@@ -27,7 +27,7 @@ export default function AdminDashboard() {
             <p className="text-[10px] opacity-70">Sistem Manajemen Internal</p>
           </div>
         </div>
-        <h2 className="text-sm font-bold uppercase tracking-widest opacity-90">Administrator</h2>
+        <h2 className="text-sm font-bold tracking-widest opacity-90">Administrator</h2>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
           {/* FOOTER HITAM */}
           <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center mt-10">
             <p className="text-[10px] font-bold">© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.</p>
-            <p className="text-[9px] opacity-50 uppercase tracking-widest mt-1">Sistem Informasi Internal untuk Notaris dan PPAT</p>
+            <p className="text-[9px] opacity-50 tracking-widest mt-1">Sistem Informasi Internal untuk Notaris dan PPAT</p>
           </footer>
         </main>
       </div>
@@ -183,7 +183,7 @@ function StatCard({ label, value, sub, color, icon, textColor }: any) {
     <div className={`bg-white p-6 rounded-[25px] border-2 ${color} shadow-sm transition-transform hover:scale-[1.02]`}>
       <div className="flex justify-between items-start">
         <div className="space-y-1">
-          <p className="text-[10px] font-bold uppercase text-gray-400">{label}</p>
+          <p className="text-[10px] font-bold text-gray-400">{label}</p>
           <h4 className={`text-5xl font-black ${textColor}`}>{value}</h4>
         </div>
         <div className="p-2.5 bg-gray-50 rounded-xl">{icon}</div>
@@ -199,7 +199,7 @@ function TableRow({ name, role, status, statusColor }: any) {
     <div className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0 last:pb-0">
       <div className="flex flex-col">
         <span className="font-bold text-sm text-gray-800">{name}</span>
-        <span className="text-[10px] font-bold uppercase text-gray-400 tracking-tighter">{role}</span>
+        <span className="text-[10px] font-bold text-gray-400 tracking-tighter">{role}</span>
       </div>
       <span className={`px-4 py-1 rounded-full text-[10px] font-bold border-2 ${statusColor}`}>
         {status}

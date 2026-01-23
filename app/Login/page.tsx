@@ -9,7 +9,7 @@ export default function LoginPage() {
           <img src="/logo.png" alt="Logo" className="h-10 w-auto" /> 
         <div className="flex flex-col">
           <h1 className="font-bold text-xl leading-none">KANTAH Gowa</h1>
-          <p className="text-[10px] uppercase tracking-tighter text-gray-400">Sistem Informasi & Layanan Internal</p>
+          <p className="text-[10px] tracking-tighter text-gray-400">Sistem Informasi & Layanan Internal</p>
         </div>
         </div>
         <Link href="/" className="px-8 py-2 bg-[#8b5e3c] text-white rounded-full text-sm font-bold hover:bg-[#724d31] transition">
@@ -49,15 +49,12 @@ export default function LoginPage() {
                     <label className="block text-sm font-bold text-[#7c4d2d] ml-2">Email</label>
                     <div className="relative">
                       <span className="absolute left-5 top-1/2 -translate-y-1/2 text-green-600 text-xl">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-                        </svg>
                       </span>
                       <input 
                         type="email" 
                         placeholder="Masukan Email Anda" 
                         autoComplete="off"
-                        className="w-full pl-14 pr-6 py-3.5 bg-white rounded-full border-2 border-[#7c4d2d]/30 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium transition-all" 
+                        className="w-full px-5 py-3 bg-white rounded-full border-2 border-[#7c4d2d]/30 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium text-xs transition-all" 
                       />
                     </div>
                   </div>
@@ -67,15 +64,12 @@ export default function LoginPage() {
                     <label className="block text-sm font-bold text-[#7c4d2d] ml-2">Password</label>
                     <div className="relative">
                       <span className="absolute left-5 top-1/2 -translate-y-1/2 text-green-600 text-xl">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-                        </svg>
                       </span>
                       <input 
                         type="password" 
                         placeholder="Masukan Password Anda" 
                         autoComplete="new-password"
-                        className="w-full pl-14 pr-12 py-3.5 bg-white rounded-full border-2 border-[#7c4d2d]/30 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium transition-all" 
+                        className="w-full px-5 py-3 bg-white rounded-full border-2 border-[#7c4d2d]/30 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium text-xs transition-all" 
                       />
                     </div>
                     <div className="text-right pr-4">
@@ -99,10 +93,9 @@ export default function LoginPage() {
           </div>
         </div>
       </section>
-
       <footer className="bg-[#1a1a1a] text-white py-6 text-center">
         <p className="text-[10px] font-bold">© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.</p>
-        <p className="text-[9px] opacity-60 mt-1 uppercase tracking-widest">Sistem Informasi Internal untuk Notaris dan PPAT</p>
+        <p className="text-[9px] opacity-60 mt-1 tracking-widest">Sistemall Informasi Internal untuk Notaris dan PPAT</p>
       </footer>
     </main>
   );

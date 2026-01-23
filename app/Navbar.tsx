@@ -2,14 +2,14 @@ import Link from "next/link"; // Pastikan import ini ada di paling atas
 
 export default function Navbar() {
   return (
-    <nav className="flex items-center justify-between px-12 py-4 bg-[#1a1a1a] text-white sticky top-0 z-50">
-      <div className="flex items-center gap-3">
-       <img src="/logo.png" alt="Logo" className="h-10 w-auto" /> 
-        <div className="flex flex-col">
-          <h1 className="font-bold text-xl leading-none">KANTAH Gowa</h1>
-          <p className="text-[10px] uppercase tracking-tighter text-gray-400">Sistem Informasi & Layanan Internal</p>
+    <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="Logo" className="h-10 w-auto" />
+          <div className="flex flex-col">
+            <h1 className="font-bold text-lg leading-none">KANTAH Gowa</h1>
+            <p className="text-[10px] opacity-70">Sistem Informasi & Layanan Internal</p>
+          </div>
         </div>
-      </div>
 
       <div className="flex gap-4">
         {/* Hubungkan ke /login */}
@@ -22,6 +22,6 @@ export default function Navbar() {
           Daftar Akun
         </Link>
       </div>
-    </nav>
+    </header>
   );
 }

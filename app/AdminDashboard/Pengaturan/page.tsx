@@ -25,7 +25,7 @@ export default function PengaturanPage() {
             <p className="text-[10px] opacity-70">Sistem Manajemen Internal</p>
           </div>
         </div>
-        <h2 className="text-sm font-bold uppercase tracking-widest opacity-90">Administrator</h2>
+        <h2 className="text-sm font-bold tracking-widest opacity-90">Administrator</h2>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
@@ -81,19 +81,19 @@ export default function PengaturanPage() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6">
                       <div>
-                        <p className="text-[11px] uppercase font-bold opacity-50 tracking-widest mb-1">Nama Sistem</p>
+                        <p className="text-[11px] font-bold opacity-50 tracking-widest mb-1">Nama Sistem</p>
                         <p className="font-bold text-sm">KANTAH Gowa Information System</p>
                       </div>
                       <div>
-                        <p className="text-[11px] uppercase font-bold opacity-50 tracking-widest mb-1">Framework</p>
+                        <p className="text-[11px] font-bold opacity-50 tracking-widest mb-1">Framework</p>
                         <p className="font-bold text-sm">React + TypeScript</p>
                       </div>
                       <div>
-                        <p className="text-[11px] uppercase font-bold opacity-50 tracking-widest mb-1">Storage</p>
+                        <p className="text-[11px] font-bold opacity-50 tracking-widest mb-1">Storage</p>
                         <p className="font-bold text-sm">Browser LocalStorage</p>
                       </div>
                       <div>
-                        <p className="text-[11px] uppercase font-bold opacity-50 tracking-widest mb-1">Versi</p>
+                        <p className="text-[11px] font-bold opacity-50 tracking-widest mb-1">Versi</p>
                         <p className="font-bold text-sm">1.0.0 (Demo)</p>
                       </div>
                     </div>
@@ -106,7 +106,7 @@ export default function PengaturanPage() {
           {/* FOOTER - Identik dengan sebelumnya */}
           <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center mt-10">
             <p className="text-[10px] font-bold">© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.</p>
-            <p className="text-[9px] opacity-50 uppercase tracking-widest mt-1">Sistem Informasi Internal untuk Notaris dan PPAT</p>
+            <p className="text-[9px] opacity-50 tracking-widest mt-1">Sistem Informasi Internal untuk Notaris dan PPAT</p>
           </footer>
         </main>
       </div>

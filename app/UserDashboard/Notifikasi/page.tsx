@@ -1,0 +1,225 @@
+"use client";
+import React, { useState } from "react";
+import Link from "next/link";
+import { 
+  LayoutDashboard, 
+  FileEdit, 
+  History, 
+  Bell, 
+  LogOut,
+  CheckCircle2, 
+  XCircle, 
+  Info
+} from "lucide-react";
+
+export default function NotifikasiPage() {
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      title: "Permohonan Ditolak",
+      message: "Mohon maaf, permohonan Anda ditolak karena dokumen tidak sesuai.",
+      date: "12 Jan 2026 pukul 19:23",
+      status: "rejected",
+      isRead: false,
+      detail: { jenis: "SKPT", no: "65487", lokasi: "Palangga" }
+    },
+    {
+      id: 2,
+      title: "Permohonan Disetujui",
+      message: "Persetujuan admin telah diberikan. Data Anda kini sudah terverifikasi.",
+      date: "10 Jan 2026 pukul 19:23",
+      status: "approved",
+      isRead: false,
+      detail: { jenis: "Pengecekan", no: "32143", lokasi: "Somba Opu" }
+    },
+    {
+      id: 3,
+      title: "Permohonan Sedang Diproses",
+      message: "Pengajuan berhasil tersimpan. Mohon tunggu proses pemeriksaan data.",
+      date: "14 Jan 2026 pukul 19:23",
+      status: "process",
+      isRead: false,
+      detail: { jenis: "SKPT", no: "54326", lokasi: "Katangka" }
+    },
+  ]);
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const markAsRead = (id: number) => {
+    setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n));
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-[#f5f5f5] font-sans overflow-hidden">
+      {/* --- HEADER --- */}
+      <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="Logo" className="h-10" />
+          <div className="text-left">
+            <h1 className="font-bold text-lg leading-none">KANTAH Gowa - User</h1>
+            <p className="text-[10px] opacity-70">Sistem Informasi Internal Notaris & PPAT</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <h2 className="text-sm font-bold tracking-tight">Nurul Karimah</h2>
+          <p className="text-[10px] opacity-70">nkarimah421@gmail.com</p>
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* --- SIDEBAR --- */}
+        <aside className="w-72 bg-[#7c4d2d] text-white flex flex-col shadow-xl">
+          <nav className="flex-1 px-4 py-8 space-y-2">
+            <Link href="/UserDashboard">
+              <button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl transition text-left font-bold">
+                <LayoutDashboard size={22} /> Beranda
+              </button>
+            </Link>
+            <Link href="/UserDashboard/Permohonan">
+              <button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl transition text-left font-bold">
+                <FileEdit size={22} /> Permohonan
+              </button>
+            </Link>
+            <Link href="/UserDashboard/Riwayat">
+              <button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl transition text-left font-bold">
+                <History size={22} /> Riwayat
+              </button>
+            </Link>
+            <Link href="/UserDashboard/Notifikasi">
+              <button className="flex items-center gap-3 w-full px-5 py-3.5 bg-[#56b35a] rounded-xl font-bold shadow-lg text-left transition">
+                <Bell size={22} /> Notifikasi
+              </button>
+            </Link>
+            
+            <div className="pt-4 border-t border-white/20 mt-4">
+              <button 
+                onClick={() => setIsLogoutModalOpen(true)}
+                className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-red-600 rounded-xl transition text-left font-bold"
+              >
+                <LogOut size={22} /> Keluar
+              </button>
+            </div>
+          </nav>
+        </aside>
+
+        {/* --- MAIN CONTENT --- */}
+        <main className="flex-1 overflow-y-auto bg-white flex flex-col">
+          <div className="p-10 flex-1">
+            <div className="max-w-[1200px] mx-auto">
+              
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-3xl font-black text-gray-900">Notifikasi</h3>
+                  <p className="text-gray-500 font-medium">Pemberitahuan resmi terkait permohonan Anda</p>
+                  <hr className="mt-5 border-gray-200" />
+                </div>
+                {unreadCount > 0 && (
+                  <span className="bg-[#e62b2b] text-white px-4 py-1.5 rounded-full text-[10px] font-black shadow-lg">
+                    {unreadCount} Belum Dibaca
+                  </span>
+                )}
+              </div>
+
+              {/* Daftar Notifikasi */}
+              <div className="space-y-4">
+                {notifications.map((notif) => (
+                  <div 
+                    key={notif.id}
+                    className={`relative flex items-start gap-4 p-5 rounded-[20px] border-2 transition-all
+                      ${notif.status === 'rejected' ? 'border-red-500 bg-red-50' : 
+                        notif.status === 'approved' ? 'border-green-500 bg-green-50' : 
+                        'border-blue-500 bg-blue-50'} ${notif.isRead ? 'opacity-50 grayscale-[0.3]' : ''}`}
+                  >
+                    <div className="mt-0.5">
+                      {notif.status === 'rejected' && <XCircle className="text-red-500" size={24} />}
+                      {notif.status === 'approved' && <CheckCircle2 className="text-green-500" size={24} />}
+                      {notif.status === 'process' && <Info className="text-blue-500" size={24} />}
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center mb-1">
+                        <h4 className="font-bold text-gray-800 text-sm">{notif.title}</h4>
+                        <span className="text-[9px] font-bold text-gray-400 tracking-tighter">{notif.date}</span>
+                      </div>
+                      
+                      <p className="text-gray-500 text-[11px] font-medium leading-relaxed mb-3">{notif.message}</p>
+                      
+                      {/* Box Detail Pengajuan */}
+                      <div className="bg-white/80 rounded-xl p-3 border border-gray-100 flex gap-5 items-center">
+                        <div className="flex gap-4">
+                          <div>
+                            <p className="text-[8px] text-gray-400 font-bold tracking-widest">Jenis</p>
+                            <p className="text-[10px] font-bold text-gray-700">{notif.detail.jenis}</p>
+                          </div>
+                          <div className="border-l border-gray-100 pl-4">
+                            <p className="text-[8px] text-gray-400 font-bold tracking-widest">No. Sertipikat</p>
+                            <p className="text-[10px] font-bold text-gray-700">{notif.detail.no}</p>
+                          </div>
+                          <div className="border-l border-gray-100 pl-4">
+                            <p className="text-[8px] text-gray-400 font-bold tracking-widest">Lokasi</p>
+                            <p className="text-[10px] font-bold text-gray-700">{notif.detail.lokasi}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Tombol Aksi - Warna disesuaikan dengan kolom */}
+                      <div className="flex justify-end mt-3">
+                        {!notif.isRead && (
+                          <button 
+                            onClick={() => markAsRead(notif.id)}
+                            className={`text-[9px] font-black tracking-tight transition-colors hover:underline
+                              ${notif.status === 'rejected' ? 'text-red-600' : 
+                                notif.status === 'approved' ? 'text-green-600' : 
+                                'text-blue-600'}`}
+                          >
+                            Tandai Sudah Dibaca
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center mt-10">
+            <p className="text-[10px] font-bold">© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.</p>
+            <p className="text-[9px] opacity-50 tracking-widest mt-1">Sistem Informasi Internal untuk Notaris dan PPAT</p>
+          </footer>
+        </main>
+      </div>
+
+      {/* Logout Modal */}
+      {isLogoutModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="space-y-4">
+              <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
+              <p className="text-gray-500 font-medium leading-relaxed">
+                Anda akan keluar dari user panel. Anda perlu login kembali untuk mengakses sistem.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-10">
+              <button 
+                onClick={() => setIsLogoutModalOpen(false)}
+                className="px-8 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition"
+              >
+                Batal
+              </button>
+
+              <Link href="/">
+                <button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200">
+                  Ya, Keluar
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

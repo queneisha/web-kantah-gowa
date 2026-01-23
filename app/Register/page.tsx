@@ -70,13 +70,13 @@ export default function RegisterPage() {
         
         <div className="container mx-auto px-16 flex items-center gap-10">
           <div className="flex-1 flex justify-end">
-            <div className="bg-white/90 backdrop-blur-sm p-8 rounded-[40px] shadow-2xl w-full max-w-xl">
+            <div className="bg-white/90 backdrop-blur-xl p-10 rounded-[50px] shadow-2xl w-full max-w-xl border border-white/40">
               <div className="text-center mb-6">
                 <h2 className="text-3xl font-bold text-[#7c4d2d] mb-2">Buat Akun Anda!</h2>
                 <p className="text-[#7c4d2d] text-sm font-medium">Silahkan daftar untuk membuat akun di sistem layanan pertanahan kantah Gowa.</p>
               </div>
 
-              <div className="bg-white rounded-[30px] p-6 shadow-inner border border-gray-100">
+              <div className="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100">
                 <h3 className="text-lg font-bold text-[#7c4d2d] mb-4">Daftar</h3>
                 <form onSubmit={handleDaftar} className="grid grid-cols-1 gap-4" autoComplete="off">
                   {/* Nama Lengkap */}
@@ -171,9 +171,15 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  <button type="submit" className="w-full bg-[#56b35a] hover:bg-[#43a047] text-white py-3 rounded-full font-bold text-xl shadow-lg transition-transform active:scale-95">
-                    Daftar Akun
-                  </button>
+                  <div className="flex flex-col items-center pt-4">
+                    <button className="w-1/2 bg-[#56b35a] hover:bg-[#43a047] text-white py-3.5 rounded-full font-bold text-xl shadow-lg transition-transform active:scale-95">
+                      Daftar
+                    </button>
+                    
+                    <p className="text-center text-xs mt-8 font-bold text-[#7c4d2d]/70">
+                      Sudah Punya Akun? <Link href="/Login" className="text-green-600 hover:underline">Login disini</Link>
+                    </p>
+                  </div>
                 </form>
               </div>
             </div>
