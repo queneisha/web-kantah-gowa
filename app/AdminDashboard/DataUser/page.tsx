@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
   LayoutDashboard, 
@@ -14,12 +14,14 @@ import {
   Trash2 
 } from "lucide-react";
 
+// Properti nama_notaris ditambahkan ke Interface
 interface UserData {
-  nama: string;
+  id: number;
+  nama_lengkap: string;
   email: string;
   jabatan: string;
-  hp: string;
-  tgl: string;
+  nama_notaris?: string; // Menampung data nama atasan
+  nomor_hp: string;
   status: string;
 }
 
@@ -30,44 +32,73 @@ export default function DataUserPage() {
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
 
-  // State untuk Dropdown Filter
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("Semua Status");
 
-  const [users, setUsers] = useState<UserData[]>([
-    { nama: "Nabila Humairah AR", email: "bila00@gmail.com", jabatan: "PPAT", hp: "09876543234", tgl: "11 Januari 2026", status: "Aktif" },
-    { nama: "Niki Renaningtyas", email: "tyas01@gmail.com", jabatan: "Notaris", hp: "07653456782", tgl: "12 Januari 2026", status: "Aktif" },
-    { nama: "Nurul Karimah", email: "nkarimah421@gmail.com", jabatan: "Notaris", hp: "081341062046", tgl: "13 Januari 2026", status: "Menunggu" },
-  ]);
+  const [users, setUsers] = useState<UserData[]>([]);
 
-  // Logika Filter Tabel
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/users');
+      const data = await response.json();
+      setUsers(data);
+    } catch (error) {
+      console.error("Gagal mengambil data user:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const confirmApprove = async () => {
+    if (selectedUser) {
+      try {
+        const response = await fetch(`http://localhost:8000/api/users/${selectedUser.id}/approve`, {
+          method: 'PUT',
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (response.ok) {
+          alert("User berhasil diaktifkan!");
+          setIsApproveModalOpen(false);
+          fetchUsers();
+        }
+      } catch (error) {
+        alert("Gagal menghubungi server.");
+      }
+    }
+  };
+
+  const confirmReject = async () => {
+    if (selectedUser) {
+      try {
+        const response = await fetch(`http://localhost:8000/api/users/${selectedUser.id}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          alert("User berhasil dihapus.");
+          setIsRejectModalOpen(false);
+          fetchUsers();
+        }
+      } catch (error) {
+        alert("Gagal menghapus user.");
+      }
+    }
+  };
+
   const filteredUsers = users.filter((user) => {
     if (selectedFilter === "Semua Status") return true;
-    return user.status === selectedFilter;
+    return user.status.toLowerCase() === selectedFilter.toLowerCase();
   });
 
   const handleOpenDetail = (user: UserData) => { setSelectedUser(user); setIsDetailOpen(true); };
   const handleOpenApprove = (user: UserData) => { setSelectedUser(user); setIsApproveModalOpen(true); };
   const handleOpenReject = (user: UserData) => { setSelectedUser(user); setIsRejectModalOpen(true); };
 
-  const confirmApprove = () => {
-    if (selectedUser) {
-      setUsers(users.map(u => u.email === selectedUser.email ? { ...u, status: "Aktif" } : u));
-      setIsApproveModalOpen(false);
-    }
-  };
-
-  const confirmReject = () => {
-    if (selectedUser) {
-      setUsers(users.filter(u => u.email !== selectedUser.email));
-      setIsRejectModalOpen(false);
-      setSelectedUser(null);
-    }
-  };
-
   return (
     <div className="flex flex-col h-screen bg-[#f5f5f5] font-sans overflow-hidden">
-      
       <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="Logo" className="h-10 w-auto" />
@@ -103,7 +134,6 @@ export default function DataUserPage() {
               <div className="bg-white rounded-[35px] shadow-xl border-2 border-[#7c4d2d] overflow-hidden">
                 <div className="bg-[#8b5e3c] p-5 px-10 flex justify-between items-center">
                   <h4 className="text-white font-bold text-xl">Daftar User</h4>
-
                   <div className="relative">
                     <button 
                       onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -112,22 +142,15 @@ export default function DataUserPage() {
                       <span className="text-[#1a1a1a] font-bold text-sm">{selectedFilter}</span>
                       <ChevronDown size={18} className={`ml-2 text-gray-600 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
                     </button>
-
                     {isFilterOpen && (
                       <div className="absolute right-0 mt-3 w-full bg-white rounded-[25px] p-2 shadow-[0_10px_25px_rgba(0,0,0,0.1)] z-50">
                         <div className="flex flex-col gap-1">
                           {["Semua Status", "Menunggu", "Aktif"].map((option) => (
                             <button
                               key={option}
-                              onClick={() => {
-                                setSelectedFilter(option);
-                                setIsFilterOpen(false);
-                              }}
+                              onClick={() => { setSelectedFilter(option); setIsFilterOpen(false); }}
                               className={`w-full py-2 px-4 rounded-full text-sm font-bold transition-colors text-center
-                                ${selectedFilter === option 
-                                  ? "bg-[#2563eb] text-white shadow-sm" 
-                                  : "bg-[#f1f1f1] text-gray-700 hover:bg-gray-200"
-                                }`}
+                                ${selectedFilter === option ? "bg-[#2563eb] text-white" : "bg-[#f1f1f1] text-gray-700 hover:bg-gray-200"}`}
                             >
                               {option}
                             </button>
@@ -151,30 +174,36 @@ export default function DataUserPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-300">
-                      {filteredUsers.map((user, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-5 text-sm text-gray-600 font-medium">{user.nama}</td>
+                      {filteredUsers.map((user) => (
+                        <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-5 text-sm text-gray-600 font-medium">{user.nama_lengkap}</td>
                           <td className="px-6 py-5 text-sm text-gray-500">{user.email}</td>
-                          <td className="px-6 py-5 text-sm text-gray-500 font-semibold">{user.jabatan}</td>
-                          <td className="px-6 py-5 text-sm text-gray-500">{user.hp}</td>
+                          
+                          {/* KOLOM JABATAN DENGAN LOGIKA OTOMATIS */}
+                          <td className="px-6 py-5 text-sm text-gray-500 font-semibold">
+                            <div className="flex flex-col">
+                              <span>{user.jabatan}</span>
+                              {user.jabatan === "Sekertaris Notaris/PPAT" && user.nama_notaris && (
+                                <span className="text-[10px] text-blue-600 italic font-bold mt-1">
+                                  Atasan: {user.nama_notaris}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-5 text-sm text-gray-500">{user.nomor_hp}</td>
                           <td className="px-6 py-5">
                             <span className={`px-4 py-1 rounded-full text-[10px] font-bold border-2 ${
-                              user.status === 'Aktif' ? 'bg-green-100 text-green-600 border-green-500' : 
-                              'bg-orange-100 text-orange-600 border-orange-500'
+                              user.status === 'Aktif' ? 'bg-green-100 text-green-600 border-green-500' : 'bg-orange-100 text-orange-600 border-orange-500'
                             }`}>{user.status}</span>
                           </td>
                           <td className="px-6 py-5 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <button onClick={() => handleOpenDetail(user)} className="p-1.5 bg-blue-50 text-blue-600 border-2 border-blue-400 rounded-lg hover:bg-blue-600 hover:text-white transition"><Eye size={16} /></button>
-
-                              {user.status === 'Aktif' ? (
-                                <button onClick={() => handleOpenReject(user)} className="p-1.5 bg-red-50 text-red-600 border-2 border-red-400 rounded-lg hover:bg-red-600 hover:text-white transition"><Trash2 size={16} /></button>
-                              ) : (
-                                <>
-                                  <button onClick={() => handleOpenApprove(user)} className="p-1.5 bg-green-50 text-green-600 border-2 border-green-400 rounded-lg hover:bg-green-600 hover:text-white transition"><Check size={16} /></button>
-                                  <button onClick={() => handleOpenReject(user)} className="p-1.5 bg-red-50 text-red-600 border-2 border-red-400 rounded-lg hover:bg-red-600 hover:text-white transition"><X size={16} /></button>
-                                </>
+                              {user.status !== 'Aktif' && (
+                                <button onClick={() => handleOpenApprove(user)} className="p-1.5 bg-green-50 text-green-600 border-2 border-green-400 rounded-lg hover:bg-green-600 hover:text-white transition"><Check size={16} /></button>
                               )}
+                              <button onClick={() => handleOpenReject(user)} className="p-1.5 bg-red-50 text-red-600 border-2 border-red-400 rounded-lg hover:bg-red-600 hover:text-white transition"><Trash2 size={16} /></button>
                             </div>
                           </td>
                         </tr>
@@ -185,81 +214,76 @@ export default function DataUserPage() {
               </div>
             </div>
           </div>
-
-          <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center mt-10">
+          <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center">
             <p className="text-[10px] font-bold">© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.</p>
-            <p className="text-[9px] opacity-50 tracking-widest mt-1">Sistem Informasi Internal untuk Notaris dan PPAT</p>
           </footer>
         </main>
       </div>
 
-      {/* MODAL SETUJU, HAPUS, DETAIL, KELUAR (Sesuai kode sebelumnya tanpa fitur Nonaktif) */}
-      {/* ... (Modal-modal tetap ada sesuai fungsi Approve, Reject, Detail, Logout) */}
-      
-      {/* POPUP SETUJU */}
+      {/* MODAL APPROVE */}
       {isApproveModalOpen && selectedUser && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[25px] p-10 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
             <h3 className="text-3xl font-bold text-gray-900 mb-2 text-green-600">Setujui User</h3>
             <div className="mb-8 text-left">
-              <p className="text-gray-500 font-semibold text-lg">{selectedUser.nama}</p>
-              <p className="mt-4 text-gray-700 font-semibold">Apakah Anda yakin ingin menyetujui akun ini?</p>
+              <p className="text-gray-500 font-semibold text-lg">{selectedUser.nama_lengkap}</p>
+              <p className="mt-4 text-gray-700 font-semibold">Aktifkan akun ini sekarang?</p>
             </div>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setIsApproveModalOpen(false)} className="px-10 py-3 rounded-full border-2 border-gray-200 font-bold text-gray-700">Batal</button>
-              <button onClick={confirmApprove} className="px-10 py-3 rounded-full bg-green-600 text-white font-bold shadow-lg shadow-green-200">Ya, Setujui</button>
+              <button onClick={() => setIsApproveModalOpen(false)} className="px-10 py-3 rounded-full border-2 border-gray-200 font-bold">Batal</button>
+              <button onClick={confirmApprove} className="px-10 py-3 rounded-full bg-green-600 text-white font-bold">Ya, Setujui</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* POPUP HAPUS/TOLAK */}
+      {/* MODAL REJECT / DELETE */}
       {isRejectModalOpen && selectedUser && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[25px] p-10 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-3xl font-bold text-gray-900 mb-2 text-red-600">Hapus User</h3>
-            <div className="mb-8 text-left">
-              <p className="text-gray-500 font-semibold text-lg">{selectedUser.nama}</p>
-              <p className="mt-4 text-gray-700 font-semibold">Data user ini akan dihapus permanen dari sistem. Lanjutkan?</p>
-            </div>
+          <div className="bg-white rounded-[25px] p-10 w-full max-w-lg shadow-2xl">
+            <h3 className="text-3xl font-bold text-red-600 mb-2">Hapus User</h3>
+            <p className="text-gray-700 mb-8">Hapus {selectedUser.nama_lengkap} secara permanen?</p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setIsRejectModalOpen(false)} className="px-10 py-3 rounded-full border-2 border-gray-200 font-bold text-gray-700">Batal</button>
-              <button onClick={confirmReject} className="px-10 py-3 rounded-full bg-red-600 text-white font-bold shadow-lg shadow-red-200">Ya, Hapus</button>
+              <button onClick={() => setIsRejectModalOpen(false)} className="px-10 py-3 rounded-full border-2 border-gray-200 font-bold">Batal</button>
+              <button onClick={confirmReject} className="px-10 py-3 rounded-full bg-red-600 text-white font-bold">Ya, Hapus</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* DETAIL MODAL */}
+      {/* DETAIL MODAL (DIPERBARUI DENGAN NAMA NOTARIS) */}
       {isDetailOpen && selectedUser && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[25px] p-10 w-full max-w-lg shadow-2xl relative animate-in fade-in zoom-in duration-200">
-            <button onClick={() => setIsDetailOpen(false)} className="absolute top-8 right-8 text-red-600 hover:scale-110 transition-transform"><X size={32} strokeWidth={3} /></button>
+          <div className="bg-white rounded-[25px] p-10 w-full max-w-lg shadow-2xl relative">
+            <button onClick={() => setIsDetailOpen(false)} className="absolute top-8 right-8 text-red-600"><X size={32} /></button>
             <h3 className="text-3xl font-bold text-gray-900 mb-6">Detail User</h3>
-            <div className="space-y-4 text-lg text-left">
-              <div><p className="text-sm font-semibold text-gray-900">Nama Lengkap</p><p className="text-gray-500 font-medium">{selectedUser.nama}</p></div>
-              <div><p className="text-sm font-semibold text-gray-900">Email</p><p className="text-gray-500 font-medium">{selectedUser.email}</p></div>
-              <div><p className="text-sm font-semibold text-gray-900">Jabatan</p><p className="text-gray-500 font-medium">{selectedUser.jabatan}</p></div>
-              <div><p className="text-sm font-semibold text-gray-900">Status</p><span className="text-green-600 font-bold">{selectedUser.status}</span></div>
+            <div className="space-y-4">
+              <div><p className="text-sm font-bold text-[#7c4d2d]">Nama Lengkap</p><p className="font-medium">{selectedUser.nama_lengkap}</p></div>
+              <div><p className="text-sm font-bold text-[#7c4d2d]">Email</p><p className="font-medium">{selectedUser.email}</p></div>
+              <div>
+                <p className="text-sm font-bold text-[#7c4d2d]">Jabatan</p>
+                <p className="font-medium">{selectedUser.jabatan}</p>
+                {selectedUser.jabatan === "Sekertaris Notaris/PPAT" && selectedUser.nama_notaris && (
+                   <p className="text-xs text-blue-600 font-bold italic mt-1 bg-blue-50 p-2 rounded-lg border border-blue-200">
+                     Bekerja pada Notaris: {selectedUser.nama_notaris}
+                   </p>
+                )}
+              </div>
+              <div><p className="text-sm font-bold text-[#7c4d2d]">Nomor HP</p><p className="font-medium">{selectedUser.nomor_hp}</p></div>
+              <div><p className="text-sm font-bold text-[#7c4d2d]">Status</p><span className={`font-bold ${selectedUser.status === 'Aktif' ? 'text-green-600' : 'text-orange-600'}`}>{selectedUser.status}</span></div>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL POP UP KELUAR */}
+      {/* LOGOUT MODAL */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="space-y-4">
-              <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
-              <p className="text-gray-500 font-medium leading-relaxed">
-                Anda akan keluar dari admin panel. Anda perlu login kembali untuk mengakses sistem.
-              </p>
-            </div>
-
+          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl">
+            <h3 className="text-2xl font-bold mb-4">Yakin untuk keluar?</h3>
             <div className="flex justify-end gap-3 mt-10">
-              <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition">Batal</button>
-              <Link href="/"><button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200">Ya, Keluar</button></Link>
+              <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-200 font-bold">Batal</button>
+              <Link href="/"><button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold">Ya, Keluar</button></Link>
             </div>
           </div>
         </div>

@@ -188,7 +188,8 @@ export default function PermohonanPage() {
                 <hr className="mt-5 border-gray-200" />
               </div>
 
-              <form onSubmit={triggerConfirm} className="max-w-4xl bg-white rounded-[30px] shadow-xl border-2 border-[#7c4d2d] overflow-hidden">
+              {/* --- PERUBAHAN DISINI: max-w-5xl membuat form lebih panjang ke kanan --- */}
+              <form onSubmit={triggerConfirm} className="max-w-5xl bg-white rounded-[30px] shadow-xl border-2 border-[#7c4d2d] overflow-hidden">
                 <div className="bg-[#8b5e3c] p-4 px-8 text-white flex items-center gap-3">
                   <FileText size={24} />
                   <span className="font-bold text-lg">Form Permohonan</span>
@@ -280,7 +281,7 @@ export default function PermohonanPage() {
         </main>
       </div>
 
-      {/* --- POPUP 1: KONFIRMASI --- */}
+      {/* --- MODAL MODAL TETAP SAMA --- */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white rounded-[35px] p-8 w-full max-w-xl shadow-2xl animate-in zoom-in duration-300">
@@ -318,7 +319,6 @@ export default function PermohonanPage() {
         </div>
       )}
 
-      {/* --- POPUP 2: BERHASIL --- */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white rounded-[35px] p-12 w-full max-w-4xl shadow-2xl border-[3px] border-green-500 relative animate-in zoom-in duration-300">
@@ -338,7 +338,6 @@ export default function PermohonanPage() {
         </div>
       )}
 
-        {/* MODAL POP UP KELUAR */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
@@ -350,23 +349,14 @@ export default function PermohonanPage() {
             </div>
 
             <div className="flex justify-end gap-3 mt-10">
-              <button 
-                onClick={() => setIsLogoutModalOpen(false)}
-                className="px-8 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition"
-              >
-                Batal
-              </button>
-
+              <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition">Batal</button>
               <Link href="/">
-                <button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200">
-                  Ya, Keluar
-                </button>
+                <button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200">Ya, Keluar</button>
               </Link>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

@@ -1,4 +1,4 @@
-"use client"; 
+"use client";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -13,20 +13,58 @@ export default function RegisterPage() {
   // State untuk popup berhasil
   const [showPopup, setShowPopup] = useState(false);
 
-  // Fungsi untuk menangani klik daftar
-  const handleDaftar = (e: React.FormEvent) => {
+  // --- FUNGSI HANDLE DAFTAR (API INTEGRATION) ---
+  const handleDaftar = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setShowPopup(true);
+    
+    const formData = new FormData(e.currentTarget);
+    
+    // Validasi password
+    if (formData.get("password") !== formData.get("password_confirmation")) {
+      alert("Konfirmasi password tidak cocok!");
+      return;
+    }
+
+    const payload = {
+      nama_lengkap: formData.get("nama_lengkap"),
+      jabatan: selectedJabatan,
+      // Mengambil nilai input nama_notaris jika jabatan adalah Sekertaris
+      nama_notaris: selectedJabatan === "Sekertaris Notaris/PPAT" ? formData.get("nama_notaris") : null,
+      email: formData.get("email"),
+      nomor_hp: formData.get("nomor_hp"),
+      password: formData.get("password"),
+    };
+
+    try {
+      const response = await fetch('http://localhost:8000/api/register', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setShowPopup(true);
+      } else {
+        alert(result.message || "Gagal mendaftar, periksa kembali data Anda.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Terjadi kesalahan koneksi ke server.");
+    }
   };
 
   return (
     <main className="min-h-screen relative flex flex-col font-sans">
-      {/* POPUP BERHASIL DENGAN GARIS HIJAU INTERNAL */}
+      {/* POPUP BERHASIL */}
       {showPopup && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[40px] p-4 max-w-md w-full shadow-2xl animate-in zoom-in duration-300">
             <div className="border-4 border-[#56b35a] rounded-[35px] p-8 flex flex-col items-center text-center">
-              
               <div className="flex justify-center mb-6">
                 <div className="w-20 h-20 bg-[#56b35a] rounded-full flex items-center justify-center shadow-lg shadow-[#56b35a]/30">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="white" className="w-12 h-12">
@@ -34,12 +72,10 @@ export default function RegisterPage() {
                   </svg>
                 </div>
               </div>
-              
               <h2 className="text-3xl font-bold text-[#56b35a] mb-4">Registrasi Berhasil !</h2>
               <p className="text-[#56b35a] text-sm font-semibold leading-relaxed mb-8">
                 Akun Anda telah terdaftar dan menunggu persetujuan dari Admin KANTAH Gowa. Anda akan menerima notifikasi melalui email setelah akun disetujui.
               </p>
-
               <Link 
                 href="/" 
                 className="block w-full bg-[#56b35a] hover:bg-[#43a047] text-white py-4 rounded-full font-bold text-lg transition-all shadow-md active:scale-95"
@@ -79,10 +115,11 @@ export default function RegisterPage() {
               <div className="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100">
                 <h3 className="text-lg font-bold text-[#7c4d2d] mb-4">Daftar</h3>
                 <form onSubmit={handleDaftar} className="grid grid-cols-1 gap-4" autoComplete="off">
+                  
                   {/* Nama Lengkap */}
                   <div>
                     <label className="text-[10px] font-bold text-[#7c4d2d] mb-1 block ml-1">Nama Lengkap</label>
-                    <input type="text" placeholder="Masukkan Nama Lengkap Anda" autoComplete="off" className="w-full px-5 py-2.5 bg-white rounded-full border-2 border-[#7c4d2d]/30 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium text-xs transition-all" />
+                    <input type="text" name="nama_lengkap" required placeholder="Masukkan Nama Lengkap Anda" className="w-full px-5 py-2.5 bg-white rounded-full border-2 border-[#7c4d2d]/30 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium text-xs transition-all" />
                   </div>
 
                   {/* Jabatan */}
@@ -105,14 +142,15 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  {/* KOLOM CATATAN NAMA NOTARIS (Hanya muncul jika Sekertaris dipilih) */}
+                  {/* INPUT DINAMIS: Nama Notaris (Otomatis Muncul) */}
                   {selectedJabatan === "Sekertaris Notaris/PPAT" && (
-                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                      <label className="text-[10px] font-bold text-[#7c4d2d] mb-1 block ml-1">Nama Notaris</label>
+                    <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <label className="text-[10px] font-bold text-[#7c4d2d] mb-1 block ml-1">Nama Notaris/PPAT (Atasan)</label>
                       <input 
                         type="text" 
-                        placeholder="Masukkan Nama Notaris/PPAT Tempat Anda Bekerja" 
-                        autoComplete="off" 
+                        name="nama_notaris"
+                        required 
+                        placeholder="Masukkan Nama Notaris Atasan Anda" 
                         className="w-full px-5 py-2.5 bg-white rounded-full border-2 border-[#7c4d2d]/50 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium text-xs transition-all" 
                       />
                     </div>
@@ -122,31 +160,28 @@ export default function RegisterPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[10px] font-bold text-[#7c4d2d] mb-1 block ml-1">Email</label>
-                      <input type="email" placeholder="Email Anda" autoComplete="off" className="w-full px-5 py-2.5 bg-white rounded-full border-2 border-[#7c4d2d]/30 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium text-xs transition-all" />
+                      <input type="email" name="email" required placeholder="Email Anda" className="w-full px-5 py-2.5 bg-white rounded-full border-2 border-[#7c4d2d]/30 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium text-xs transition-all" />
                     </div>
                     <div>
                       <label className="text-[10px] font-bold text-[#7c4d2d] mb-1 block ml-1">Nomor Handphone</label>
-                      <input type="text" placeholder="No. HP Anda" autoComplete="off" className="w-full px-5 py-2.5 bg-white rounded-full border-2 border-[#7c4d2d]/30 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium text-xs transition-all" />
+                      <input type="text" name="nomor_hp" required placeholder="No. HP Anda" className="w-full px-5 py-2.5 bg-white rounded-full border-2 border-[#7c4d2d]/30 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium text-xs transition-all" />
                     </div>
                   </div>
 
-                  {/* Password & Konfirmasi Password */}
+                  {/* Password & Konfirmasi */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="relative">
                       <label className="text-[10px] font-bold text-[#7c4d2d] mb-1 block ml-1">Password</label>
                       <div className="relative">
                         <input 
                           type={showPassword ? "text" : "password"} 
+                          name="password"
+                          required
                           placeholder="Password" 
-                          autoComplete="new-password"
                           className="w-full px-5 py-2.5 bg-white rounded-full border-2 border-[#7c4d2d]/30 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium text-xs transition-all" 
                         />
-                        <button 
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity"
-                        >
-                          <img src="/icon_mata.png" alt="toggle password" color="#56b35a" className="w-5 h-5 object-contain" />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity">
+                          <img src="/icon_mata.png" alt="toggle" className="w-5 h-5 object-contain" />
                         </button>
                       </div>
                     </div>
@@ -156,26 +191,22 @@ export default function RegisterPage() {
                       <div className="relative">
                         <input 
                           type={showConfirmPassword ? "text" : "password"} 
+                          name="password_confirmation"
+                          required
                           placeholder="Ulangi Password" 
-                          autoComplete="new-password"
                           className="w-full px-5 py-2.5 bg-white rounded-full border-2 border-[#7c4d2d]/30 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium text-xs transition-all" 
                         />
-                        <button 
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity"
-                        >
-                          <img src="/icon_mata.png" alt="toggle password" className="w-5 h-5 object-contain" />
+                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity">
+                          <img src="/icon_mata.png" alt="toggle" className="w-5 h-5 object-contain" />
                         </button>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex flex-col items-center pt-4">
-                    <button className="w-1/2 bg-[#56b35a] hover:bg-[#43a047] text-white py-3.5 rounded-full font-bold text-xl shadow-lg transition-transform active:scale-95">
+                    <button type="submit" className="w-1/2 bg-[#56b35a] hover:bg-[#43a047] text-white py-3.5 rounded-full font-bold text-xl shadow-lg transition-transform active:scale-95">
                       Daftar
                     </button>
-                    
                     <p className="text-center text-xs mt-8 font-bold text-[#7c4d2d]/70">
                       Sudah Punya Akun? <Link href="/Login" className="text-green-600 hover:underline">Login disini</Link>
                     </p>
