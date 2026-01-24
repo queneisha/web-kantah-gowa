@@ -8,7 +8,8 @@ import {
   Settings, 
   LogOut, 
   UserCheck, 
-  Clock 
+  Clock, 
+  Edit
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -56,6 +57,12 @@ export default function AdminDashboard() {
             <Link href="/AdminDashboard/Pengaturan">  
             <button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl font-bold transition text-left">
               <Settings size={22} /> Pengaturan
+            </button>
+            </Link>
+
+            <Link href="/AdminDashboard/EditKonten">  
+            <button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl font-bold transition text-left">
+              <Edit size={22} /> Edit Konten
             </button>
             </Link>
 

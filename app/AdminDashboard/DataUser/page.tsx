@@ -11,7 +11,8 @@ import {
   Check,
   X,
   ChevronDown,
-  Trash2 
+  Trash2, 
+  Edit
 } from "lucide-react";
 
 // Properti nama_notaris ditambahkan ke Interface
@@ -117,6 +118,7 @@ export default function DataUserPage() {
             <Link href="/AdminDashboard/DataUser"><button className="flex items-center gap-3 w-full px-5 py-3.5 bg-[#56b35a] rounded-xl font-semibold transition shadow-lg text-left"><Users size={22} /> Data User</button></Link>
             <Link href="/AdminDashboard/DataPermohonan"><button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl font-bold transition text-left"><FileText size={22} /> Data Permohonan</button></Link>
             <Link href="/AdminDashboard/Pengaturan"><button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl font-bold transition text-left"><Settings size={22} /> Pengaturan</button></Link>
+            <Link href="/AdminDashboard/EditKonten"><button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl font-bold transition text-left"><Edit size={22} /> Edit Konten</button></Link>
             <div className="pt-4 mt-4 border-t border-white/20">
               <button onClick={() => setIsLogoutModalOpen(true)} className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-red-600 rounded-xl font-bold transition text-left"><LogOut size={22} /> Keluar</button>
             </div>

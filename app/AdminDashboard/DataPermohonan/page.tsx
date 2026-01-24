@@ -11,7 +11,8 @@ import {
   ChevronDown,
   Trash2,
   Eye,
-  X
+  X,
+  Edit
 } from "lucide-react";
 
 interface Permohonan {
@@ -116,6 +117,11 @@ export default function DataPermohonanPage() {
             <Link href="/AdminDashboard/DataUser"><button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl transition text-left font-bold"><Users size={22} /> Data User</button></Link>
             <Link href="/AdminDashboard/DataPermohonan"><button className="flex items-center gap-3 w-full px-5 py-3.5 bg-[#56b35a] rounded-xl font-bold shadow-lg text-left"><FileText size={22} /> Data Permohonan</button></Link>
             <Link href="/AdminDashboard/Pengaturan"><button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl transition text-left font-bold"><Settings size={22} /> Pengaturan</button></Link>
+            <Link href="/AdminDashboard/EditKonten">  
+            <button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl transition font-bold text-left">
+              <Edit size={22} /> Edit Konten
+            </button>
+            </Link>
             <div className="pt-4 border-t border-white/20 mt-4">
               <button onClick={() => setIsLogoutModalOpen(true)} className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-red-600 rounded-xl transition text-left font-bold"><LogOut size={22} /> Keluar</button>
             </div>
@@ -297,34 +303,34 @@ export default function DataPermohonanPage() {
         </div>
       )}
 
-{/* MODAL POP UP KELUAR */}
-      {isLogoutModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="space-y-4">
-              <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
-              <p className="text-gray-500 font-medium leading-relaxed">
-                Anda akan keluar dari admin panel. Anda perlu login kembali untuk mengakses sistem.
-              </p>
-            </div>
+            {/* MODAL POP UP KELUAR */}
+            {isLogoutModalOpen && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+                <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
+                  <div className="space-y-4">
+                    <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
+                    <p className="text-gray-500 font-medium leading-relaxed">
+                      Anda akan keluar dari admin panel. Anda perlu login kembali untuk mengakses sistem.
+                    </p>
+                  </div>
 
-            <div className="flex justify-end gap-3 mt-10">
-              <button 
-                onClick={() => setIsLogoutModalOpen(false)}
-                className="px-8 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition"
-              >
-                Batal
-              </button>
+                  <div className="flex justify-end gap-3 mt-10">
+                    <button 
+                      onClick={() => setIsLogoutModalOpen(false)}
+                      className="px-8 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition"
+                    >
+                      Batal
+                    </button>
 
-              <Link href="/">
-                <button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200">
-                  Ya, Keluar
-                </button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+                    <Link href="/">
+                      <button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200">
+                        Ya, Keluar
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
 
     </div>
   );

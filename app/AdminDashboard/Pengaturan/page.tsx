@@ -8,7 +8,8 @@ import {
   Settings, 
   LogOut,
   ShieldCheck,
-  Info
+  Info,
+  Edit
 } from "lucide-react";
 
 export default function PengaturanPage() {
@@ -36,6 +37,7 @@ export default function PengaturanPage() {
             <Link href="/AdminDashboard/DataUser"><button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl transition font-bold text-left"><Users size={22} /> Data User</button></Link>
             <Link href="/AdminDashboard/DataPermohonan"><button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl transition font-bold text-left"><FileText size={22} /> Data Permohonan</button></Link>
             <Link href="/AdminDashboard/Pengaturan"><button className="flex items-center gap-3 w-full px-5 py-3.5 bg-[#56b35a] rounded-xl font-bold shadow-lg text-left"><Settings size={22} /> Pengaturan</button></Link>
+            <Link href="/AdminDashboard/EditKonten"><button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl transition font-bold text-left"><Edit size={22} /> Edit Konten</button></Link>
             <div className="pt-4 border-t border-white/20 mt-4">
               <button onClick={() => setIsLogoutModalOpen(true)} className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-red-600 rounded-xl transition font-bold text-left"><LogOut size={22} /> Keluar</button>
             </div>
