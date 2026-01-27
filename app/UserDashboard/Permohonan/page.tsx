@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   X,
-  MessageSquare
+  MessageSquare,
+  Menu
 } from "lucide-react";
 
 // --- KOMPONEN CUSTOM DROPDOWN ---
@@ -60,7 +61,7 @@ const AdminStyleSelect: React.FC<AdminSelectProps> = ({ label, options, value, o
       </button>
 
       {isOpen && (
-        <div className="absolute z-[100] w-full mt-2 bg-white border border-gray-100 shadow-2xl rounded-[25px] p-2 animate-in fade-in zoom-in duration-200">
+        <div className="absolute z-100 w-full mt-2 bg-white border border-gray-100 shadow-2xl rounded-[25px] p-2 animate-in fade-in zoom-in duration-200">
           {options.map((opt) => (
             <button
               key={opt}
@@ -82,11 +83,12 @@ const AdminStyleSelect: React.FC<AdminSelectProps> = ({ label, options, value, o
     </div>
   );
 };
-
 export default function PermohonanPage() {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   const [formData, setFormData] = useState({
     jenisPendaftaran: "",
@@ -147,37 +149,105 @@ export default function PermohonanPage() {
     handleReset();
   };
 
+ // 1. Efek untuk menangani mounting dan membaca localStorage (Cegah Hydration Error)
+  useEffect(() => {
+    setMounted(true);
+    const saved = localStorage.getItem("sidebarStatus");
+    if (saved !== null) {
+      setIsSidebarOpen(JSON.parse(saved));
+    }
+  }, []);
+
+  // 2. Simpan status sidebar setiap kali berubah
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem("sidebarStatus", JSON.stringify(isSidebarOpen));
+    }
+  }, [isSidebarOpen, mounted]);
+
+  // Helper untuk Sidebar Item
+  const SidebarItem = ({ href, icon: Icon, label, active = false }: any) => (
+    <Link href={href} className="block group relative">
+      <button 
+        className={`flex items-center w-full py-3.5 transition-all rounded-xl font-bold whitespace-nowrap
+        ${active ? "bg-[#56b35a] shadow-lg text-white" : "text-white hover:bg-white/10"} 
+        ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}
+      >
+        <Icon size={22} className="shrink-0" /> 
+        {isSidebarOpen && <span>{label}</span>}
+      </button>
+
+      {/* TOOLTIP: Muncul saat sidebar tertutup */}
+      {!isSidebarOpen && (
+        <div className="absolute left-full ml-4 px-3 py-2 bg-[#1a1a1a] text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl border border-white/10 top-1/2 -translate-y-1/2 whitespace-nowrap">
+          {label}
+          <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-[#1a1a1a] rotate-45"></div>
+        </div>
+      )}
+    </Link>
+  );
+
+  // Jangan render apapun sebelum mounted untuk menghindari mismatch HTML server vs client
+  if (!mounted) return null;
+
   return (
     <div className="flex flex-col h-screen bg-[#f5f5f5] font-sans overflow-hidden relative">
       
       {/* --- HEADER --- */}
-      <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Logo" className="h-10" />
-          <div className="text-left">
-            <h1 className="font-bold text-lg leading-none">KANTAH Gowa - User</h1>
-            <p className="text-[10px] opacity-70">Sistem Informasi Internal Notaris & PPAT</p>
-          </div>
-        </div>
-        <div className="text-right">
-          <h2 className="text-sm font-bold tracking-tight">Nurul Karimah</h2>
-          <p className="text-[10px] opacity-70">nkarimah421@gmail.com</p>
-        </div>
-      </header>
+      <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
+                    <div className="flex items-center">
+                      {/* Container Tombol Toggle - Dikunci lebarnya (w-12) agar sejajar dengan ikon sidebar */}
+                      <div className="w-12 flex justify-start items-center">
+                        <button 
+                          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                        >
+                          <Menu size={24} />
+                        </button>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 ml-4">
+                        <img src="/logo.png" alt="Logo" className="h-10 w-auto shrink-0" />
+                        <div className="flex flex-col min-w-max">
+                          <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - User</h1>
+                          <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right hidden sm:block">
+                    <h2 className="text-sm font-bold tracking-tight">Nurul Karimah</h2>
+                    <p className="text-[10px] opacity-70">nkarimah421@gmail.com</p>
+                    </div>
+                  </header>
 
       <div className="flex flex-1 overflow-hidden">
         {/* --- SIDEBAR --- */}
-        <aside className="w-72 bg-[#7c4d2d] text-white flex flex-col shadow-xl">
-          <nav className="flex-1 px-4 py-8 space-y-2">
-            <Link href="/UserDashboard"><button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl transition text-left font-bold"><LayoutDashboard size={22} /> Beranda</button></Link>
-            <Link href="/UserDashboard/Permohonan"><button className="flex items-center gap-3 w-full px-5 py-3.5 bg-[#56b35a] rounded-xl font-bold shadow-lg text-left transition"><FileEdit size={22} /> Permohonan</button></Link>
-            <Link href="/UserDashboard/Riwayat"><button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl transition text-left font-bold"><History size={22} /> Riwayat</button></Link>
-            <Link href="/UserDashboard/Notifikasi"><button className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-white/10 rounded-xl transition text-left font-bold"><Bell size={22} /> Notifikasi</button></Link>
-            <div className="pt-4 border-t border-white/20 mt-4">
-              <button onClick={() => setIsLogoutModalOpen(true)} className="flex items-center gap-3 w-full px-5 py-3.5 hover:bg-red-600 rounded-xl transition text-left font-bold"><LogOut size={22} /> Keluar</button>
-            </div>
-          </nav>
-        </aside>
+        <aside className={`${isSidebarOpen ? "w-72" : "w-20"} bg-[#7c4d2d] text-white flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out relative`}>
+                         <nav className="flex-1 px-3 py-8 space-y-4">
+                           <SidebarItem href="/UserDashboard" icon={LayoutDashboard} label="Beranda" />
+                           <SidebarItem href="/UserDashboard/Permohonan" icon={FileEdit} label="Permohonan" active={true} />
+                           <SidebarItem href="/UserDashboard/Riwayat" icon={History} label="Riwayat" />
+                           <SidebarItem href="/UserDashboard/Notifikasi" icon={Bell} label="Notifikasi" />
+               
+                           {/* Tombol Keluar */}
+                           <div className="pt-4 mt-4 border-t border-white/20">
+                              <button 
+                               onClick={() => setIsLogoutModalOpen(true)}
+                               className={`group relative flex items-center w-full py-3.5 hover:bg-red-600 rounded-xl font-bold transition-all whitespace-nowrap ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}
+                              >
+                               <LogOut size={22} className="shrink-0 text-white" /> 
+                               {isSidebarOpen && <span className="text-white">Keluar</span>}
+                               
+                               {!isSidebarOpen && (
+                                 <div className="absolute left-full ml-4 px-3 py-2 bg-red-600 text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl top-1/2 -translate-y-1/2 whitespace-nowrap">
+                                   Keluar
+                                   <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-red-600 rotate-45"></div>
+                                 </div>
+                               )}
+                             </button>
+                           </div>
+                         </nav>
+                       </aside>
 
         <main className="flex-1 overflow-y-auto bg-[#f8f9fa] flex flex-col relative">
           <div className="p-10 flex-1">
