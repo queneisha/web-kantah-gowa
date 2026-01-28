@@ -117,15 +117,18 @@ export default function RiwayatPage() {
           {/* Konten Utama */}
           <div className="p-10 flex-1">
             <div className="max-w-[1400px] mx-auto">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
-                <div>
-                  <h2 className="text-3xl font-black text-gray-900">Riwayat Permohonan</h2>
-                  <p className="text-gray-500 font-medium">Menampilkan {filteredData.length} data laporan</p>
-                </div>
-                <button onClick={() => setIsExportModalOpen(true)} className="flex items-center gap-2 bg-[#56b35a] hover:bg-[#469e4a] text-white px-6 py-3 rounded-xl font-bold transition shadow-md">
-                  <Download size={20} /> Export Laporan
-                </button>
-              </div>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 pb-4 border-b-2 border-gray-200 gap-4">
+      <div>
+        <h2 className="text-3xl font-black text-gray-900">Riwayat Permohonan</h2>
+        <p className="text-gray-500 font-medium">Menampilkan {filteredData.length} data laporan</p>
+      </div>
+      <button 
+        onClick={() => setIsExportModalOpen(true)} 
+        className="flex items-center gap-2 bg-[#56b35a] hover:bg-[#469e4a] text-white px-6 py-3 rounded-xl font-bold transition shadow-md"
+      >
+        <Download size={20} /> Export Laporan
+      </button>
+    </div>
 
               {/* SEARCH & FILTER */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -270,7 +273,7 @@ export default function RiwayatPage() {
             <div className="flex justify-end gap-3 mt-10">
               <button 
                 onClick={() => setIsLogoutModalOpen(false)}
-                className="px-8 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition"
+                className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold hover:bg-gray-50 transition"
               >
             Batal
               </button>

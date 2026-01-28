@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function RegisterPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedJabatan, setSelectedJabatan] = useState("Notaris/PPAT");
-  const opsiJabatan = ["Notaris/PPAT", "Sekertaris Notaris/PPAT", "Anggota ATR BPN"];
+  const opsiJabatan = ["Notaris/PPAT", "Sekretaris Notaris/PPAT", "Anggota ATR BPN"];
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -25,11 +25,14 @@ export default function RegisterPage() {
       return;
     }
 
+    // --- LOGIKA PAYLOAD TERINTEGRASI ---
     const payload = {
       nama_lengkap: formData.get("nama_lengkap"),
       jabatan: selectedJabatan,
-      // Mengambil nilai input nama_notaris jika jabatan adalah Sekertaris
-      nama_notaris: selectedJabatan === "Sekertaris Notaris/PPAT" ? formData.get("nama_notaris") : null,
+      // Memastikan nama_notaris dikirim hanya jika jabatan sesuai, menggunakan trim() untuk akurasi
+      nama_notaris: selectedJabatan.trim() === "Sekretaris Notaris/PPAT" 
+        ? formData.get("nama_notaris") 
+        : null,
       email: formData.get("email"),
       nomor_hp: formData.get("nomor_hp"),
       password: formData.get("password"),
@@ -143,14 +146,14 @@ export default function RegisterPage() {
                   </div>
 
                   {/* INPUT DINAMIS: Nama Notaris (Otomatis Muncul) */}
-                  {selectedJabatan === "Sekertaris Notaris/PPAT" && (
+                  {selectedJabatan === "Sekretaris Notaris/PPAT" && (
                     <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <label className="text-[10px] font-bold text-[#7c4d2d] mb-1 block ml-1">Nama Notaris/PPAT (Atasan)</label>
+                      <label className="text-[10px] font-bold text-[#7c4d2d] mb-1 block ml-1">Nama Notaris/PPAT </label>
                       <input 
                         type="text" 
                         name="nama_notaris"
                         required 
-                        placeholder="Masukkan Nama Notaris Atasan Anda" 
+                        placeholder="Masukkan Nama Notaris/PPAT Atasan Anda" 
                         className="w-full px-5 py-2.5 bg-white rounded-full border-2 border-[#7c4d2d]/50 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium text-xs transition-all" 
                       />
                     </div>

@@ -203,16 +203,16 @@ export default function DataPermohonanPage() {
 
         <main className="flex-1 overflow-y-auto bg-[#f8f9fa] flex flex-col justify-between">
           <div className="p-10">
-            <div className="max-w-350 mx-auto text-left">
+            <div className="mx-auto text-left">
               <h3 className="text-3xl font-black text-gray-900 ">Manajemen Permohonan</h3>
-              <p className="text-gray-500 font-medium mb-8">Kelola dan verifikasi permohonan</p>
+              <p className="text-gray-500 border-b-2 border-gray-200 pb-4 font-medium mb-8">Kelola dan verifikasi permohonan</p>
 
               <div className="relative max-w-md mb-8 group">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#7c4d2d] transition-colors" size={20} />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-700 group-focus-within:text-[#7c4d2d] transition-colors" size={20} />
               <input 
                 type="text" 
                 placeholder="Cari nama, email, atau no. sertifikat..." 
-                className="w-full pl-14 pr-12 py-3.5 bg-white border-2 border-transparent focus:border-[#7c4d2d] rounded-full outline-none font-bold shadow-md transition-all text-gray-700"
+                className="w-full pl-12 pr-12 py-4 text-gray-800 bg-white border-2 border-gray-100 shadow-sm focus:border-[#56b35a] rounded-2xl outline-none font-semibold transition"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -387,7 +387,7 @@ export default function DataPermohonanPage() {
             <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
             <p className="text-gray-500 font-medium mt-2">Anda perlu login kembali untuk mengakses sistem.</p>
             <div className="flex justify-end gap-3 mt-10">
-              <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-200 font-bold">Batal</button>
+              <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 text-gray-600 border-gray-600 font-bold">Batal</button>
               <Link href="/"><button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold shadow-lg shadow-red-200">Ya, Keluar</button></Link>
             </div>
           </div>

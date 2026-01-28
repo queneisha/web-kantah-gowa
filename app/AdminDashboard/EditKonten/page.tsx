@@ -213,7 +213,7 @@ export default function EditKontenPage() {
           <div className="p-10">
             <div className="max-w-350 mx-auto">
               <h3 className="text-3xl font-black text-gray-900">Edit Konten Website</h3>
-              <p className="text-gray-500 font-medium mb-8">Kelola informasi yang tampil di halaman depan Website</p>
+              <p className="border-b-2 border-gray-200 pb-4 text-gray-500 font-medium mb-8">Kelola informasi yang tampil di halaman depan Website</p>
               {isSaved && (
                 <div className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-[12px] font-bold animate-pulse flex items-center gap-2">
                   <Save size={14} /> Perubahan Disimpan
@@ -857,7 +857,7 @@ export default function EditKontenPage() {
             <div className="flex justify-end gap-3 mt-10">
               <button 
                 onClick={() => setIsLogoutModalOpen(false)}
-                className="px-8 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition"
+                className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold hover:bg-gray-50 transition"
               >
                 Batal
               </button>

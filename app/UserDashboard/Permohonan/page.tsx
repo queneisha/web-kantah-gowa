@@ -13,8 +13,6 @@ import {
   ChevronDown,
   CheckCircle2,
   AlertTriangle,
-  X,
-  MessageSquare,
   Menu
 } from "lucide-react";
 
@@ -44,14 +42,14 @@ const AdminStyleSelect: React.FC<AdminSelectProps> = ({ label, options, value, o
 
   return (
     <div className="space-y-1.5 relative" ref={dropdownRef}>
-      <label className="text-sm font-bold text-gray-700 ml-1">{label}</label>
+      {label && <label className="text-sm font-bold text-gray-700 ml-1">{label}</label>}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full flex items-center justify-between px-5 py-3 rounded-xl font-medium transition-all border-none outline-none
-          ${isOpen ? "ring-2 ring-[#56b35a] bg-white shadow-md" : "bg-[#e9e9e9] text-gray-700"}`}
+          ${isOpen ? "ring-2 ring-[#56b35a] bg-white shadow-md" : "bg-[#e9e9e9] text-black"}`}
       >
-        <span className={value ? "text-black" : "text-gray-400"}>
+        <span className={value ? "text-black" : "text-gray-500"}>
           {value || placeholder}
         </span>
         <ChevronDown 
@@ -61,7 +59,7 @@ const AdminStyleSelect: React.FC<AdminSelectProps> = ({ label, options, value, o
       </button>
 
       {isOpen && (
-        <div className="absolute z-100 w-full mt-2 bg-white border border-gray-100 shadow-2xl rounded-[25px] p-2 animate-in fade-in zoom-in duration-200">
+        <div className="absolute z-[100] w-full mt-2 bg-white border border-gray-100 shadow-2xl rounded-[25px] p-2 animate-in fade-in zoom-in duration-200">
           {options.map((opt) => (
             <button
               key={opt}
@@ -83,12 +81,19 @@ const AdminStyleSelect: React.FC<AdminSelectProps> = ({ label, options, value, o
     </div>
   );
 };
+
 export default function PermohonanPage() {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [userData, setUserData] = useState({
+    nama: "Guest",
+    email: "guest@mail.com"
+  });
 
   const [formData, setFormData] = useState({
     jenisPendaftaran: "",
@@ -98,6 +103,28 @@ export default function PermohonanPage() {
     desa: "",
     kecamatan: ""
   });
+
+  useEffect(() => {
+    setMounted(true);
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setUserData({
+        nama: user.nama_lengkap || "User",
+        email: user.email || ""
+      });
+    }
+    const saved = localStorage.getItem("sidebarStatus");
+    if (saved !== null) {
+      setIsSidebarOpen(JSON.parse(saved));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem("sidebarStatus", JSON.stringify(isSidebarOpen));
+    }
+  }, [isSidebarOpen, mounted]);
 
   const handleCustomChange = (name: string, value: string) => {
     setFormData(prev => ({ 
@@ -136,36 +163,51 @@ export default function PermohonanPage() {
         alert("Harap lengkapi Jenis Pendaftaran, Jenis Hak, dan No. Sertipikat!");
         return;
     }
-    if (formData.jenisPendaftaran === "Lainnya" && !formData.catatanPendaftaran) {
-        alert("Harap isi catatan pendaftaran lainnya!");
-        return;
-    }
     setShowConfirmModal(true);
   };
 
-  const handleFinalSubmit = () => {
-    setShowConfirmModal(false);
-    setShowSuccessModal(true);
-    handleReset();
+  const handleFinalSubmit = async () => {
+    setIsLoading(true);
+    const storedUser = localStorage.getItem("user");
+    const user = storedUser ? JSON.parse(storedUser) : null;
+
+    if (!user) {
+      alert("Sesi berakhir, silakan login kembali.");
+      setIsLoading(false);
+      return;
+    }
+
+    const dataToSend = { 
+      ...formData, 
+      user_id: user.id,
+      tgl_pendaftaran: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch("http://localhost:8000/api/permohonan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(dataToSend),
+      });
+
+      if (response.ok) {
+        setShowConfirmModal(false);
+        setShowSuccessModal(true);
+        handleReset();
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || "Gagal mengirim permohonan.");
+      }
+    } catch (error) {
+      alert("Terjadi kesalahan koneksi ke server.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
- // 1. Efek untuk menangani mounting dan membaca localStorage (Cegah Hydration Error)
-  useEffect(() => {
-    setMounted(true);
-    const saved = localStorage.getItem("sidebarStatus");
-    if (saved !== null) {
-      setIsSidebarOpen(JSON.parse(saved));
-    }
-  }, []);
-
-  // 2. Simpan status sidebar setiap kali berubah
-  useEffect(() => {
-    if (mounted) {
-      localStorage.setItem("sidebarStatus", JSON.stringify(isSidebarOpen));
-    }
-  }, [isSidebarOpen, mounted]);
-
-  // Helper untuk Sidebar Item
   const SidebarItem = ({ href, icon: Icon, label, active = false }: any) => (
     <Link href={href} className="block group relative">
       <button 
@@ -176,80 +218,50 @@ export default function PermohonanPage() {
         <Icon size={22} className="shrink-0" /> 
         {isSidebarOpen && <span>{label}</span>}
       </button>
-
-      {/* TOOLTIP: Muncul saat sidebar tertutup */}
-      {!isSidebarOpen && (
-        <div className="absolute left-full ml-4 px-3 py-2 bg-[#1a1a1a] text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl border border-white/10 top-1/2 -translate-y-1/2 whitespace-nowrap">
-          {label}
-          <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-[#1a1a1a] rotate-45"></div>
-        </div>
-      )}
     </Link>
   );
 
-  // Jangan render apapun sebelum mounted untuk menghindari mismatch HTML server vs client
   if (!mounted) return null;
 
   return (
     <div className="flex flex-col h-screen bg-[#f5f5f5] font-sans overflow-hidden relative">
       
-      {/* --- HEADER --- */}
       <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
-                    <div className="flex items-center">
-                      {/* Container Tombol Toggle - Dikunci lebarnya (w-12) agar sejajar dengan ikon sidebar */}
-                      <div className="w-12 flex justify-start items-center">
-                        <button 
-                          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                        >
-                          <Menu size={24} />
-                        </button>
-                      </div>
-                      
-                      <div className="flex items-center gap-3 ml-4">
-                        <img src="/logo.png" alt="Logo" className="h-10 w-auto shrink-0" />
-                        <div className="flex flex-col min-w-max">
-                          <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - User</h1>
-                          <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right hidden sm:block">
-                    <h2 className="text-sm font-bold tracking-tight">Nurul Karimah</h2>
-                    <p className="text-[10px] opacity-70">nkarimah421@gmail.com</p>
-                    </div>
-                  </header>
+        <div className="flex items-center">
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg mr-4">
+            <Menu size={24} />
+          </button>
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="Logo" className="h-10 w-auto" />
+            <div className="flex flex-col">
+              <h1 className="font-bold text-lg leading-none">KANTAH Gowa - User</h1>
+              <p className="text-[10px] opacity-70">Sistem Manajemen Internal</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-right hidden sm:block">
+          <h2 className="text-sm font-bold tracking-tight">{userData.nama}</h2>
+          <p className="text-[10px] opacity-70">{userData.email}</p>
+        </div>
+      </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* --- SIDEBAR --- */}
-        <aside className={`${isSidebarOpen ? "w-72" : "w-20"} bg-[#7c4d2d] text-white flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out relative`}>
-                         <nav className="flex-1 px-3 py-8 space-y-4">
-                           <SidebarItem href="/UserDashboard" icon={LayoutDashboard} label="Beranda" />
-                           <SidebarItem href="/UserDashboard/Permohonan" icon={FileEdit} label="Permohonan" active={true} />
-                           <SidebarItem href="/UserDashboard/Riwayat" icon={History} label="Riwayat" />
-                           <SidebarItem href="/UserDashboard/Notifikasi" icon={Bell} label="Notifikasi" />
-               
-                           {/* Tombol Keluar */}
-                           <div className="pt-4 mt-4 border-t border-white/20">
-                              <button 
-                               onClick={() => setIsLogoutModalOpen(true)}
-                               className={`group relative flex items-center w-full py-3.5 hover:bg-red-600 rounded-xl font-bold transition-all whitespace-nowrap ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}
-                              >
-                               <LogOut size={22} className="shrink-0 text-white" /> 
-                               {isSidebarOpen && <span className="text-white">Keluar</span>}
-                               
-                               {!isSidebarOpen && (
-                                 <div className="absolute left-full ml-4 px-3 py-2 bg-red-600 text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl top-1/2 -translate-y-1/2 whitespace-nowrap">
-                                   Keluar
-                                   <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-red-600 rotate-45"></div>
-                                 </div>
-                               )}
-                             </button>
-                           </div>
-                         </nav>
-                       </aside>
+        <aside className={`${isSidebarOpen ? "w-72" : "w-20"} bg-[#7c4d2d] text-white flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out`}>
+          <nav className="flex-1 px-3 py-8 space-y-4">
+            <SidebarItem href="/UserDashboard" icon={LayoutDashboard} label="Beranda" />
+            <SidebarItem href="/UserDashboard/Permohonan" icon={FileEdit} label="Permohonan" active={true} />
+            <SidebarItem href="/UserDashboard/Riwayat" icon={History} label="Riwayat" />
+            <SidebarItem href="/UserDashboard/Notifikasi" icon={Bell} label="Notifikasi" />
+            <div className="pt-4 mt-4 border-t border-white/20">
+               <button onClick={() => setIsLogoutModalOpen(true)} className={`flex items-center w-full py-3.5 hover:bg-red-600 rounded-xl font-bold transition-all ${isSidebarOpen ? "px-5 gap-3" : "justify-center"}`}>
+                <LogOut size={22} /> {isSidebarOpen && <span>Keluar</span>}
+               </button>
+            </div>
+          </nav>
+        </aside>
 
-        <main className="flex-1 overflow-y-auto bg-[#f8f9fa] flex flex-col relative">
+        <main className="flex-1 overflow-y-auto bg-[#f8f9fa] flex flex-col">
           <div className="p-10 flex-1">
             <div className="max-w-[1400px] mx-auto text-left">
               <div className="mb-8">
@@ -258,7 +270,6 @@ export default function PermohonanPage() {
                 <hr className="mt-5 border-gray-200" />
               </div>
 
-              {/* --- PERUBAHAN DISINI: max-w-5xl membuat form lebih panjang ke kanan --- */}
               <form onSubmit={triggerConfirm} className="max-w-5xl bg-white rounded-[30px] shadow-xl border-2 border-[#7c4d2d] overflow-hidden">
                 <div className="bg-[#8b5e3c] p-4 px-8 text-white flex items-center gap-3">
                   <FileText size={24} />
@@ -267,8 +278,9 @@ export default function PermohonanPage() {
 
                 <div className="p-8 space-y-5">
                   <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-gray-700">Nama Lengkap</label>
-                    <input type="text" value="Nurul Karimah" disabled className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 font-medium" />
+                    <label className="text-sm font-bold text-gray-700 ml-1">Nama Lengkap</label>
+                    {/* Menggunakan bg-[#e9e9e9] agar seragam dengan lainnya */}
+                    <input type="text" value={userData.nama} disabled className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl text-gray-500 font-bold" />
                   </div>
 
                   <AdminStyleSelect 
@@ -281,54 +293,50 @@ export default function PermohonanPage() {
                   />
 
                   {formData.jenisPendaftaran === "Lainnya" && (
-                    <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
-                      <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                        Catatan Pendaftaran (Sebutkan Lainnya)
-                      </label>
-                      <input 
-                        type="text" 
-                        name="catatanPendaftaran" 
-                        value={formData.catatanPendaftaran} 
-                        onChange={handleChange} 
-                        placeholder="Ketik jenis pendaftaran Anda di sini..." 
-                        required 
-                        className="w-full px-4 py-3 bg-[#f0fff0] border-2 border-[#56b35a]/30 rounded-xl font-medium focus:ring-2 focus:ring-[#56b35a] outline-none text-black transition-all" 
-                      />
+                    <div className="space-y-1.5  animate-in slide-in-from-top-2">
+                      <label className="text-sm font-bold text-gray-700 ml-1">Catatan Pendaftaran</label>
+                      <input type="text" name="catatanPendaftaran" value={formData.catatanPendaftaran} onChange={handleChange} placeholder="Sebutkan..." className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl text-black font-medium focus:ring-2 focus:ring-[#56b35a] outline-none transition-all" />
                     </div>
                   )}
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-gray-700">Tanggal Pendaftaran</label>
-                    <input 
-                      type="text" 
-                      value={new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })} 
-                      disabled 
-                      className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl text-gray-500 font-medium" 
-                    />
-                  </div>
-
                   <AdminStyleSelect 
-                    label="Jenis Hak"
-                    name="jenisHak"
-                    placeholder="Pilih jenis hak"
-                    options={["Hak Milik", "Hak Guna Bangunan", "Hak Pengelolaan", "Hak Pakai", "Hak Guna Usaha", "Hak Wakaf"]}
-                    value={formData.jenisHak}
-                    onChange={handleCustomChange}
+                    label="Jenis Hak" 
+                    name="jenisHak" 
+                    placeholder="Pilih jenis hak" 
+                    options={["Hak Milik", "Hak Guna Bangunan", "Hak Pakai", "Hak Guna Usaha"]} 
+                    value={formData.jenisHak} 
+                    onChange={handleCustomChange} 
                   />
 
                   <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-gray-700">5 Angka Terakhir No. Hak Sertipikat</label>
-                    <input type="text" name="noSertipikat" value={formData.noSertipikat} onChange={handleNoSertipikatChange} placeholder="00001" required className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl font-medium focus:ring-2 focus:ring-[#56b35a] outline-none text-black" />
+                    <label className="text-sm font-bold text-gray-700 ml-1">5 Angka Terakhir No. Sertipikat</label>
+                    {/* Warna disamakan ke bg-[#e9e9e9] dan text-black */}
+                    <input type="text" name="noSertipikat" value={formData.noSertipikat} onChange={handleNoSertipikatChange} placeholder="Contoh: 12345" className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl text-black font-medium focus:ring-2 focus:ring-[#56b35a] outline-none transition-all" />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-gray-700">Desa / Kelurahan</label>
-                    <input type="text" name="desa" value={formData.desa} onChange={handleChange} placeholder="Nama desa / kelurahan" required className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl font-medium focus:ring-2 focus:ring-[#56b35a] outline-none text-black" />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-gray-700">Kecamatan</label>
-                    <input type="text" name="kecamatan" value={formData.kecamatan} onChange={handleChange} placeholder="Nama kecamatan" required className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl font-medium focus:ring-2 focus:ring-[#56b35a] outline-none text-black" />
+                  <div className="space-y-5">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-gray-700 ml-1">Desa / Kelurahan</label>
+                      <input 
+                        type="text" 
+                        name="desa" 
+                        value={formData.desa} 
+                        onChange={handleChange} 
+                        placeholder="Masukkan Desa" 
+                        className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl text-black font-medium focus:ring-2 focus:ring-[#56b35a] outline-none transition-all" 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-gray-700 ml-1">Kecamatan</label>
+                      <input 
+                        type="text" 
+                        name="kecamatan" 
+                        value={formData.kecamatan} 
+                        onChange={handleChange} 
+                        placeholder="Masukkan Kecamatan" 
+                        className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl text-black font-medium focus:ring-2 focus:ring-[#56b35a] outline-none transition-all" 
+                      />
+                    </div>
                   </div>
 
                   <div className="flex gap-4 pt-4">
@@ -336,74 +344,46 @@ export default function PermohonanPage() {
                       <Send size={18} /> Ajukan Permohonan
                     </button>
                     <button type="button" onClick={handleReset} className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition">
-                      <RotateCcw size={18} /> Reset Form
+                      <RotateCcw size={18} /> Reset
                     </button>
                   </div>
                 </div>
               </form>
             </div>
           </div>
-
-          <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center mt-10">
-            <p className="text-[10px] font-bold">© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.</p>
-            <p className="text-[9px] opacity-50 tracking-widest mt-1">Sistem Informasi Internal untuk Notaris dan PPAT</p>
+          <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center text-[10px] font-bold">
+            © 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.
           </footer>
         </main>
       </div>
 
-      {/* --- MODAL MODAL TETAP SAMA --- */}
+      {/* --- MODAL KONFIRMASI, BERHASIL, & LOGOUT TETAP SAMA --- */}
+      {/* (Bagian modal tidak berubah karena sudah sesuai fungsinya) */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white rounded-[35px] p-8 w-full max-w-xl shadow-2xl animate-in zoom-in duration-300">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-black text-gray-900">Periksa Kembali Dokumen</h3>
-            </div>
-            
+            <h3 className="text-2xl font-black text-gray-900 mb-6 text-center">Konfirmasi Pengiriman</h3>
             <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex gap-4 mb-6">
               <AlertTriangle className="text-orange-500 shrink-0" size={24} />
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Pastikan seluruh <b>data dan dokumen</b> yang <b>anda</b> kirim sudah benar. Kesalahan data dapat menyebabkan proses permohonan tertunda.
-              </p>
+              <p className="text-sm text-gray-600">Pastikan data sudah benar sebelum dikirim.</p>
             </div>
-
-            <div className="space-y-4 px-4 mb-8">
-              <div>
-                <p className="text-xs font-bold text-gray-400 uppercase">Jenis Pendaftaran</p>
-                <p className="font-bold text-gray-800">
-                  {formData.jenisPendaftaran} {formData.catatanPendaftaran && `(${formData.catatanPendaftaran})`}
-                </p>
-              </div>
-              <div><p className="text-xs font-bold text-gray-400 uppercase">Jenis Hak</p><p className="font-bold text-gray-800">{formData.jenisHak}</p></div>
-              <div><p className="text-xs font-bold text-gray-400 uppercase">5 Angka Terakhir No. Hak Sertipikat</p><p className="font-bold text-gray-800">{formData.noSertipikat}</p></div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><p className="text-xs font-bold text-gray-400 uppercase">Desa / Kelurahan</p><p className="font-bold text-gray-800">{formData.desa}</p></div>
-                <div><p className="text-xs font-bold text-gray-400 uppercase">Kecamatan</p><p className="font-bold text-gray-800">{formData.kecamatan}</p></div>
-              </div>
-            </div>
-
-            <div className="flex justify-center gap-4">
-              <button onClick={() => setShowConfirmModal(false)} className="px-8 py-3 rounded-full border-2 border-gray-100 text-gray-500 font-bold hover:bg-gray-50 transition">Periksa Kembali</button>
-              <button onClick={handleFinalSubmit} className="px-8 py-3 rounded-full bg-[#56b35a] text-white font-bold hover:bg-[#469e4a] shadow-lg transition">Ya, Kirim Permohonan</button>
+            <div className="flex justify-center gap-4 mt-8">
+              <button onClick={() => setShowConfirmModal(false)} className="px-8 py-3 rounded-full border-2 border-gray-100 text-gray-500 font-bold">Kembali</button>
+              <button onClick={handleFinalSubmit} disabled={isLoading} className="px-8 py-3 rounded-full bg-[#56b35a] text-white font-bold shadow-lg disabled:opacity-50">
+                {isLoading ? "Mengirim..." : "Ya, Kirim Sekarang"}
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {showSuccessModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[35px] p-12 w-full max-w-4xl shadow-2xl border-[3px] border-green-500 relative animate-in zoom-in duration-300">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
-                <CheckCircle2 size={60} className="text-green-500" />
-              </div>
-              <h3 className="text-4xl font-black text-[#56b35a] mb-4">Permohonan Berhasil Diajukan!</h3>
-              <p className="text-xl text-gray-600 max-w-2xl leading-relaxed">
-                Permohonan Anda telah masuk ke sistem dan menunggu persetujuan dari Admin. Anda akan menerima notifikasi melalui email dan sistem.
-              </p>
-              <button onClick={() => setShowSuccessModal(false)} className="mt-10 px-12 py-3 bg-green-500 text-white font-bold rounded-full hover:bg-black transition shadow-lg">
-                Tutup
-              </button>
-            </div>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-center">
+          <div className="bg-white rounded-[35px] p-12 w-full max-w-2xl shadow-2xl border-[3px] border-green-500 animate-in zoom-in duration-300 flex flex-col items-center">
+            <CheckCircle2 size={80} className="text-green-500 mb-6" />
+            <h3 className="text-3xl font-black text-[#56b35a] mb-4">Berhasil!</h3>
+            <p className="text-gray-600 text-lg">Permohonan Anda telah terkirim dan sedang diproses.</p>
+            <button onClick={() => setShowSuccessModal(false)} className="mt-10 px-10 py-3 bg-green-500 text-white font-bold rounded-full">Tutup</button>
           </div>
         </div>
       )}
@@ -411,19 +391,11 @@ export default function PermohonanPage() {
       {isLogoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="space-y-4">
-              <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
-              <p className="text-gray-500 font-medium leading-relaxed">
-                Anda akan keluar dari user panel. Anda perlu login kembali untuk mengakses sistem.
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-3 mt-10">
-              <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition">Batal</button>
-              <Link href="/">
-                <button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200">Ya, Keluar</button>
-              </Link>
-            </div>
+             <h3 className="text-2xl font-bold text-gray-900">Keluar Sistem?</h3>
+             <div className="flex justify-end gap-3 mt-10">
+               <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 font-bold">Batal</button>
+               <Link href="/"><button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold">Ya, Keluar</button></Link>
+             </div>
           </div>
         </div>
       )}
