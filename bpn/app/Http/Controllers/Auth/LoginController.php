@@ -11,6 +11,7 @@ class LoginController extends Controller
 {
     public function login(Request $request)
     {
+        // Hapus 'status' dari validasi karena status ada di DB, bukan dikirim user
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -18,10 +19,10 @@ class LoginController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        // 1. Logika Akun Tidak Ditemukan (Ditolak Admin)
+        // 1. Cek Akun
         if (!$user) {
             return response()->json([
-                'message' => 'Akun Anda telah ditolak oleh Admin KANTAH Gowa.'
+                'message' => 'Akun tidak ditemukan.'
             ], 401);
         }
 
@@ -32,8 +33,8 @@ class LoginController extends Controller
             ], 401);
         }
 
-        // 3. Cek Status Aktif (Menunggu Persetujuan)
-        if ($user->status !== 'Aktif') {
+        // 3. Cek Status (Gunakan strtolower agar tidak sensitif huruf besar/kecil)
+        if (strtolower($user->status) !== 'aktif') {
             return response()->json([
                 'message' => 'Akun Anda belum aktif. Silakan tunggu persetujuan Admin KANTAH Gowa.'
             ], 403);
@@ -42,7 +43,9 @@ class LoginController extends Controller
         // 4. Sukses Login
         return response()->json([
             'message' => 'Login Berhasil',
-            'user' => $user
+            'user' => $user,
+            // Pastikan Anda mengirim token jika menggunakan Sanctum/JWT
+            'token' => 'dummy-token-atau-generate-token-disini' 
         ], 200);
     }
 }

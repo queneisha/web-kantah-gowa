@@ -96,7 +96,7 @@ export default function DataUserPage() {
     }
   };
 
-  const confirmApprove = async () => {
+ const confirmApprove = async () => {
     if (selectedUser) {
       try {
         const response = await fetch(`http://localhost:8000/api/approve-user/${selectedUser.id}`, {
@@ -105,7 +105,10 @@ export default function DataUserPage() {
         });
 
         if (response.ok) {
-          setUsers(users.map(u => u.id === selectedUser.id ? { ...u, status: "Aktif" } : u));
+          // KUNCI PERBAIKAN: Gunakan status yang seragam (misal "aktif" kecil) 
+          // atau pastikan sama dengan yang dicek di LoginPage.
+          setUsers(users.map(u => u.id === selectedUser.id ? { ...u, status: "aktif" } : u));
+          
           setIsApproveModalOpen(false);
           alert("User berhasil disetujui!");
         }
@@ -116,28 +119,43 @@ export default function DataUserPage() {
   };
 
   const confirmReject = async () => {
-    if (selectedUser) {
-      try {
-        const response = await fetch(`http://localhost:8000/api/admin/users/${selectedUser.id}/reject`, {
-          method: 'DELETE'
-        });
-
-        if (response.ok) {
-          setUsers(users.filter(u => u.id !== selectedUser.id));
-          setIsRejectModalOpen(false);
-          setSelectedUser(null);
-          alert("User berhasil ditolak/dihapus.");
+  if (selectedUser) {
+    try {
+      // PERHATIKAN URL DI BAWAH INI: Tambahkan 'admin' dan 'reject'
+      const response = await fetch(`http://localhost:8000/api/admin/users/${selectedUser.id}/reject`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
         }
-      } catch (error) {
-        alert("Gagal menghapus user.");
-      }
-    }
-  };
+      });
 
-  const filteredUsers = users.filter((user) => {
-    const matchesFilter = selectedFilter === "Semua Status" || user.status === selectedFilter;
-    const matchesSearch = user.nama.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      if (response.ok) {
+        setUsers(users.filter(u => u.id !== selectedUser.id));
+        setIsRejectModalOpen(false);
+        setSelectedUser(null);
+        alert("User berhasil dihapus.");
+      } else {
+        const errorData = await response.json();
+        alert(`Gagal menghapus: ${errorData.message}`);
+      }
+    } catch (error) {
+      alert("Terjadi kesalahan koneksi ke server.");
+    }
+  }
+};
+
+ const filteredUsers = users.filter((user) => {
+    // Normalisasi status ke huruf kecil untuk perbandingan filter
+    const userStatus = user.status?.toLowerCase();
+    const filterStatus = selectedFilter.toLowerCase();
+
+    const matchesFilter = selectedFilter === "Semua Status" || userStatus === filterStatus;
+    
+    const matchesSearch = 
+      user.nama?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      
     return matchesFilter && matchesSearch;
   });
 
@@ -290,7 +308,7 @@ export default function DataUserPage() {
                             <td className="px-6 py-5">
                               <div className="flex justify-center gap-2">
                                 <button onClick={() => handleOpenDetail(user)} className="p-1.5 bg-blue-50 text-blue-600 border-2 border-blue-400 rounded-lg hover:bg-blue-600 hover:text-white transition"><Eye size={16} /></button>
-                                {user.status !== 'Aktif' && (
+                                {user.status !== 'aktif' && (
                                   <button onClick={() => handleOpenApprove(user)} className="p-1.5 bg-green-50 text-green-600 border-2 border-green-400 rounded-lg hover:bg-green-600 hover:text-white transition"><Check size={16} /></button>
                                 )}
                                 <button onClick={() => handleOpenReject(user)} className="p-1.5 bg-red-50 text-red-600 border-2 border-red-400 rounded-lg hover:bg-red-600 hover:text-white transition"><Trash2 size={16} /></button>

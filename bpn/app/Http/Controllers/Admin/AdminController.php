@@ -100,4 +100,22 @@ class AdminController extends Controller
         }
         return response()->json(['message' => 'User not found'], 404);
     }
+
+    public function destroy($id)
+{
+    try {
+        $user = \App\Models\User::findOrFail($id);
+        $user->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User berhasil dihapus.'
+        ], 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Gagal menghapus user: ' . $e->getMessage()
+        ], 500);
+    }
+}
 }

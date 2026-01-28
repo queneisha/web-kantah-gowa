@@ -29,12 +29,20 @@ export default function LoginPage() {
       const result = await response.json();
 
       if (response.ok) {
-        // --- LOGIKA PENYIMPANAN DATA USER ---
-        // Simpan data user dan token agar bisa dipanggil di Beranda
+        // --- VALIDASI STATUS AKUN (DIPERBARUI) ---
+        // Mengambil status, mengubah ke string, menghapus spasi, dan mengubah ke huruf kecil
+        const userStatus = result.user?.status?.toString().trim().toLowerCase();
+
+        if (userStatus !== "aktif") {
+          alert("Akun Anda belum aktif. Silakan tunggu persetujuan Admin KANTAH Gowa.");
+          return; // Berhenti jika status bukan 'aktif'
+        }
+
+        // --- LOGIKA PENYIMPANAN DATA USER (Hanya jika status 'aktif') ---
         localStorage.setItem("user", JSON.stringify(result.user)); 
         localStorage.setItem("token", result.token);
 
-        alert(`Selamat Datang, ${result.user.name || 'User'}!`);
+        alert(`Selamat Datang, ${result.user.nama_lengkap || result.user.name || 'User'}!`);
         
         // Cek Role untuk diarahkan ke Dashboard yang sesuai
         if (result.user?.role === 'admin' || payload.email === 'admin@gmail.com') {
