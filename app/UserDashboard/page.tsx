@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { 
   LayoutDashboard, 
@@ -12,22 +12,33 @@ import {
   Clock,
   XCircle,
   Menu,
+  RefreshCw,
 } from "lucide-react";
 
 export default function UserDashboardPage() {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   // State untuk menyimpan data user dari login
   const [userData, setUserData] = useState<any>(null);
+  
+  // State untuk statistik permohonan
+  const [permohonanStats, setPermohonanStats] = useState({
+    diproses: 0,
+    disetujui: 0,
+    ditolak: 0,
+    total: 0
+  });
 
-  const stats = [
-    { label: "Total Permohonan", value: 0, icon: <FileText size={20} className="text-black" />, borderColor: "border-black", textColor: "text-black" },
-    { label: "Disetujui", value: 0, icon: <CheckCircle size={20} className="text-green-500" />, borderColor: "border-green-500", textColor: "text-green-500" },
+  const [stats, setStats] = useState([
     { label: "Diproses", value: 0, icon: <Clock size={20} className="text-orange-500" />, borderColor: "border-orange-500", textColor: "text-orange-500" },
+    { label: "Disetujui", value: 0, icon: <CheckCircle size={20} className="text-green-500" />, borderColor: "border-green-500", textColor: "text-green-500" },
     { label: "Ditolak", value: 0, icon: <XCircle size={20} className="text-red-500" />, borderColor: "border-red-500", textColor: "text-red-500" },
-  ];
+    { label: "Total Permohonan", value: 0, icon: <FileText size={20} className="text-black" />, borderColor: "border-black", textColor: "text-black" },
+  ]);
 
   useEffect(() => {
     setMounted(true);
@@ -44,6 +55,77 @@ export default function UserDashboardPage() {
       setUserData(JSON.parse(savedUser));
     }
   }, []);
+
+  // 3. Fetch data permohonan dari backend berdasarkan user_id
+  useEffect(() => {
+    if (mounted && userData?.id) {
+      fetchPermohonanStats(userData.id);
+      
+      // Setup interval refetch setiap 5 detik untuk update real-time
+      refreshIntervalRef.current = setInterval(() => {
+        fetchPermohonanStats(userData.id);
+      }, 5000); // 5000ms = 5 detik
+
+      // Cleanup interval saat component unmount
+      return () => {
+        if (refreshIntervalRef.current) {
+          clearInterval(refreshIntervalRef.current);
+        }
+      };
+    }
+  }, [mounted, userData]);
+
+  // Fungsi untuk fetch statistik permohonan user
+  const fetchPermohonanStats = async (userId: string) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/riwayat/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        console.error('Gagal fetch permohonan');
+        return;
+      }
+
+      const data = await response.json();
+      
+      // Hitung statistik berdasarkan status
+      const diproses = data.filter((item: any) => item.status === 'Proses').length;
+      const disetujui = data.filter((item: any) => item.status === 'Disetujui').length;
+      const ditolak = data.filter((item: any) => item.status === 'Ditolak').length;
+      const total = data.length;
+
+      setPermohonanStats({
+        diproses,
+        disetujui,
+        ditolak,
+        total
+      });
+
+      // Update stats array dengan nilai yang baru
+      setStats([
+        { label: "Diproses", value: diproses, icon: <Clock size={20} className="text-orange-500" />, borderColor: "border-orange-500", textColor: "text-orange-500" },
+        { label: "Disetujui", value: disetujui, icon: <CheckCircle size={20} className="text-green-500" />, borderColor: "border-green-500", textColor: "text-green-500" },
+        { label: "Ditolak", value: ditolak, icon: <XCircle size={20} className="text-red-500" />, borderColor: "border-red-500", textColor: "text-red-500" },
+        { label: "Total Permohonan", value: total, icon: <FileText size={20} className="text-black" />, borderColor: "border-black", textColor: "text-black" },
+      ]);
+    } catch (error) {
+      console.error('Error fetching permohonan stats:', error);
+    }
+  };
+
+  // Fungsi manual refresh untuk user
+  const handleManualRefresh = async () => {
+    if (userData?.id) {
+      setIsRefreshing(true);
+      await fetchPermohonanStats(userData.id);
+      setIsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     if (mounted) {
@@ -101,9 +183,19 @@ export default function UserDashboardPage() {
           </div>
 
           {/* Dinamis berdasarkan User Login */}
-          <div className="text-right hidden sm:block">
-            <h2 className="text-sm font-bold tracking-tight">{userData.name || userData.nama_lengkap}</h2>
-            <p className="text-[10px] opacity-70">{userData.email}</p>
+          <div className="text-right hidden sm:block flex items-center gap-6">
+            <button 
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
+              title="Refresh data"
+            >
+              <RefreshCw size={20} className={`${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
+            <div>
+              <h2 className="text-sm font-bold tracking-tight">{userData.name || userData.nama_lengkap}</h2>
+              <p className="text-[10px] opacity-70">{userData.email}</p>
+            </div>
           </div>
       </header>
 
@@ -132,7 +224,7 @@ export default function UserDashboardPage() {
               <div className="mb-8">
                 <h3 className="text-3xl font-black text-gray-900">Beranda</h3>
                 <p className="text-gray-500 font-medium">Selamat datang, {userData.name || userData.nama_lengkap}</p>
-                <hr className="mt-5 border-gray-200" />
+                <hr className="mt-5 border-b-2 border-gray-200" />
               </div>
 
               {/* STAT CARDS */}
@@ -149,35 +241,45 @@ export default function UserDashboardPage() {
               </div>
 
               {/* ACCOUNT INFO CARD - Terhubung ke Database */}
-              <div className="max-w-2xl bg-white rounded-[30px] shadow-xl border-2 border-[#7c4d2d] overflow-hidden">
-                <div className="bg-[#8b5e3c] p-4 px-8 text-white">
-                  <span className="font-bold text-lg">Informasi Akun</span>
-                </div>
-                <div className="p-8 grid grid-cols-2 gap-y-6">
-                  <div>
-                    <p className="text-sm text-gray-400 font-bold tracking-tight">Nama Lengkap</p>
-                    <p className="font-semibold text-gray-800 text-lg">{userData.name || userData.nama_lengkap}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400 font-bold tracking-tight">Email</p>
-                    <p className="font-semibold text-gray-800 text-lg">{userData.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400 font-bold tracking-tight">Jabatan</p>
-                    <p className="font-semibold text-gray-800 text-lg">{userData.jabatan || userData.role}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400 font-bold tracking-tight">No HP.</p>
-                    <p className="font-semibold text-gray-800 text-lg">{userData.nomor_hp || userData.phone || "-"}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-sm text-gray-400 font-bold mb-2 tracking-tight">Status</p>
-                    <span className="px-5 py-1 bg-green-500 text-white text-[11px] font-bold rounded-full uppercase">
-                      {userData.status || "Aktif"}
-                    </span>
-                  </div>
-                </div>
-              </div>
+<div className="max-w-2xl bg-white rounded-[30px] shadow-xl border-2 border-[#7c4d2d] overflow-hidden">
+  <div className="bg-[#8b5e3c] p-4 px-8 text-white">
+    <span className="font-bold text-lg">Informasi Akun</span>
+  </div>
+  <div className="p-8 grid grid-cols-2 gap-y-6">
+    <div>
+      <p className="text-sm text-gray-400 font-bold tracking-tight">Nama Lengkap</p>
+      <p className="font-semibold text-gray-800 text-lg">{userData.name || userData.nama_lengkap}</p>
+    </div>
+    <div>
+      <p className="text-sm text-gray-400 font-bold tracking-tight">Email</p>
+      <p className="font-semibold text-gray-800 text-lg">{userData.email}</p>
+    </div>
+    
+    {/* BAGIAN JABATAN YANG DIPERBARUI */}
+    <div>
+      <p className="text-sm text-gray-400 font-bold tracking-tight">Jabatan</p>
+      <p className="font-semibold text-gray-800 text-lg">{userData.jabatan || userData.role}</p>
+      
+      {/* Logika: Jika jabatan mengandung kata Sekretaris, munculkan Nama Notaris */}
+      {(userData.jabatan || "").toLowerCase().includes('sekretaris') && userData.nama_notaris && (
+        <p className="text-sm font-normal italic text-gray-600 mt-1 leading-tight">
+          Nama Notaris/PPAT: <span className="font-medium text-gray-700">{userData.nama_notaris}</span>
+        </p>
+      )}
+    </div>
+
+    <div>
+      <p className="text-sm text-gray-400 font-bold tracking-tight">No HP.</p>
+      <p className="font-semibold text-gray-800 text-lg">{userData.nomor_hp || userData.phone || "-"}</p>
+    </div>
+    <div className="col-span-2">
+      <p className="text-sm text-gray-400 font-bold mb-2 tracking-tight">Status</p>
+      <span className="px-5 py-1 bg-green-500 text-white text-[11px] font-bold rounded-full uppercase">
+        {userData.status || "Aktif"}
+      </span>
+    </div>
+  </div>
+</div>
             </div>
           </div>
 
@@ -194,7 +296,7 @@ export default function UserDashboardPage() {
             <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
             <p className="text-gray-500 font-medium mt-2">Anda perlu login kembali untuk mengakses sistem.</p>
             <div className="flex justify-end gap-3 mt-10">
-              <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 font-bold">Batal</button>
+              <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold">Batal</button>
               <button onClick={handleLogout} className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold shadow-lg">Ya, Keluar</button>
             </div>
           </div>

@@ -145,19 +145,34 @@ export default function DataUserPage() {
   }
 };
 
- const filteredUsers = users.filter((user) => {
-    // Normalisasi status ke huruf kecil untuk perbandingan filter
+ const filteredUsers = users
+  .sort((a, b) => {
+    const statusA = a.status?.toLowerCase();
+    const statusB = b.status?.toLowerCase();
+
+    // ✅ Prioritas: status MENUNGGU selalu di atas
+    if (statusA === "menunggu" && statusB !== "menunggu") return -1;
+    if (statusA !== "menunggu" && statusB === "menunggu") return 1;
+
+    // ✅ Jika status sama → urutkan dari tanggal paling baru
+    const dateA = new Date(a.tgl).getTime();
+    const dateB = new Date(b.tgl).getTime();
+    return dateB - dateA;
+  })
+  .filter((user) => {
     const userStatus = user.status?.toLowerCase();
     const filterStatus = selectedFilter.toLowerCase();
 
-    const matchesFilter = selectedFilter === "Semua Status" || userStatus === filterStatus;
-    
-    const matchesSearch = 
-      user.nama?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesFilter =
+      selectedFilter === "Semua Status" || userStatus === filterStatus;
+
+    const matchesSearch =
+      user.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
     return matchesFilter && matchesSearch;
   });
+
 
   const handleOpenApprove = (user: UserData) => { setSelectedUser(user); setIsApproveModalOpen(true); };
   const handleOpenReject = (user: UserData) => { setSelectedUser(user); setIsRejectModalOpen(true); };
@@ -308,7 +323,7 @@ export default function DataUserPage() {
                             <td className="px-6 py-5">
                               <div className="flex justify-center gap-2">
                                 <button onClick={() => handleOpenDetail(user)} className="p-1.5 bg-blue-50 text-blue-600 border-2 border-blue-400 rounded-lg hover:bg-blue-600 hover:text-white transition"><Eye size={16} /></button>
-                                {user.status !== 'aktif' && (
+                                {user.status !== 'Aktif' && (
                                   <button onClick={() => handleOpenApprove(user)} className="p-1.5 bg-green-50 text-green-600 border-2 border-green-400 rounded-lg hover:bg-green-600 hover:text-white transition"><Check size={16} /></button>
                                 )}
                                 <button onClick={() => handleOpenReject(user)} className="p-1.5 bg-red-50 text-red-600 border-2 border-red-400 rounded-lg hover:bg-red-600 hover:text-white transition"><Trash2 size={16} /></button>
@@ -397,11 +412,20 @@ export default function DataUserPage() {
       {isRejectModalOpen && selectedUser && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[25px] p-10 w-full max-w-lg shadow-2xl">
-            <h3 className="text-3xl font-bold text-red-600 mb-2">Hapus/Tolak User</h3>
-            <p className="text-gray-600 font-semibold">Tolak pendaftaran atau hapus data <b>{selectedUser.nama}</b>?</p>
+            {selectedUser.status === 'Aktif' ? (
+              <>
+                <h3 className="text-3xl font-bold text-red-600 mb-2">Hapus User</h3>
+                <p className="text-gray-600 font-semibold">Hapus user dengan nama <b>{selectedUser.nama}</b>?</p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-3xl font-bold text-red-600 mb-2">Tolak Pendaftaran</h3>
+                <p className="text-gray-600 font-semibold">Tolak pendaftaran akun dengan nama <b>{selectedUser.nama}</b>?</p>
+              </>
+            )}
             <div className="flex justify-end gap-3 mt-8">
               <button onClick={() => setIsRejectModalOpen(false)} className="px-8 py-3 rounded-full border-2 font-bold text-gray-600 hover:bg-gray-50">Batal</button>
-              <button onClick={confirmReject} className="px-8 py-3 rounded-full bg-red-600 text-white font-bold">Ya, Hapus</button>
+              <button onClick={confirmReject} className="px-8 py-3 rounded-full bg-red-600 text-white font-bold">Ya, {selectedUser.status === 'Aktif' ? 'Hapus' : 'Tolak'}</button>
             </div>
           </div>
         </div>

@@ -13,44 +13,75 @@ import {
   Menu
 } from "lucide-react";
 
+interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  date: string;
+  status: string;
+  jenis: string;
+  jenis_lainnya?: string | null;
+  catatan?: string | null;
+  no: string;
+  lokasi: string;
+  is_read: boolean;
+  detail: {
+    jenis: string;
+    jenis_lainnya?: string | null;
+    no: string;
+    lokasi: string;
+    catatan?: string | null;
+  };
+}
+
 export default function NotifikasiPage() {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "Permohonan Ditolak",
-      message: "Mohon maaf, permohonan Anda ditolak karena dokumen tidak sesuai.",
-      date: "12 Jan 2026 pukul 19:23",
-      status: "rejected",
-      isRead: false,
-      detail: { jenis: "SKPT", no: "65487", lokasi: "Palangga" }
-    },
-    {
-      id: 2,
-      title: "Permohonan Disetujui",
-      message: "Persetujuan admin telah diberikan. Data Anda kini sudah terverifikasi.",
-      date: "10 Jan 2026 pukul 19:23",
-      status: "approved",
-      isRead: false,
-      detail: { jenis: "Pengecekan", no: "32143", lokasi: "Somba Opu" }
-    },
-    {
-      id: 3,
-      title: "Permohonan Sedang Diproses",
-      message: "Pengajuan berhasil tersimpan. Mohon tunggu proses pemeriksaan data.",
-      date: "14 Jan 2026 pukul 19:23",
-      status: "process",
-      isRead: false,
-      detail: { jenis: "SKPT", no: "54326", lokasi: "Katangka" }
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userData, setUserData] = useState<any>(null);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  const markAsRead = (id: number) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n));
+  // Fetch notifikasi dari backend
+  const fetchNotifikasi = async (userId: string) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`http://localhost:8000/api/notifikasi/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+      const data = await response.json();
+      setNotifications(data);
+    } catch (error) {
+      console.error("Gagal mengambil notifikasi:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const markAsRead = async (id: number) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/notifikasi/${id}/read`, {
+        method: 'PATCH',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n));
+      }
+    } catch (error) {
+      console.error("Gagal memperbarui notifikasi:", error);
+    }
   };
 
   // 1. Efek untuk menangani mounting dan membaca localStorage (Cegah Hydration Error)
@@ -59,6 +90,17 @@ export default function NotifikasiPage() {
     const saved = localStorage.getItem("sidebarStatus");
     if (saved !== null) {
       setIsSidebarOpen(JSON.parse(saved));
+    }
+
+    // Ambil data user dari localStorage
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      setUserData(user);
+      // Fetch notifikasi berdasarkan user_id
+      if (user.id) {
+        fetchNotifikasi(user.id);
+      }
     }
   }, []);
 
@@ -116,8 +158,8 @@ export default function NotifikasiPage() {
                       </div>
                     </div>
                     <div className="text-right hidden sm:block">
-                    <h2 className="text-sm font-bold tracking-tight">Nurul Karimah</h2>
-                    <p className="text-[10px] opacity-70">nkarimah421@gmail.com</p>
+                    <h2 className="text-sm font-bold tracking-tight">{userData?.nama_lengkap || "User"}</h2>
+                    <p className="text-[10px] opacity-70">{userData?.email || "email@example.com"}</p>
                     </div>
                   </header>
 
@@ -159,7 +201,6 @@ export default function NotifikasiPage() {
                 <div>
                   <h3 className="text-3xl font-black text-gray-900">Notifikasi</h3>
                   <p className="text-gray-500 font-medium">Pemberitahuan resmi terkait permohonan Anda</p>
-                  <hr className="mt-5 border-gray-200" />
                 </div>
                 {unreadCount > 0 && (
                   <span className="bg-[#e62b2b] text-white px-4 py-1.5 rounded-full text-[10px] font-black shadow-lg">
@@ -167,57 +208,72 @@ export default function NotifikasiPage() {
                   </span>
                 )}
               </div>
+              
+              <hr className="mt-5 border-b-2 border-gray-200 mb-8 " />
 
               {/* Daftar Notifikasi */}
               <div className="space-y-4">
-                {notifications.map((notif) => (
-                  <div 
-                    key={notif.id}
-                    className={`relative flex items-start gap-4 p-5 rounded-[20px] border-2 transition-all
-                      ${notif.status === 'rejected' ? 'border-red-500 bg-red-50' : 
-                        notif.status === 'approved' ? 'border-green-500 bg-green-50' : 
-                        'border-blue-500 bg-blue-50'} ${notif.isRead ? 'opacity-50 grayscale-[0.3]' : ''}`}
-                  >
-                    <div className="mt-0.5">
-                      {notif.status === 'rejected' && <XCircle className="text-red-500" size={24} />}
-                      {notif.status === 'approved' && <CheckCircle2 className="text-green-500" size={24} />}
-                      {notif.status === 'process' && <Info className="text-blue-500" size={24} />}
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center mb-1">
-                        <h4 className="font-bold text-gray-800 text-sm">{notif.title}</h4>
-                        <span className="text-[9px] font-bold text-gray-400 tracking-tighter">{notif.date}</span>
+                {isLoading ? (
+                  <div className="py-20 text-center text-gray-400 italic font-bold">Mengambil notifikasi...</div>
+                ) : notifications.length > 0 ? (
+                  notifications.map((notif) => (
+                    <div 
+                      key={notif.id}
+                      className={`relative flex items-start gap-4 p-5 rounded-[20px] border-2 transition-all
+                        ${notif.status === 'ditolak' ? 'border-red-500 bg-red-50' : 
+                          notif.status === 'disetujui' ? 'border-green-500 bg-green-50' : 
+                          'border-blue-500 bg-blue-50'} ${notif.is_read ? 'opacity-50 grayscale-[0.3]' : ''}`}
+                    >
+                      <div className="mt-0.5">
+                        {notif.status === 'ditolak' && <XCircle className="text-red-500" size={24} />}
+                        {notif.status === 'disetujui' && <CheckCircle2 className="text-green-500" size={24} />}
+                        {notif.status === 'proses' && <Info className="text-blue-500" size={24} />}
                       </div>
-                      
-                      <p className="text-gray-500 text-[11px] font-medium leading-relaxed mb-3">{notif.message}</p>
-                      
-                      {/* Box Detail Pengajuan */}
-                      <div className="bg-white/80 rounded-xl p-3 border border-gray-100 flex gap-5 items-center">
-                        <div className="flex gap-4">
-                          <div>
-                            <p className="text-[8px] text-gray-400 font-bold tracking-widest">Jenis</p>
-                            <p className="text-[10px] font-bold text-gray-700">{notif.detail.jenis}</p>
-                          </div>
-                          <div className="border-l border-gray-100 pl-4">
-                            <p className="text-[8px] text-gray-400 font-bold tracking-widest">No. Sertipikat</p>
-                            <p className="text-[10px] font-bold text-gray-700">{notif.detail.no}</p>
-                          </div>
-                          <div className="border-l border-gray-100 pl-4">
-                            <p className="text-[8px] text-gray-400 font-bold tracking-widest">Lokasi</p>
-                            <p className="text-[10px] font-bold text-gray-700">{notif.detail.lokasi}</p>
+
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <h4 className="font-bold text-gray-800 text-sm">{notif.title}</h4>
+                          <span className="text-[9px] font-bold text-gray-400 tracking-tighter">{notif.date}</span>
+                        </div>
+                        
+                        <p className="text-gray-500 text-[11px] font-medium leading-relaxed mb-3">{notif.message}</p>
+                        
+                        {/* Box Detail Pengajuan */}
+                        <div className="bg-white/80 rounded-xl p-3 border border-gray-100 flex gap-5 items-center flex-wrap">
+                          <div className="flex gap-4">
+                            <div>
+                              <p className="text-[8px] text-gray-400 font-bold tracking-widest">Jenis</p>
+                              <p className="text-[10px] font-bold text-gray-700">{notif.detail.jenis}</p>
+                              {notif.detail.jenis_lainnya && (
+                                <p className="text-[9px] text-gray-500 italic mt-1 font-medium">({notif.detail.jenis_lainnya})</p>
+                              )}
+                            </div>
+                            <div className="border-l border-gray-100 pl-4">
+                              <p className="text-[8px] text-gray-400 font-bold tracking-widest">No. Sertipikat</p>
+                              <p className="text-[10px] font-bold text-gray-700">{notif.detail.no}</p>
+                            </div>
+                            <div className="border-l border-gray-100 pl-4">
+                              <p className="text-[8px] text-gray-400 font-bold tracking-widest">Lokasi</p>
+                              <p className="text-[10px] font-bold text-gray-700">{notif.detail.lokasi}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
+
+                        {notif.detail.catatan && (
+                          <div className="mt-3 bg-yellow-50 rounded-xl p-3 border border-yellow-200">
+                            <p className="text-[8px] text-gray-500 font-bold tracking-widest uppercase mb-1">Catatan Admin</p>
+                            <p className="text-[10px] text-gray-700 font-medium">{notif.detail.catatan}</p>
+                          </div>
+                        )}
 
                       {/* Tombol Aksi - Warna disesuaikan dengan kolom */}
                       <div className="flex justify-end mt-3">
-                        {!notif.isRead && (
+                        {!notif.is_read && (
                           <button 
                             onClick={() => markAsRead(notif.id)}
                             className={`text-[9px] font-black tracking-tight transition-colors hover:underline
-                              ${notif.status === 'rejected' ? 'text-red-600' : 
-                                notif.status === 'approved' ? 'text-green-600' : 
+                              ${notif.status === 'ditolak' ? 'text-red-600' : 
+                                notif.status === 'disetujui' ? 'text-green-600' : 
                                 'text-blue-600'}`}
                           >
                             Tandai Sudah Dibaca
@@ -226,7 +282,12 @@ export default function NotifikasiPage() {
                       </div>
                     </div>
                   </div>
-                ))}
+                ))
+              ) : (
+                <div className="py-20 text-center text-gray-400">
+                  <p className="font-bold">Belum ada notifikasi</p>
+                </div>
+              )}
               </div>
             </div>
           </div>

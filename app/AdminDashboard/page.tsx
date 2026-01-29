@@ -1,16 +1,17 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
-  Settings, 
-  LogOut, 
-  UserCheck, 
-  Clock, 
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  Settings,
+  LogOut,
+  UserCheck,
+  Clock,
   Edit,
-  Menu, 
+  Menu,
   FileSpreadsheet
 } from "lucide-react";
 
@@ -18,16 +19,16 @@ export default function AdminDashboard() {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
-  
-  // State untuk menampung data statistik dari database
+
   const [stats, setStats] = useState({
     total_user: 0,
     user_menunggu: 0,
     total_permohonan: 0,
     permohonan_masuk: 0
   });
-  
+
   const [latestUsers, setLatestUsers] = useState([]);
+  const [latestPermohonan, setLatestPermohonan] = useState([]);
 
   useEffect(() => {
     setMounted(true);
@@ -35,13 +36,12 @@ export default function AdminDashboard() {
     if (saved !== null) {
       setIsSidebarOpen(JSON.parse(saved));
     }
-    
-    // Memanggil data saat komponen dimuat
+
     fetchStats();
     fetchUsers();
+    fetchPermohonan();
   }, []);
 
-  // Fungsi mengambil angka statistik (Total User, Menunggu ACC, dll)
   const fetchStats = async () => {
     try {
       const response = await fetch('http://localhost:8000/api/dashboard-stats');
@@ -52,7 +52,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Fungsi mengambil daftar user terbaru
   const fetchUsers = async () => {
     try {
       const response = await fetch('http://localhost:8000/api/latest-users');
@@ -60,6 +59,16 @@ export default function AdminDashboard() {
       setLatestUsers(data);
     } catch (error) {
       console.error("Gagal mengambil data user:", error);
+    }
+  };
+
+  const fetchPermohonan = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/latest-permohonan');
+      const data = await response.json();
+      setLatestPermohonan(data);
+    } catch (error) {
+      console.error("Gagal mengambil data permohonan:", error);
     }
   };
 
@@ -71,12 +80,12 @@ export default function AdminDashboard() {
 
   const SidebarItem = ({ href, icon: Icon, label, active = false }: any) => (
     <Link href={href} className="block group relative">
-      <button 
+      <button
         className={`flex items-center w-full py-3.5 transition-all rounded-xl font-bold whitespace-nowrap
-        ${active ? "bg-[#56b35a] shadow-lg text-white" : "text-white hover:bg-white/10"} 
+        ${active ? "bg-[#56b35a] shadow-lg text-white" : "text-white hover:bg-white/10"}
         ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}
       >
-        <Icon size={22} className="shrink-0" /> 
+        <Icon size={22} className="shrink-0" />
         {isSidebarOpen && <span>{label}</span>}
       </button>
 
@@ -93,12 +102,11 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex flex-col h-screen bg-[#f5f5f5] font-sans overflow-hidden">
-      
       {/* NAVBAR */}
       <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
         <div className="flex items-center">
           <div className="w-12 flex justify-start items-center">
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="p-2 hover:bg-white/10 rounded-lg transition-colors"
             >
@@ -117,23 +125,29 @@ export default function AdminDashboard() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        
         {/* SIDEBAR */}
         <aside className={`${isSidebarOpen ? "w-72" : "w-20"} bg-[#7c4d2d] text-white flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out relative`}>
           <nav className="flex-1 px-3 py-8 space-y-4">
             <SidebarItem href="/AdminDashboard" icon={LayoutDashboard} label="Beranda" active={true} />
             <SidebarItem href="/AdminDashboard/DataUser" icon={Users} label="Data User" />
-            <SidebarItem href="/AdminDashboard/DataPermohonan" icon={FileText} label="Data Permohonan" />
+            
+            {/* KODE YANG DIMASUKKAN ADA DI BAWAH INI */}
+            <SidebarItem 
+              href="/AdminDashboard/DataPermohonan" 
+              icon={FileText} 
+              label="Data Permohonan" 
+            />
+            
             <SidebarItem href="/AdminDashboard/Pengaturan" icon={Settings} label="Pengaturan" />
             <SidebarItem href="/AdminDashboard/EditKonten" icon={Edit} label="Edit Konten" />
             <SidebarItem href="/AdminDashboard/Riwayat" icon={FileSpreadsheet} label="Riwayat" />
-          
+
             <div className="pt-4 mt-4 border-t border-white/20">
-               <button 
+              <button
                 onClick={() => setIsLogoutModalOpen(true)}
                 className={`group relative flex items-center w-full py-3.5 hover:bg-red-600 rounded-xl font-bold transition-all whitespace-nowrap ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}
-               >
-                <LogOut size={22} className="shrink-0 text-white" /> 
+              >
+                <LogOut size={22} className="shrink-0 text-white" />
                 {isSidebarOpen && <span className="text-white">Keluar</span>}
               </button>
             </div>
@@ -148,58 +162,27 @@ export default function AdminDashboard() {
               <p className="text-gray-500 font-medium">Selamat datang di Panel Administrasi KANTAH Gowa</p>
             </div>
 
-            {/* STAT CARDS - Terhubung ke state stats */}
+            {/* STAT CARDS */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard 
-                label="Total User Terdaftar" 
-                value={stats.total_user.toString()} 
-                sub="Notaris & PPAT" 
-                color="border-black" 
-                textColor="text-black" 
-                icon={<Users className="text-black" />} 
-              />
-              <StatCard 
-                label="User Menunggu ACC" 
-                value={stats.user_menunggu.toString()} 
-                sub="Perlu Verifikasi" 
-                color="border-orange-500" 
-                textColor="text-orange-500" 
-                icon={<UserCheck className="text-orange-500" />} 
-              />
-              <StatCard 
-                label="Total Permohonan" 
-                value={stats.total_permohonan.toString()} 
-                sub="Semua Permohonan" 
-                color="border-green-500" 
-                textColor="text-green-500" 
-                icon={<FileText className="text-green-500" />} 
-              />
-              <StatCard 
-                label="Permohonan Masuk" 
-                value={stats.permohonan_masuk.toString()} 
-                sub="Menunggu Verifikasi" 
-                color="border-blue-500" 
-                textColor="text-blue-500" 
-                icon={<Clock className="text-blue-500" />} 
-              />
-            </div>
+               <StatCard label="User Menunggu ACC" value={stats.user_menunggu.toString()} sub="Perlu Verifikasi" color="border-orange-500" textColor="text-orange-500" icon={<UserCheck className="text-orange-500" />} />
+                <StatCard label="Total User Terdaftar" value={stats.total_user.toString()} sub="Notaris & PPAT" color="border-black" textColor="text-black" icon={<Users className="text-black" />} />
+               <StatCard label="Permohonan Masuk" value={stats.permohonan_masuk.toString()} sub="Menunggu Verifikasi" color="border-blue-500" textColor="text-blue-500" icon={<Clock className="text-blue-500" />} />
+               <StatCard label="Total Permohonan" value={stats.total_permohonan.toString()} sub="Semua Permohonan" color="border-green-500" textColor="text-green-500" icon={<FileText className="text-green-500" />} />
+             </div>
 
-            {/* TABLES SECTION - items-start memastikan tinggi kolom mengikuti konten */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-              
               {/* TABEL USER TERBARU */}
               <div className="bg-white rounded-[30px] overflow-hidden shadow-lg border-2 border-[#7c4d2d]">
                 <div className="p-4 px-8 bg-[#8b5e3c] text-white font-bold text-lg">User Terbaru</div>
                 <div className="p-6 space-y-4">
                   {latestUsers.length > 0 ? (
                     latestUsers.map((user: any) => (
-                      <TableRow 
+                      <TableRow
                         key={user.id}
-                        name={user.nama} 
-                        role={user.jabatan} 
-                        status={user.status} 
-                        notaris={user.notaris}
-                        statusColor={user.status === 'Aktif' ? "bg-green-100 text-green-600 border-green-500" : "bg-orange-100 text-orange-600 border-orange-500"} 
+                        name={user.nama_lengkap || user.nama || user.name}
+                        role={user.jabatan}
+                        status={user.status}
+                        notaris={user.nama_notaris || user.notaris} 
                       />
                     ))
                   ) : (
@@ -212,11 +195,19 @@ export default function AdminDashboard() {
               <div className="bg-white rounded-[30px] overflow-hidden shadow-lg border-2 border-[#7c4d2d]">
                 <div className="p-4 px-8 bg-[#8b5e3c] text-white font-bold text-lg">Permohonan Terbaru</div>
                 <div className="p-6 space-y-4">
-                  <TableRow name="Nabila Humairah AR" role="PENGECEKAN" status="Disetujui" statusColor="bg-green-100 text-green-600 border-green-500" />
-                  <TableRow name="Niki Renaningtyas" role="SKPT" status="Ditolak" statusColor="bg-red-100 text-red-600 border-red-500" />
-                  <TableRow name="Nabila Humairah AR" role="SKPT" status="Diproses" statusColor="bg-blue-100 text-blue-600 border-blue-500" />
-                  <TableRow name="Nabila Humairah AR" role="PENGECEKAN" status="Menunggu" statusColor="bg-orange-100 text-orange-600 border-orange-500" />
-                  <TableRow name="Nabila Humairah AR" role="PENGECEKAN" status="Menunggu" statusColor="bg-orange-100 text-orange-600 border-orange-500" />
+                  {latestPermohonan.length > 0 ? (
+                    latestPermohonan.map((permohonan: any) => (
+                      <TableRow
+                        key={permohonan.id}
+                        name={permohonan.nama}
+                        role={permohonan.jenis}
+                        status={permohonan.status}
+                        jenis_lainnya={permohonan.jenis_lainnya}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-center text-gray-400 py-4 italic">Memuat data permohonan...</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -260,23 +251,41 @@ function StatCard({ label, value, sub, color, icon, textColor }: any) {
     </div>
   );
 }
-function TableRow({ name, role, status, statusColor, notaris }: any) {
-  // Cek apakah role mengandung kata "Sekretaris"
+
+function TableRow({ name, role, status, notaris, jenis_lainnya }: any) {
+  const statusLower = status?.toLowerCase();
+
+  let statusColor = "bg-orange-100 text-orange-600 border-orange-500"; // default (menunggu)
+
+  if (statusLower === "aktif" || statusLower === "disetujui") {
+    statusColor = "bg-green-100 text-green-600 border-green-500";
+  } else if (statusLower === "ditolak") {
+    statusColor = "bg-red-100 text-red-600 border-red-500";
+  } else if (statusLower === "Diproses" || statusLower === "proses") {
+    statusColor = "border-blue-400 text-blue-500 bg-white";
+  }
+ 
   const isSekretaris = role?.toLowerCase().includes("sekretaris");
 
   return (
     <div className="flex items-center justify-between border-b-2 border-gray-200 pb-3 last:border-0 last:pb-0">
       <div className="flex flex-col text-left">
-        <span className="font-bold text-sm text-gray-800">{name}</span>
-        <span className="text-[11px] font-medium text-gray-600 tracking-tighter uppercase">{role}</span>
-        
-        {/* Hanya tampilkan jika dia Sekretaris DAN data notaris ada */}
+        <span className="font-bold text-sm text-gray-800">{name || "Tanpa Nama"}</span>
+        <span className="text-[11px] font-medium text-gray-700 tracking-tighter uppercase">{role}</span>
+
+        {jenis_lainnya && (
+          <span className="text-[11px] italic text-gray-500 font-semibold mt-0.5">
+            "{jenis_lainnya}"
+          </span>
+        )}
+
         {isSekretaris && notaris && (
-          <span className="text-[10px] italic text-gray-600 font-medium">
-            Notaris/PPAT : {notaris}
+          <span className="text-[10px] italic text-gray-600 font-semibold mt-0.5">
+            Nama Notaris: {notaris}
           </span>
         )}
       </div>
+
       <span className={`px-4 py-1 rounded-full text-[10px] font-bold border-2 ${statusColor}`}>
         {status}
       </span>

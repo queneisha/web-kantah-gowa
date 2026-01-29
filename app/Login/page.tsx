@@ -33,6 +33,12 @@ export default function LoginPage() {
         // Mengambil status, mengubah ke string, menghapus spasi, dan mengubah ke huruf kecil
         const userStatus = result.user?.status?.toString().trim().toLowerCase();
 
+        // Cek apakah akun ditolak
+        if (userStatus === "ditolak") {
+          alert(`Maaf, pendaftaran akun Anda telah ditolak oleh Admin KANTAH Gowa.\n\nAlasan: ${result.user?.rejection_reason || 'Tidak ada alasan yang diberikan'}\n\nSilakan hubungi admin untuk informasi lebih lanjut.`);
+          return;
+        }
+
         if (userStatus !== "aktif") {
           alert("Akun Anda belum aktif. Silakan tunggu persetujuan Admin KANTAH Gowa.");
           return; // Berhenti jika status bukan 'aktif'
