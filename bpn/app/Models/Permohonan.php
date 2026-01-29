@@ -4,18 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+// Import model User
+use App\Models\User;
 
 class Permohonan extends Model
 {
     use HasFactory;
 
-    // Nama tabel di database
     protected $table = 'permohonans';
 
-    // Kolom yang boleh diisi
     protected $fillable = [
         'user_id',
         'jenis_pendaftaran',
+        'jenis_lainnya',
         'catatan_pendaftaran',
         'jenis_hak',
         'no_sertipikat',
@@ -23,4 +24,13 @@ class Permohonan extends Model
         'kecamatan',
         'status',
     ];
+
+    /**
+     * Relasi ke model User
+     * Satu permohonan dimiliki oleh satu user
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }

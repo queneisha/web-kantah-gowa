@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Permohonan;
 use App\Mail\UserApprovedMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
@@ -19,8 +20,8 @@ class AdminController extends Controller
         return response()->json([
             'total_user'       => User::count(),
             'user_menunggu'    => User::where('status', 'menunggu')->count(),
-            'total_permohonan' => 0,
-            'permohonan_masuk' => 0,
+            'total_permohonan' => Permohonan::count(),
+            'permohonan_masuk' => Permohonan::where('status', 'Menunggu')->count(),
         ]);
     }
 
@@ -47,18 +48,22 @@ class AdminController extends Controller
 
     /**
      * Mengambil semua user dan menyesuaikan format kolom untuk halaman Data User
+     * Diurutkan berdasarkan status (menunggu di atas), kemudian dari yang terbaru
      */
     public function getUsers()
     {
-        $users = User::all()->map(function($user) {
-            return [
-                'id'      => $user->id,
-                'nama'    => $user->nama_lengkap, // Mapping ke frontend
-                'email'   => $user->email,
-                'jabatan' => $user->jabatan,
-                'hp'      => $user->nomor_hp,      // Mapping ke frontend
-                'status'  => ucfirst($user->status),
-                'notaris' => $user->nama_notaris ?? null,
+        $users = User::orderByRaw("CASE WHEN status = 'menunggu' THEN 0 ELSE 1 END")
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($user) {
+                return [
+                    'id'      => $user->id,
+                    'nama'    => $user->nama_lengkap, // Mapping ke frontend
+                    'email'   => $user->email,
+                    'jabatan' => $user->jabatan,
+                    'hp'      => $user->nomor_hp,      // Mapping ke frontend
+                    'status'  => ucfirst($user->status),
+                    'notaris' => $user->nama_notaris ?? null,
                 'tgl'     => $user->created_at->format('d F Y'),
             ];
         });
@@ -96,7 +101,7 @@ class AdminController extends Controller
     {
         $user = User::find($id);
         if ($user) {
-            $user->status = 'aktif';
+            $user->status = 'Aktif';
             $user->save();
 
             // Kirim email notifikasi ke user
@@ -110,6 +115,28 @@ class AdminController extends Controller
             return response()->json(['message' => 'User approved successfully']);
         }
         return response()->json(['message' => 'User not found'], 404);
+    }
+
+    /**
+     * Mengambil data permohonan terbaru (limit 5) untuk tabel di dashboard
+     */
+    public function getLatestPermohonan()
+    {
+        $permohonan = Permohonan::with('user')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get()
+            ->map(function($item) {
+                return [
+                    'id'            => $item->id,
+                    'nama'          => $item->user->nama_lengkap ?? 'Tanpa Nama',
+                    'jenis'         => $item->jenis_pendaftaran,
+                    'jenis_lainnya' => $item->jenis_lainnya ?? null,
+                    'status'        => $item->status,
+                ];
+            });
+
+        return response()->json($permohonan);
     }
 
     public function destroy($id)

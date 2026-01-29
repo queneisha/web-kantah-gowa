@@ -8,7 +8,8 @@ import {
   Bell, 
   LogOut,
   ChevronDown,
-  Menu
+  Menu,
+  RefreshCw,
 } from "lucide-react";
 
 export default function RiwayatPage() {
@@ -17,6 +18,11 @@ export default function RiwayatPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const [riwayatData, setRiwayatData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Menutup dropdown saat klik di luar area
@@ -30,20 +36,51 @@ export default function RiwayatPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const dataRiwayat = [
-    { tgl: "11 Januari 2026", jenis: "Pengecekan", hak: "Hak Guna Bangunan", no: "32143", lokasi: "Somba Opu", desa: "Barombong", status: "Disetujui", catatan: "Verifikasi selesai. Permohonan disetujui." },
-    { tgl: "11 Januari 2026", jenis: "Pengecekan", hak: "Hak Guna Bangunan", no: "32143", lokasi: "Somba Opu", desa: "Barombong", status: "Disetujui", catatan: "Verifikasi selesai. Permohonan disetujui." },
-    { tgl: "11 Januari 2026", jenis: "Pengecekan", hak: "Hak Guna Bangunan", no: "32143", lokasi: "Somba Opu", desa: "Barombong", status: "Disetujui", catatan: "Verifikasi selesai. Permohonan disetujui." },
-    { tgl: "12 Januari 2026", jenis: "SKPT", hak: "Hak Milik", no: "65487", lokasi: "Palangga", desa: "Baringkanaya", status: "Ditolak", catatan: "Data sertifikat tidak sesuai dengan sistem." },
-    { tgl: "12 Januari 2026", jenis: "SKPT", hak: "Hak Milik", no: "65487", lokasi: "Palangga", desa: "Baringkanaya", status: "Ditolak", catatan: "Data sertifikat tidak sesuai dengan sistem." },
-    { tgl: "12 Januari 2026", jenis: "SKPT", hak: "Hak Milik", no: "65487", lokasi: "Palangga", desa: "Baringkanaya", status: "Ditolak", catatan: "Data sertifikat tidak sesuai dengan sistem." },
-    { tgl: "13 Januari 2026", jenis: "SKPT", hak: "Hak Milik", no: "54326", lokasi: "Katangka", desa: "Jeneberang", status: "Diproses", catatan: "Sedang dilakukan pengecekan kelengkapan administrasi." },
-    { tgl: "13 Januari 2026", jenis: "SKPT", hak: "Hak Milik", no: "54326", lokasi: "Katangka", desa: "Jeneberang", status: "Diproses", catatan: "Sedang dilakukan pengecekan kelengkapan administrasi." },
-    { tgl: "13 Januari 2026", jenis: "SKPT", hak: "Hak Milik", no: "54326", lokasi: "Katangka", desa: "Jeneberang", status: "Diproses", catatan: "Sedang dilakukan pengecekan kelengkapan administrasi." },
-    { tgl: "14 Januari 2026", jenis: "Pengecekan", hak: "Hak Guna Bangunan", no: "24556", lokasi: "Sepakat", desa: "Andi Tonro", status: "Menunggu", catatan: "-" },
-    { tgl: "14 Januari 2026", jenis: "Pengecekan", hak: "Hak Guna Bangunan", no: "24556", lokasi: "Sepakat", desa: "Andi Tonro", status: "Menunggu", catatan: "-" },
-    { tgl: "14 Januari 2026", jenis: "Pengecekan", hak: "Hak Guna Bangunan", no: "24556", lokasi: "Sepakat", desa: "Andi Tonro", status: "Menunggu", catatan: "-" },
-  ];
+  // Fetch riwayat permohonan dari backend
+  const fetchRiwayatPermohonan = async (userId: string) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`http://localhost:8000/api/riwayat/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.error('Gagal fetch riwayat');
+        setRiwayatData([]);
+        return;
+      }
+
+      const data = await response.json();
+      // Transform data dari backend
+      const formattedData = data.map((item: any) => ({
+        tgl: item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID', { 
+          day: '2-digit', 
+          month: 'long', 
+          year: 'numeric' 
+        }) : '-',
+        jenis: item.jenis_pendaftaran || '-',
+        jenis_lainnya: item.jenis_lainnya || null,
+        hak: item.jenis_hak || '-',
+        no: item.no_sertipikat || '-',
+        lokasi: item.desa || '-',
+        desa: item.kecamatan || '-',
+        status: item.status || 'Menunggu',
+        catatan: item.catatan_pendaftaran || '-'
+      }));
+      setRiwayatData(formattedData);
+    } catch (error) {
+      console.error('Error fetching riwayat:', error);
+      setRiwayatData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const dataRiwayat = riwayatData.length > 0 ? riwayatData : [];
 
   // LOGIKA FILTER: Menyaring data tabel berdasarkan pilihan dropdown
   const dataTerfilter = dataRiwayat.filter((item) => {
@@ -58,6 +95,19 @@ export default function RiwayatPage() {
     const saved = localStorage.getItem("sidebarStatus");
     if (saved !== null) {
       setIsSidebarOpen(JSON.parse(saved));
+    }
+
+    // Ambil data user dari localStorage
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      setUserData(user);
+      // Fetch riwayat permohonan berdasarkan user_id
+      if (user.id) {
+        fetchRiwayatPermohonan(user.id);
+      }
+    } else {
+      setIsLoading(false);
     }
   }, []);
 
@@ -118,8 +168,8 @@ export default function RiwayatPage() {
                       </div>
                     </div>
                     <div className="text-right hidden sm:block">
-                    <h2 className="text-sm font-bold tracking-tight">Nurul Karimah</h2>
-                    <p className="text-[10px] opacity-70">nkarimah421@gmail.com</p>
+                    <h2 className="text-sm font-bold tracking-tight">{userData?.name || userData?.nama_lengkap || 'User'}</h2>
+                    <p className="text-[10px] opacity-70">{userData?.email || 'email@example.com'}</p>
                     </div>
                   </header>
 
@@ -160,11 +210,11 @@ export default function RiwayatPage() {
               <div className="mb-8">
                 <h3 className="text-3xl font-black text-gray-900">Riwayat Permohonan</h3>
                 <p className="text-gray-500 font-medium text-sm">Data historis seluruh permohonan Anda</p>
-                <hr className="mt-5 border-gray-200" />
+                <hr className="mt-5 border-b-2 border-gray-200" />
               </div>
 
-              <div className="bg-white rounded-[25px] shadow-sm border border-gray-200 overflow-hidden">
-                <div className="bg-[#7c4d2d] p-4 px-8 flex justify-between items-center text-white">
+              <div className="bg-white rounded-[25px] shadow-sm border-2 border-[#7c4d2d] overflow-hidden">
+                <div className="bg-[#8b5e3c] p-4 px-8 flex justify-between items-center text-white">
                   <span className="font-bold text-lg">Daftar Permohonan</span>
                   
                   {/* Dropdown Filter */}
@@ -196,46 +246,58 @@ export default function RiwayatPage() {
                   </div>
                 </div>
                 
-                <div className="overflow-x-auto">
+                <div className="p-6 overflow-x-auto">
                   <table className="w-full text-left">
-                    <thead className="bg-white border-b border-gray-100">
+                    <thead className="border-b-3 border-gray-200">
                       <tr>
-                        <th className="px-8 py-4 text-[11px] font-bold text-gray-400">Tgl Daftar</th>
-                        <th className="px-6 py-4 text-[11px] font-bold text-gray-400">Jenis Pendaftaran</th>
-                        <th className="px-6 py-4 text-[11px] font-bold text-gray-400">Jenis Hak</th>
-                        <th className="px-6 py-4 text-[11px] font-bold text-gray-400">No. Sertipikat</th>
-                        <th className="px-6 py-4 text-[11px] font-bold text-gray-400">Lokasi</th>
-                        <th className="px-6 py-4 text-[11px] font-bold text-gray-400 text-center">Status</th>
-                        <th className="px-8 py-4 text-[11px] font-bold text-gray-400">Catatan Admin</th>
+                        <th className="px-8 text-sm py-4 text-[13px] font-bold text-gray-600">Tanggal Daftar</th>
+                        <th className="px-6 text-sm py-4 text-[13px] font-bold text-gray-600">Jenis Pendaftaran</th>
+                        <th className="px-6 text-sm py-4 text-[13px] font-bold text-gray-600">Jenis Hak</th>
+                        <th className="px-6 text-sm py-4 text-[13px] font-bold text-gray-600">No. Sertipikat</th>
+                        <th className="px-6 text-sm py-4 text-[13px] font-bold text-gray-600">Lokasi</th>
+                        <th className="px-6 text-sm py-4 text-[13px] font-bold text-gray-600 text-center">Status</th>
+                        <th className="px-8 text-sm py-4 text-[13px] font-bold text-gray-600">Catatan Admin</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {dataTerfilter.map((item, index) => (
-                        <tr key={index} className="hover:bg-gray-100 transition-colors">
-                          <td className="px-8 py-5 text-sm font-medium text-gray-500">{item.tgl}</td>
-                          <td className="px-6 py-5 text-sm font-semibold text-gray-800">{item.jenis}</td>
-                          <td className="px-6 py-5 text-sm font-medium text-gray-600">{item.hak}</td>
-                          <td className="px-6 py-5 text-sm font-semibold text-gray-800">{item.no}</td>
-                          <td className="px-6 py-5">
-                             <div className="text-sm font-semibold text-gray-800">{item.lokasi}</div>
-                             <div className="text-[10px] text-gray-400 font-semibold">{item.desa}</div>
-                          </td>
-                          <td className="px-6 py-5 text-center">
-                            <span className={`px-4 py-1 rounded-full text-[10px] font-bold inline-block min-w-[90px] text-center
-                              ${item.status === "Disetujui" ? "border-green-500 text-green-500 bg-green-50" : 
-                                item.status === "Ditolak" ? "border-red-500 text-red-500 bg-red-50" : 
-                                item.status === "Diproses" ? "border-blue-500 text-blue-500 bg-blue-50" : 
-                                "border-orange-500 text-orange-500 bg-orange-50"}`}>
-                              {item.status}
-                            </span>
-                          </td>
-                          <td className="px-8 py-5 text-xs text-gray-500 italic">{item.catatan}</td>
-                        </tr>
-                      ))}
-                      {dataTerfilter.length === 0 && (
+                    <tbody className="divide-y divide-gray-300">
+                      {isLoading ? (
                         <tr>
                           <td colSpan={7} className="py-20 text-center text-gray-400 font-bold italic">
-                            Tidak ada data dengan status "{filterStatus}"
+                            Memuat data riwayat permohonan...
+                          </td>
+                        </tr>
+                      ) : dataTerfilter.length > 0 ? (
+                        dataTerfilter.map((item, index) => (
+                          <tr key={index} className="hover:bg-gray-100 transition-colors">
+                            <td className="px-8 py-5 text-sm font-medium text-gray-500">{item.tgl}</td>
+                            <td className="px-6 py-5">
+                              <p className="text-sm font-semibold text-gray-800">{item.jenis}</p>
+                              {item.jenis_lainnya && (
+                                <p className="text-[11px] text-gray-400 italic mt-1">"{item.jenis_lainnya}"</p>
+                              )}
+                            </td>
+                            <td className="px-6 py-5 text-sm font-medium text-gray-600">{item.hak}</td>
+                            <td className="px-6 py-5 text-sm font-semibold text-gray-800">{item.no}</td>
+                            <td className="px-6 py-5">
+                               <div className="text-sm font-semibold text-gray-800">{item.lokasi}</div>
+                               <div className="text-[10px] text-gray-400 font-semibold">{item.desa}</div>
+                            </td>
+                            <td className="px-6 py-5 text-center">
+                              <span className={`px-4 py-1 rounded-full text-[10px] font-bold inline-block min-w-[90px] text-center
+                                ${item.status === "Disetujui" ? "border-green-500 text-green-500 bg-green-50" : 
+                                  item.status === "Ditolak" ? "border-red-500 text-red-500 bg-red-50" : 
+                                  item.status === "Proses" ? "border-blue-500 text-blue-500 bg-blue-50" : 
+                                  "border-orange-500 text-orange-500 bg-orange-50"}`}>
+                                {item.status}
+                              </span>
+                            </td>
+                            <td className="px-8 py-5 text-xs text-gray-500 italic">{item.catatan}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="py-20 text-center text-gray-400 font-bold italic">
+                            Tidak ada data permohonan
                           </td>
                         </tr>
                       )}

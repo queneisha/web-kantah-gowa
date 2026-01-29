@@ -86,16 +86,28 @@ class UserController extends Controller
 
     /**
      * Menghapus atau menolak user
+     * Jika status masih 'menunggu' -> tolak (ubah status ke 'Ditolak')
+     * Jika status 'Aktif' -> hapus user
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $user = User::find($id);
 
-        if ($user) {
-            $user->delete();
-            return response()->json(['message' => 'User berhasil dihapus']);
+        if (!$user) {
+            return response()->json(['message' => 'User tidak ditemukan'], 404);
         }
 
-        return response()->json(['message' => 'Gagal menghapus user'], 404);
+        // Jika user masih menunggu, tolak pendaftaran
+        if (strtolower($user->status) === 'menunggu') {
+            $user->status = 'Ditolak';
+            $user->rejection_reason = $request->input('reason', 'Pendaftaran ditolak oleh admin');
+            $user->save();
+
+            return response()->json(['message' => 'Pendaftaran user berhasil ditolak']);
+        }
+
+        // Jika user sudah aktif, hapus data user
+        $user->delete();
+        return response()->json(['message' => 'User berhasil dihapus']);
     }
 }

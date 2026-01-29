@@ -25,6 +25,7 @@ class User extends Authenticatable
     'nama_notaris',
     'nomor_hp',
     'status',
+    'rejection_reason',
 ];
     
 
