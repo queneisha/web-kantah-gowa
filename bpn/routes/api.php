@@ -25,18 +25,37 @@ Route::post('/register', [RegisterController::class, 'register']);
 | Permohonan Routes (User & Admin Side)
 |--------------------------------------------------------------------------
 */
-// Ambil semua data permohonan untuk Admin Dashboard
-Route::get('/all-permohonan', [PermohonanController::class, 'index']);
+// Ambil semua data permohonan untuk Admin Dashboard (butuh autentikasi admin)
+Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureAdmin::class])->group(function () {
+    Route::get('/all-permohonan', [PermohonanController::class, 'index']);
 
-// Simpan permohonan baru dari User
+    // Update status & Hapus permohonan (Untuk aksi di tabel Admin)
+    Route::patch('/permohonan/{id}/status', [PermohonanController::class, 'updateStatus']);
+    Route::delete('/permohonan/{id}', [PermohonanController::class, 'destroy']);
+
+    // Admin Management Routes
+    Route::get('/dashboard-stats', [\App\Http\Controllers\Admin\AdminController::class, 'getStats']);
+    Route::get('/latest-users', [\App\Http\Controllers\Admin\AdminController::class, 'getLatestUsers']);
+    Route::get('/latest-permohonan', [\App\Http\Controllers\Admin\AdminController::class, 'getLatestPermohonan']);
+    Route::get('/all-users', [\App\Http\Controllers\Admin\AdminController::class, 'getUsers']);
+    Route::get('/users/{id}', [\App\Http\Controllers\Admin\AdminController::class, 'showUser']);
+
+    // Persetujuan akun user baru
+    Route::post('/approve-user/{id}', [\App\Http\Controllers\Admin\AdminController::class, 'approveUser']);
+
+    // Admin prefixed routes
+    Route::prefix('admin')->group(function () {
+        Route::get('/users', [\App\Http\Controllers\Admin\AdminController::class, 'getUsers']);
+        Route::post('/users/{id}/approve', [\App\Http\Controllers\Admin\AdminController::class, 'approveUser']);
+        Route::delete('/users/{id}/reject', [\App\Http\Controllers\Admin\AdminController::class, 'destroy']);
+    });
+});
+
+// Routes available for users (no auth required to submit permohonan in current setup)
 Route::post('/permohonan', [PermohonanController::class, 'store']);
 
-// Ambil riwayat permohonan spesifik user
+// Ambil riwayat permohonan spesifik user (bisa dikunci di masa depan)
 Route::get('/riwayat/{userId}', [PermohonanController::class, 'getRiwayatUser']);
-
-// Update status & Hapus permohonan (Untuk aksi di tabel Admin)
-Route::patch('/permohonan/{id}/status', [PermohonanController::class, 'updateStatus']);
-Route::delete('/permohonan/{id}', [PermohonanController::class, 'destroy']);
 
 // Ambil notifikasi user
 Route::get('/notifikasi/{userId}', [PermohonanController::class, 'getNotifikasiUser']);

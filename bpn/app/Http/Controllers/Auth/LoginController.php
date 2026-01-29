@@ -33,19 +33,26 @@ class LoginController extends Controller
             ], 401);
         }
 
-        // 3. Cek Status (Gunakan strtolower agar tidak sensitif huruf besar/kecil)
-        if (strtolower($user->status) !== 'aktif') {
+        // 3. Cek Status (kecuali admin)
+        // Jika user bukan admin dan status bukan 'aktif' maka tolak login
+        if (strtolower($user->role ?? 'user') !== 'admin' && strtolower($user->status) !== 'aktif') {
             return response()->json([
                 'message' => 'Akun Anda belum aktif. Silakan tunggu persetujuan Admin KANTAH Gowa.'
             ], 403);
         }
 
         // 4. Sukses Login
+        $isAdmin = strtolower($user->role ?? 'user') === 'admin';
+
+        // Buat token Sanctum untuk API authentication
+        $token = $user->createToken('api-token')->plainTextToken;
+
         return response()->json([
             'message' => 'Login Berhasil',
             'user' => $user,
-            // Pastikan Anda mengirim token jika menggunakan Sanctum/JWT
-            'token' => 'dummy-token-atau-generate-token-disini' 
+            'is_admin' => $isAdmin,
+            'redirect' => $isAdmin ? '/AdminDashboard' : '/UserDashboard',
+            'token' => $token,
         ], 200);
     }
 }
