@@ -8,6 +8,10 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\PermohonanController;
 
+
+Route::get('/users', [UserController::class, 'index']);
+
+
 // Route untuk simpan permohonan
 Route::post('/permohonan', [PermohonanController::class, 'store']);
 
@@ -36,7 +40,7 @@ Route::post('/approve-user/{id}', [AdminController::class, 'approveUser']);
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')->group(function () {
-    
+
     // Route lama (tetap dipertahankan agar tidak break fitur lain jika ada)
     Route::get('/users', [AdminController::class, 'getUsers']);
 

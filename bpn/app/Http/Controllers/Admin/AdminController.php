@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Mail\UserApprovedMail;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -17,7 +19,7 @@ class AdminController extends Controller
         return response()->json([
             'total_user'       => User::count(),
             'user_menunggu'    => User::where('status', 'menunggu')->count(),
-            'total_permohonan' => 0, 
+            'total_permohonan' => 0,
             'permohonan_masuk' => 0,
         ]);
     }
@@ -36,7 +38,7 @@ class AdminController extends Controller
                     'nama'    => $user->nama_lengkap,
                     'jabatan' => $user->jabatan,
                     'status'  => ucfirst($user->status),
-                    'notaris' => $user->nama_notaris ?? '-', 
+                    'notaris' => $user->nama_notaris ?? '-',
                 ];
             });
 
@@ -70,7 +72,7 @@ class AdminController extends Controller
     public function showUser($id)
     {
         $user = User::find($id);
-        
+
         if (!$user) {
             return response()->json(['message' => 'User tidak ditemukan'], 404);
         }
@@ -88,7 +90,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Menyetujui pendaftaran user (Update status ke aktif)
+     * Menyetujui pendaftaran user (Update status ke aktif + Kirim Email)
      */
     public function approveUser($id)
     {
@@ -96,6 +98,15 @@ class AdminController extends Controller
         if ($user) {
             $user->status = 'aktif';
             $user->save();
+
+            // Kirim email notifikasi ke user
+            try {
+                Mail::to($user->email)->send(new UserApprovedMail($user));
+            } catch (\Exception $e) {
+                // Log error tapi jangan return error karena user sudah approved
+                \Log::error('Email gagal dikirim: ' . $e->getMessage());
+            }
+
             return response()->json(['message' => 'User approved successfully']);
         }
         return response()->json(['message' => 'User not found'], 404);

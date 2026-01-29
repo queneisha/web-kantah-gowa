@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\UserApprovedMail;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -47,7 +50,7 @@ class UserController extends Controller
 
         return [
             'id'      => $user->id,
-            'nama'    => $user->nama_lengkap, 
+            'nama'    => $user->nama_lengkap,
             'email'   => $user->email,
             'jabatan' => $jabatan,
             'notaris' => $user->nama_notaris,
@@ -61,18 +64,25 @@ class UserController extends Controller
      * Mengubah status user menjadi 'Aktif'
      */
     public function approve($id)
-    {
-        $user = User::find($id);
+{
+    $user = User::find($id);
 
-        if (!$user) {
-            return response()->json(['message' => 'User tidak ditemukan'], 404);
-        }
-
-        $user->status = 'Aktif';
-        $user->save();
-
-        return response()->json(['message' => 'Akun berhasil disetujui!']);
+    if (!$user) {
+        return response()->json(['message' => 'User tidak ditemukan'], 404);
     }
+
+    $user->status = 'Aktif';
+    $user->save();
+
+    Log::info('Mengirim email ke: ' . $user->email);
+
+    Mail::to($user->email)->send(new UserApprovedMail($user));
+
+    Log::info('Email terkirim!');
+
+    return response()->json(['message' => 'Akun disetujui & email dikirim']);
+}
+
 
     /**
      * Menghapus atau menolak user
@@ -80,12 +90,12 @@ class UserController extends Controller
     public function destroy($id)
     {
         $user = User::find($id);
-        
+
         if ($user) {
             $user->delete();
             return response()->json(['message' => 'User berhasil dihapus']);
         }
-        
+
         return response()->json(['message' => 'Gagal menghapus user'], 404);
     }
 }
