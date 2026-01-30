@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   FileEdit, 
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 
 export default function UserDashboardPage() {
+  const router = useRouter();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -50,11 +52,21 @@ export default function UserDashboardPage() {
     }
 
     // 2. Ambil data user yang login (Dihubungkan ke sistem Login)
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUserData(JSON.parse(savedUser));
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      // PROTEKSI: Jika user adalah admin, redirect ke AdminDashboard
+      if (user.role === 'admin') {
+        router.push('/AdminDashboard');
+        return;
+      }
+      setUserData(user);
+    } else {
+      // PROTEKSI: Jika tidak ada user data, redirect ke login
+      router.push('/Login');
+      return;
     }
-  }, []);
+  }, [router]);
 
   // 3. Fetch data permohonan dari backend berdasarkan user_id
   useEffect(() => {
@@ -154,10 +166,11 @@ export default function UserDashboardPage() {
   );
 
   // Fungsi Logout untuk membersihkan storage
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    window.location.href = "/";
+  const handleLogout = async () => {
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    localStorage.removeItem("sidebarStatus");
+    router.push("/");
   };
 
   if (!mounted || !userData) return null;
@@ -220,7 +233,7 @@ export default function UserDashboardPage() {
         {/* MAIN CONTENT */}
         <main className="flex-1 overflow-y-auto bg-[#f8f9fa] flex flex-col">
           <div className="p-10 flex-1">
-            <div className="max-w-350 mx-auto text-left">
+            <div className="w-full text-left">
               <div className="mb-8">
                 <h3 className="text-3xl font-black text-gray-900">Beranda</h3>
                 <p className="text-gray-500 font-medium">Selamat datang, {userData.name || userData.nama_lengkap}</p>
@@ -241,40 +254,40 @@ export default function UserDashboardPage() {
               </div>
 
               {/* ACCOUNT INFO CARD - Terhubung ke Database */}
-<div className="max-w-2xl bg-white rounded-[30px] shadow-xl border-2 border-[#7c4d2d] overflow-hidden">
+<div className="w-full bg-white rounded-[30px] shadow-xl border-2 border-[#7c4d2d] overflow-hidden">
   <div className="bg-[#8b5e3c] p-4 px-8 text-white">
     <span className="font-bold text-lg">Informasi Akun</span>
   </div>
-  <div className="p-8 grid grid-cols-2 gap-y-6">
+  <div className="p-8 space-y-6">
     <div>
       <p className="text-sm text-gray-400 font-bold tracking-tight">Nama Lengkap</p>
-      <p className="font-semibold text-gray-800 text-lg">{userData.name || userData.nama_lengkap}</p>
+      <p className="font-semibold text-gray-800 text-lg break-words">{userData.name || userData.nama_lengkap}</p>
     </div>
     <div>
       <p className="text-sm text-gray-400 font-bold tracking-tight">Email</p>
-      <p className="font-semibold text-gray-800 text-lg">{userData.email}</p>
+      <p className="font-semibold text-gray-800 text-lg break-all">{userData.email}</p>
     </div>
     
     {/* BAGIAN JABATAN YANG DIPERBARUI */}
     <div>
       <p className="text-sm text-gray-400 font-bold tracking-tight">Jabatan</p>
-      <p className="font-semibold text-gray-800 text-lg">{userData.jabatan || userData.role}</p>
+      <p className="font-semibold text-gray-800 text-lg break-words">{userData.jabatan || userData.role}</p>
       
       {/* Logika: Jika jabatan mengandung kata Sekretaris, munculkan Nama Notaris */}
       {(userData.jabatan || "").toLowerCase().includes('sekretaris') && userData.nama_notaris && (
         <p className="text-sm font-normal italic text-gray-600 mt-1 leading-tight">
-          Nama Notaris/PPAT: <span className="font-medium text-gray-700">{userData.nama_notaris}</span>
+          Nama Notaris/PPAT: <span className="font-medium text-gray-700 break-words">{userData.nama_notaris}</span>
         </p>
       )}
     </div>
 
     <div>
       <p className="text-sm text-gray-400 font-bold tracking-tight">No HP.</p>
-      <p className="font-semibold text-gray-800 text-lg">{userData.nomor_hp || userData.phone || "-"}</p>
+      <p className="font-semibold text-gray-800 text-lg break-words">{userData.nomor_hp || userData.phone || "-"}</p>
     </div>
-    <div className="col-span-2">
+    <div>
       <p className="text-sm text-gray-400 font-bold mb-2 tracking-tight">Status</p>
-      <span className="px-5 py-1 bg-green-500 text-white text-[11px] font-bold rounded-full uppercase">
+      <span className="px-5 py-1 bg-green-500 text-white text-[11px] font-bold rounded-full uppercase inline-block">
         {userData.status || "Aktif"}
       </span>
     </div>

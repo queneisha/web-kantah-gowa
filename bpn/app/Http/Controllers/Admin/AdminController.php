@@ -13,13 +13,13 @@ class AdminController extends Controller
 {
     /**
      * Mengambil data statistik untuk dashboard card
-     * Permohonan di-set 0 sementara karena tabel belum ada
+     * Filter: Hanya user dengan role 'user' (bukan admin)
      */
     public function getStats()
     {
         return response()->json([
-            'total_user'       => User::count(),
-            'user_menunggu'    => User::where('status', 'menunggu')->count(),
+            'total_user'       => User::where('role', 'user')->count(),
+            'user_menunggu'    => User::where('role', 'user')->where('status', 'menunggu')->count(),
             'total_permohonan' => Permohonan::count(),
             'permohonan_masuk' => Permohonan::where('status', 'Menunggu')->count(),
         ]);
@@ -27,10 +27,12 @@ class AdminController extends Controller
 
     /**
      * Mengambil data user terbaru (limit 5) untuk tabel di dashboard
+     * Filter: Hanya user dengan role 'user' (bukan admin)
      */
     public function getLatestUsers()
     {
-        $users = User::orderBy('created_at', 'desc')
+        $users = User::where('role', 'user') // FILTER: Hanya user biasa, bukan admin
+            ->orderBy('created_at', 'desc')
             ->take(5)
             ->get()
             ->map(function($user) {
@@ -47,12 +49,14 @@ class AdminController extends Controller
     }
 
     /**
-     * Mengambil semua user dan menyesuaikan format kolom untuk halaman Data User
+     * Mengambil semua user (BUKAN admin) dan menyesuaikan format kolom untuk halaman Data User
+     * Filter: Hanya user dengan role 'user' saja
      * Diurutkan berdasarkan status (menunggu di atas), kemudian dari yang terbaru
      */
     public function getUsers()
     {
-        $users = User::orderByRaw("CASE WHEN status = 'menunggu' THEN 0 ELSE 1 END")
+        $users = User::where('role', 'user') // FILTER: Hanya user biasa, bukan admin
+            ->orderByRaw("CASE WHEN status = 'menunggu' THEN 0 ELSE 1 END")
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function($user) {

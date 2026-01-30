@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import {
@@ -179,6 +179,7 @@ export default function PermohonanPage() {
   const [mounted, setMounted] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
 
 
@@ -216,11 +217,17 @@ export default function PermohonanPage() {
 
     setMounted(true);
 
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
 
     if (storedUser) {
 
       const user = JSON.parse(storedUser);
+
+      // PROTEKSI: Jika user adalah admin, redirect ke AdminDashboard
+      if (user.role === 'admin') {
+        router.push('/AdminDashboard');
+        return;
+      }
 
       setUserData({
 
@@ -232,6 +239,10 @@ export default function PermohonanPage() {
 
       });
 
+    } else {
+      // PROTEKSI: Jika tidak ada user data, redirect ke login
+      router.push('/Login');
+      return;
     }
 
     const saved = localStorage.getItem("sidebarStatus");
@@ -242,7 +253,7 @@ export default function PermohonanPage() {
 
     }
 
-  }, []);
+  }, [router]);
 
 
 
@@ -255,6 +266,15 @@ export default function PermohonanPage() {
     }
 
   }, [isSidebarOpen, mounted]);
+
+  const handleLogout = async () => {
+    // Bersihkan sessionStorage
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    localStorage.removeItem("sidebarStatus");
+    // Redirect ke home
+    router.push("/");
+  };
 
 
 
@@ -772,7 +792,7 @@ export default function PermohonanPage() {
 
                <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 font-bold">Batal</button>
 
-               <Link href="/"><button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold">Ya, Keluar</button></Link>
+               <button onClick={handleLogout} className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold">Ya, Keluar</button>
 
              </div>
 

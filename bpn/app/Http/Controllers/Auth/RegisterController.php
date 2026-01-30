@@ -27,6 +27,7 @@ class RegisterController extends Controller
             'nomor_hp' => $request->nomor_hp,
             'password' => Hash::make($request->password),
             'status' => 'menunggu',
+            'role' => 'user', // Default role untuk user baru
         ]);
 
         return response()->json(['message' => 'Registrasi Berhasil!'], 201);

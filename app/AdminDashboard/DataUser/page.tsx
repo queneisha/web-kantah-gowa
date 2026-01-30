@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   Users, 
@@ -30,6 +31,7 @@ interface UserData {
 }
 
 export default function DataUserPage() {
+  const router = useRouter();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -176,6 +178,15 @@ export default function DataUserPage() {
 
   const handleOpenApprove = (user: UserData) => { setSelectedUser(user); setIsApproveModalOpen(true); };
   const handleOpenReject = (user: UserData) => { setSelectedUser(user); setIsRejectModalOpen(true); };
+
+  const handleLogout = async () => {
+    // Clear all user session data from sessionStorage
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    localStorage.removeItem("sidebarStatus");
+    // Redirect to home page
+    router.push("/");
+  };
 
   const SidebarItem = ({ href, icon: Icon, label, active = false }: any) => (
     <Link href={href} className="block group relative">
@@ -438,7 +449,7 @@ export default function DataUserPage() {
             <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
             <div className="flex justify-end gap-3 mt-10">
               <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 text-gray-600 border-gray-600 font-bold">Batal</button>
-              <Link href="/"><button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold shadow-lg">Ya, Keluar</button></Link>
+              <button onClick={handleLogout} className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold shadow-lg">Ya, Keluar</button>
             </div>
           </div>
         </div>

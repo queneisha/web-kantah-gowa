@@ -7,11 +7,13 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\PermohonanController;
+use App\Http\Controllers\Api\HeroController;
 
 
 Route::get('/users', [UserController::class, 'index']);
 
-
+Route::get('/hero-display', [HeroController::class, 'getHero']);
+Route::post('/hero-update', [HeroController::class, 'updateHero']);
 /*
 |--------------------------------------------------------------------------
 | Public & Auth Routes

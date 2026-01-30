@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   Users, 
@@ -10,7 +11,7 @@ import {
   Edit3,
   ChevronDown,
   Trash2,
-  Eye,
+  Edit,
   Menu,
   FileSpreadsheet,
   Search,
@@ -35,6 +36,7 @@ interface Permohonan {
 }
 
 export default function DataPermohonanPage() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [selectedMohon, setSelectedMohon] = useState<Permohonan | null>(null);
@@ -64,16 +66,40 @@ export default function DataPermohonanPage() {
   const fetchAllPermohonan = async () => {
     try {
       setIsLoading(true);
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
       const response = await fetch('http://localhost:8000/api/all-permohonan', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         }
       });
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Server error: ${response.status}`);
+        let errorData: any = null;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          console.error('Gagal parse response JSON:', e);
+        }
+        console.error('Fetch /all-permohonan error', response.status, errorData);
+
+        // Jika tidak terautentikasi atau tidak diizinkan, arahkan ke halaman login
+        if (response.status === 401 || response.status === 403) {
+          setNotification({ type: 'error', message: 'Sesi berakhir atau tidak memiliki akses. Silakan login ulang.' });
+          try {
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+          } catch (e) {
+            // ignore
+          }
+          setTimeout(() => {
+            if (typeof window !== 'undefined') window.location.href = '/Login';
+          }, 1200);
+          return;
+        }
+
+        throw new Error((errorData && errorData.message) || `Server error: ${response.status}`);
       }
       const data = await response.json();
       setAllPermohonan(data);
@@ -86,7 +112,7 @@ export default function DataPermohonanPage() {
 
   useEffect(() => {
     setMounted(true);
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
       try {
         const user = JSON.parse(storedUser);
@@ -145,23 +171,33 @@ export default function DataPermohonanPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filteredData = allPermohonan.filter((item) => {
-    const matchesStatus = filterStatus === "Semua Status" || item.status === filterStatus;
-    const matchesSearch = 
-      (item.nama?.toLowerCase() || "").includes(searchTerm.toLowerCase()) || 
-      (item.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-      (item.noSertifikat || "").includes(searchTerm);
-    return matchesStatus && matchesSearch;
-  });
+  const filteredData = allPermohonan
+    .filter((item) => {
+      // Filter untuk hanya menampilkan permohonan yang MENUNGGU atau DIPROSES
+      const isActiveStatus = item.status === "Menunggu" || item.status === "Proses";
+      const matchesSearch = 
+        (item.nama?.toLowerCase() || "").includes(searchTerm.toLowerCase()) || 
+        (item.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (item.noSertifikat || "").includes(searchTerm);
+      return isActiveStatus && matchesSearch;
+    })
+    .sort((a, b) => {
+      // Prioritas: Menunggu di atas, Proses di bawah
+      if (a.status === "Menunggu" && b.status !== "Menunggu") return -1;
+      if (a.status !== "Menunggu" && b.status === "Menunggu") return 1;
+      return 0;
+    });
 
   // Fungsi untuk membuka data (ubah status ke Proses)
   const handleInstantProcess = async (id: string) => {
     try {
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
       const response = await fetch(`http://localhost:8000/api/permohonan/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify({ status: 'Proses' })
       });
@@ -200,11 +236,13 @@ export default function DataPermohonanPage() {
     if (!selectedMohon) return;
     try {
       setIsSaving(true);
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
       const response = await fetch(`http://localhost:8000/api/permohonan/${selectedMohon.id}`, {
         method: 'DELETE',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         }
       });
       if (response.ok) {
@@ -236,11 +274,13 @@ export default function DataPermohonanPage() {
       if (newStatus === 'Ditolak' && catatanPenolakan.trim()) {
         payload.catatan = catatanPenolakan;
       }
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
       const response = await fetch(`http://localhost:8000/api/permohonan/${selectedMohon.id}/status`, {
         method: 'PATCH',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify(payload)
       });
@@ -264,6 +304,15 @@ export default function DataPermohonanPage() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleLogout = async () => {
+    // Clear all user session data from localStorage
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("sidebarStatus");
+    // Redirect to home page
+    router.push("/");
   };
 
   const SidebarItem = ({ href, icon: Icon, label, active = false }: any) => (
@@ -444,7 +493,7 @@ export default function DataPermohonanPage() {
                                 ) : (
                                   <>
                                     <button onClick={() => handleOpenEdit(mohon)} className="p-2 text-blue-500 bg-blue-50 rounded-xl hover:bg-blue-500 hover:text-white transition-all">
-                                      <Eye size={16} />
+                                      <Edit size={16} />
                                     </button>
                                     <button onClick={() => handleDeleteClick(mohon)} className="p-2 text-red-500 bg-red-50 rounded-xl hover:bg-red-500 hover:text-white transition-all">
                                       <Trash2 size={16} />
@@ -564,6 +613,34 @@ export default function DataPermohonanPage() {
               <button onClick={() => setIsEditPopupOpen(false)} disabled={isSaving} className="px-8 py-3 rounded-full border-2 border-gray-100 font-bold text-gray-400 hover:bg-gray-50 transition text-sm disabled:opacity-50">Batal</button>
               <button onClick={handleUpdateStatus} disabled={isSaving || !newStatus} className="px-10 py-3 rounded-full bg-[#1a1a1a] text-white font-bold hover:bg-black transition shadow-lg text-sm disabled:opacity-50">{isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}</button>
             </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL POP UP KELUAR */}
+      {isLogoutModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="space-y-4">
+              <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
+              <p className="text-gray-500 font-medium leading-relaxed">
+                Anda akan keluar dari admin panel. Anda perlu login kembali untuk mengakses sistem.
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 mt-10">
+              <button 
+                onClick={() => setIsLogoutModalOpen(false)}
+                className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold hover:bg-gray-50 transition"
+              >
+            Batal
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200"
+              >
+                  Ya, Keluar
+                </button>
             </div>
           </div>
         </div>

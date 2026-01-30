@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   Users, 
@@ -24,11 +25,14 @@ import {
 import { button } from "framer-motion/client";  
 
 export default function EditKontenPage() {
+  const router = useRouter();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [activeTab, setActiveTab] = useState("hero");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [bgHero, setBgHero] = useState<string | null>(null);
 
   // State untuk menyimpan data teks
   const [konten, setKonten] = useState({
@@ -91,39 +95,131 @@ export default function EditKontenPage() {
     { id: 4, judul: "Notifikasi Otomatis", deskripsi: "Terima pemberitahuan melalui sistem dan email untuk setiap update" }
 ]);
 
-  const handleSave = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+const fileInputRef = React.useRef<HTMLInputElement>(null);
+//untuk trigger klik pada input file yg tersembunyi
+const handleUploadClick = () => {
+  fileInputRef.current?.click();
+};
+
+//fungsi waktu file dipilih
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files && e.target.files[0]) {
+    setSelectedFile(e.target.files[0]);
+    //opsi: bisa tambah alert atau preview gambar
+    alert(`File dipilih: ${e.target.files[0].name}`);
+  }
+};
+
+   const handleSave = async () => {
+  const formData = new FormData();
+
+  // teks
+  formData.append("heroTitle1", konten.heroTitle1);
+  formData.append("heroTitle2", konten.heroTitle2);
+  formData.append("heroTitle3", konten.heroTitle3);
+
+  // gambar
+  if (selectedFile) {
+    formData.append("image", selectedFile);
+  }
+
+  try {
+    const response = await fetch("http://localhost:8000/api/hero-update", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error("Gagal menyimpan");
+
+    // 🔥 trigger Hero reload
+    window.dispatchEvent(new Event("heroUpdated"));
+
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
-    console.log("Data Register yang disimpan:", registerKonten);
-    // Tambahkan logika pengiriman ke API/Backend di sini
-    alert("Perubahan berhasil disimpan!");
+
+    alert("Berhasil! Hero Section diperbarui.");
+  } catch (error) {
+    console.error("Gagal simpan:", error);
+    alert("Gagal menyimpan data");
+  }
+};
+  // // --- FUNGSI SIMPAN KE BACKEND ---
+  // const handleSave = async (e?: React.FormEvent) => {
+  //   if (e) e.preventDefault();
+
+  //   try {
+  //     const formData = new FormData();
+  //     // Pastikan nama state-nya 'registerKonten', kalau 'konten' silakan ganti
+  //     formData.append("heroTitle1", konten.heroTitle1);
+  //     formData.append("heroTitle2", konten.heroTitle2);
+  //     formData.append("heroTitle3", konten.heroTitle3);
+      
+  //     if (selectedFile) {
+  //       formData.append("image", selectedFile);
+  //     }
+
+  //     const response = await fetch("http://localhost:8000/api/hero-update", {
+  //       method: "POST",
+  //       body: formData,
+  //     });
+
+  //     if (response.ok) {
+  //       setIsSaved(true);
+  //       setTimeout(() => setIsSaved(false), 3000);
+  //       alert("Berhasil disimpan ke Database!");
+  //     }
+  //   } catch (err) {
+  //     console.error("Error:", err);
+  //     alert("Gagal koneksi ke Laravel!");
+  //   }
+  // }; // <--- PENUTUP HANDLE SAVE HARUS DI SINI
+
+      // --- FUNGSI UPDATE LAINNYA ---
+      const updateFitur = (id: number, field: string, value: string) => {
+        setFiturUtama(fiturUtama.map(item => item.id === id ? { ...item, [field]: value } : item));
+      };
+
+      const updateAlur = (id: number, field: string, value: string) => {
+        setAlurSistem(alurSistem.map(item => item.id === id ? { ...item, [field]: value } : item));
+      };
+
+      // --- USE EFFECTS ---
+      useEffect(() => {
+        const savedBg = localStorage.getItem("heroBackground");
+        if (savedBg) {
+          setBgHero(savedBg);
+        }
+      }, []);
+
+      useEffect(() => {
+        setMounted(true);
+        const saved = localStorage.getItem("sidebarStatus");
+        if (saved !== null) {
+          setIsSidebarOpen(JSON.parse(saved));
+        }
+      }, []);
+
+      useEffect(() => {
+        if (mounted) {
+          localStorage.setItem("sidebarStatus", JSON.stringify(isSidebarOpen));
+        }
+      }, [isSidebarOpen, mounted]);
+
+      // 2. Simpan status sidebar setiap kali berubah
+      useEffect(() => {
+        if (mounted) {
+          localStorage.setItem("sidebarStatus", JSON.stringify(isSidebarOpen));
+        }
+      }, [isSidebarOpen, mounted]);
+
+  const handleLogout = async () => {
+    // Clear all user session data from sessionStorage
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    localStorage.removeItem("sidebarStatus");
+    // Redirect to home page
+    router.push("/");
   };
-
-  const updateFitur = (id: number, field: string, value: string) => {
-  setFiturUtama(fiturUtama.map(item => item.id === id ? { ...item, [field]: value } : item));
-};
-
-  // Fungsi untuk update teks alur
-  const updateAlur = (id: number, field: string, value: string) => {
-    setAlurSistem(alurSistem.map(item => item.id === id ? { ...item, [field]: value } : item));
-};
-
-// 1. Efek untuk menangani mounting dan membaca localStorage (Cegah Hydration Error)
-  useEffect(() => {
-    setMounted(true);
-    const saved = localStorage.getItem("sidebarStatus");
-    if (saved !== null) {
-      setIsSidebarOpen(JSON.parse(saved));
-    }
-  }, []);
-
-  // 2. Simpan status sidebar setiap kali berubah
-  useEffect(() => {
-    if (mounted) {
-      localStorage.setItem("sidebarStatus", JSON.stringify(isSidebarOpen));
-    }
-  }, [isSidebarOpen, mounted]);
 
   // Helper untuk Sidebar Item
   const SidebarItem = ({ href, icon: Icon, label, active = false }: any) => (
@@ -294,21 +390,36 @@ export default function EditKontenPage() {
                     />
                     </div>
 
-                    <div className="space-y-1">
-                    <label className="text-[15px] font-bold text-gray-900 ml-1 block mb-3">Gambar Background</label>
-                    <div className="group bg-gray-50 p-6 rounded-[20px] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-center space-y-3 hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300">
-                        <div className="p-3 bg-white rounded-full text-gray-900 shadow-sm group-hover:text-[#56b35a] transition-colors">
-                        <ImageIcon size={24} />
-                        </div>
-                        <div className="space-y-1">
-                        <p className="text-[13px] font-bold text-gray-800 group-hover:text-[#56b35a] transition-colors">Ganti Gambar Hero</p>
-                        <p className="text-[10px] text-gray-900 font-black">Maksimal 2MB • JPG/PNG</p>
-                        </div>
-                        <button className="text-[11px] font-black bg-gray-900 text-white px-5 py-2 rounded-lg tracking-widest group-hover:bg-[#56b35a] transition-all">
-                        Pilih File
-                        </button>
-                    </div>
-                    </div>
+                   <div className="space-y-1">
+                <label className="text-[15px] font-bold text-gray-900 ml-1 block mb-3">Gambar Background</label>
+                
+                {/* Input File Tersembunyi */}
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  accept="image/*" 
+                  className="hidden" 
+                />
+
+                <div 
+                  onClick={handleUploadClick} // Klik di mana saja di kotak ini akan buka explorer
+                  className="group bg-gray-50 p-6 rounded-[20px] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-center space-y-3 hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300"
+                >
+                  <div className="p-3 bg-white rounded-full text-gray-900 shadow-sm group-hover:text-[#56b35a] transition-colors">
+                    <ImageIcon size={24} />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[13px] font-bold text-gray-800 group-hover:text-[#56b35a] transition-colors">
+                      {selectedFile ? `File: ${selectedFile.name}` : "Ganti Gambar Hero"}
+                    </p>
+                    <p className="text-[10px] text-gray-900 font-black">Maksimal 2MB • JPG/PNG</p>
+                  </div>
+                  <button className="text-[11px] font-black bg-gray-900 text-white px-5 py-2 rounded-lg tracking-widest group-hover:bg-[#56b35a] transition-all">
+                    Pilih File
+                  </button>
+                </div>
+              </div>
                 </div>
               </section>
               )}
@@ -862,19 +973,16 @@ export default function EditKontenPage() {
                 Batal
               </button>
 
-              <Link href="/">
-                <button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200">
+              <button 
+                onClick={handleLogout}
+                className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200"
+              >
                   Ya, Keluar
                 </button>
-              </Link>
             </div>
           </div>
         </div>
       )}
     </div>
   );
-}
-
-function setMounted(arg0: boolean) {
-  throw new Error("Function not implemented.");
 }

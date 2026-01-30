@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   FileEdit, 
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 
 export default function RiwayatPage() {
+  const router = useRouter();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState("Semua Status");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -97,19 +99,26 @@ export default function RiwayatPage() {
       setIsSidebarOpen(JSON.parse(saved));
     }
 
-    // Ambil data user dari localStorage
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
+    // Ambil data user dari sessionStorage
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      // PROTEKSI: Jika user adalah admin, redirect ke AdminDashboard
+      if (user.role === 'admin') {
+        router.push('/AdminDashboard');
+        return;
+      }
       setUserData(user);
       // Fetch riwayat permohonan berdasarkan user_id
       if (user.id) {
         fetchRiwayatPermohonan(user.id);
       }
     } else {
-      setIsLoading(false);
+      // PROTEKSI: Jika tidak ada user data, redirect ke login
+      router.push('/Login');
+      return;
     }
-  }, []);
+  }, [router]);
 
   // 2. Simpan status sidebar setiap kali berubah
   useEffect(() => {
@@ -334,11 +343,15 @@ export default function RiwayatPage() {
                 Batal
               </button>
 
-              <Link href="/">
-                <button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200">
-                  Ya, Keluar
-                </button>
-              </Link>
+              <button 
+                onClick={() => {
+                  setIsLogoutModalOpen(false);
+                  handleLogout();
+                }}
+                className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200"
+              >
+                Ya, Keluar
+              </button>
             </div>
           </div>
         </div>

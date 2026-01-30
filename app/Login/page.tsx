@@ -45,8 +45,11 @@ export default function LoginPage() {
         }
 
         // --- LOGIKA PENYIMPANAN DATA USER (Hanya jika status 'aktif') ---
-        localStorage.setItem("user", JSON.stringify(result.user)); 
-        localStorage.setItem("token", result.token);
+        // Gunakan sessionStorage untuk user data (isolated per tab/window)
+        sessionStorage.setItem("user", JSON.stringify(result.user)); 
+        sessionStorage.setItem("token", result.token);
+        // localStorage hanya untuk preference yang persisten
+        localStorage.setItem("sidebarStatus", JSON.stringify(false));
 
         alert(`Selamat Datang, ${result.user.nama_lengkap || result.user.name || 'User'}!`);
         

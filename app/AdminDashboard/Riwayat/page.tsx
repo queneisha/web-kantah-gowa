@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   Users, 
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 
 export default function RiwayatPage() {
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -24,11 +26,45 @@ export default function RiwayatPage() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBulan, setFilterBulan] = useState("Semua");
+  const [riwayatData, setRiwayatData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch riwayat permohonan (Disetujui & Ditolak)
+  const fetchRiwayatPermohonan = async () => {
+    try {
+      setIsLoading(true);
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+      const response = await fetch('http://localhost:8000/api/all-permohonan', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Filter hanya permohonan yang sudah disetujui atau ditolak
+        const finished = data.filter((item: any) => 
+          item.status === "Disetujui" || item.status === "Ditolak"
+        );
+        setRiwayatData(finished);
+      }
+    } catch (error) {
+      console.error('Gagal fetch riwayat:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
     const saved = localStorage.getItem("sidebarStatus");
     if (saved !== null) setIsSidebarOpen(JSON.parse(saved));
+    
+    // Fetch riwayat saat component mount
+    fetchRiwayatPermohonan();
   }, []);
 
   useEffect(() => {
@@ -37,22 +73,49 @@ export default function RiwayatPage() {
     }
   }, [isSidebarOpen, mounted]);
 
-  const initialData = [
-    { nama: "Nabila Humairah AR", email: "bila00@gmail.com", tglDaftar: "11 Januari 2026", bulan: "Januari", jenisPendaftaran: "Pengecekan", jenisHak: "Hak Guna Bangunan", noSertifikat: "32143", lokasi: "Somba Opu", subLokasi: "Barombong", status: "Disetujui" },
-    { nama: "Niki Renaningtyas", email: "tyas01@gmail.com", tglDaftar: "12 Januari 2026", bulan: "Januari", jenisPendaftaran: "SKPT", jenisHak: "Hak Milik", noSertifikat: "65487", lokasi: "Palangga", subLokasi: "Baringkanaya", status: "Ditolak" },
-    { nama: "Rahmat Hidayat", email: "rahmat@gmail.com", tglDaftar: "05 Februari 2026", bulan: "Februari", jenisPendaftaran: "Peralihan", jenisHak: "Hak Milik", noSertifikat: "99211", lokasi: "Somba Opu", subLokasi: "Tompobulu", status: "Disetujui" },
-    { nama: "Nabila Humairah AR", email: "bila00@gmail.com", tglDaftar: "11 Januari 2026", bulan: "Januari", jenisPendaftaran: "Pengecekan", jenisHak: "Hak Guna Bangunan", noSertifikat: "32143", lokasi: "Somba Opu", subLokasi: "Barombong", status: "Disetujui" },
-    { nama: "Niki Renaningtyas", email: "tyas01@gmail.com", tglDaftar: "12 Januari 2026", bulan: "Januari", jenisPendaftaran: "SKPT", jenisHak: "Hak Milik", noSertifikat: "65487", lokasi: "Palangga", subLokasi: "Baringkanaya", status: "Ditolak" },
-    { nama: "Nabila Humairah AR", email: "bila00@gmail.com", tglDaftar: "11 Januari 2026", bulan: "Januari", jenisPendaftaran: "Pengecekan", jenisHak: "Hak Guna Bangunan", noSertifikat: "32143", lokasi: "Somba Opu", subLokasi: "Barombong", status: "Disetujui" },
-    { nama: "Niki Renaningtyas", email: "tyas01@gmail.com", tglDaftar: "12 Januari 2026", bulan: "Januari", jenisPendaftaran: "SKPT", jenisHak: "Hak Milik", noSertifikat: "65487", lokasi: "Palangga", subLokasi: "Baringkanaya", status: "Ditolak" },
-    { nama: "Rahmat Hidayat", email: "rahmat@gmail.com", tglDaftar: "05 Februari 2026", bulan: "Februari", jenisPendaftaran: "Peralihan", jenisHak: "Hak Milik", noSertifikat: "99211", lokasi: "Somba Opu", subLokasi: "Tompobulu", status: "Disetujui" },
-    { nama: "Nabila Humairah AR", email: "bila00@gmail.com", tglDaftar: "11 Januari 2026", bulan: "Januari", jenisPendaftaran: "Pengecekan", jenisHak: "Hak Guna Bangunan", noSertifikat: "32143", lokasi: "Somba Opu", subLokasi: "Barombong", status: "Disetujui" },
-    { nama: "Niki Renaningtyas", email: "tyas01@gmail.com", tglDaftar: "12 Januari 2026", bulan: "Januari", jenisPendaftaran: "SKPT", jenisHak: "Hak Milik", noSertifikat: "65487", lokasi: "Palangga", subLokasi: "Baringkanaya", status: "Ditolak" },
-    { nama: "Rahmat Hidayat", email: "rahmat@gmail.com", tglDaftar: "05 Februari 2026", bulan: "Februari", jenisPendaftaran: "Peralihan", jenisHak: "Hak Milik", noSertifikat: "99211", lokasi: "Somba Opu", subLokasi: "Tompobulu", status: "Disetujui" },
-    { nama: "Rahmat Hidayat", email: "rahmat@gmail.com", tglDaftar: "05 Februari 2026", bulan: "Februari", jenisPendaftaran: "Peralihan", jenisHak: "Hak Milik", noSertifikat: "99211", lokasi: "Somba Opu", subLokasi: "Tompobulu", status: "Disetujui" },
-  ];
+  // Helper function untuk parse tanggal dari format "d-m-Y"
+  const parseDate = (dateStr: string) => {
+    if (!dateStr) return "N/A";
+    try {
+      // Format dari API: "d-m-Y" (e.g., "30-01-2026")
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const day = parts[0];
+        const month = parts[1];
+        const year = parts[2];
+        const date = new Date(`${year}-${month}-${day}`);
+        return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+      }
+      return dateStr;
+    } catch (e) {
+      return dateStr;
+    }
+  };
 
-  const filteredData = initialData.filter((item) => {
+  // Helper function untuk convert nomor bulan ke nama bulan Indonesia
+  const getMonthName = (monthNum: string) => {
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const num = parseInt(monthNum);
+    return months[num - 1] || "N/A";
+  };
+
+  // Transform data dari API format ke display format
+  const displayData = riwayatData.map((item: any) => ({
+    nama: item.nama || "N/A",
+    email: item.email || "N/A",
+    tglDaftar: parseDate(item.tgl),
+    bulan: item.tgl ? getMonthName(item.tgl.split('-')[1]) : "N/A", // Convert nomor bulan ke nama
+    jenisPendaftaran: item.jenis || "N/A",
+    keteranganLainnya: item.jenis_lainnya || "-",
+    jenisHak: item.hak || "N/A",
+    noSertifikat: item.noSertifikat || "N/A",
+    lokasi: item.lokasi || "N/A",
+    subLokasi: item.kecamatan || "N/A",
+    catatan: item.catatan || "-",
+    status: item.status || "N/A"
+  }));
+
+  const filteredData = displayData.filter((item) => {
     const matchesSearch = item.nama.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           item.noSertifikat.includes(searchTerm);
     const matchesBulan = filterBulan === "Semua" || item.bulan === filterBulan;
@@ -60,6 +123,15 @@ export default function RiwayatPage() {
   });
 
   if (!mounted) return null;
+
+  const handleLogout = async () => {
+    // Clear all user session data from sessionStorage
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    localStorage.removeItem("sidebarStatus");
+    // Redirect to home page
+    router.push("/");
+  };
 
   const SidebarItem = ({ href, icon: Icon, label, active = false }: any) => (
     <Link href={href} className="block group relative">
@@ -138,12 +210,21 @@ export default function RiwayatPage() {
                   {searchTerm && <button onClick={() => setSearchTerm("")} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-red-500"><X size={20} /></button>}
                 </div>
                 <div className="relative">
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700" size={20} />
-                  <select className="w-full pl-12 pr-8 py-4 text-gray-700 bg-white border-2 border-gray-100 shadow-sm rounded-2xl font-bold appearance-none outline-none focus:border-[#56b35a] cursor-pointer" value={filterBulan} onChange={(e) => setFilterBulan(e.target.value)}>
-                    <option value="Semua">Semua Bulan</option>
-                    <option value="Januari">Januari 2026</option>
-                    <option value="Februari">Februari 2026</option>
-                    <option value="Maret">Maret 2026</option>
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700 pointer-events-none" size={20} />
+                  <select className="w-full pl-12 pr-8 py-4 text-gray-700 bg-white border-2 border-gray-400 shadow-md rounded-2xl font-bold appearance-none outline-none focus:border-[#56b35a] focus:ring-2 focus:ring-[#56b35a]/20 cursor-pointer transition" value={filterBulan} onChange={(e) => setFilterBulan(e.target.value)}>
+                    <option value="Semua" className="border border-gray-300">Semua Bulan</option>
+                    <option value="Januari" className="border border-gray-300">Januari 2026</option>
+                    <option value="Februari" className="border border-gray-300">Februari 2026</option>
+                    <option value="Maret" className="border border-gray-300">Maret 2026</option>
+                    <option value="April" className="border border-gray-300">April 2026</option>
+                    <option value="Mei" className="border border-gray-300">Mei 2026</option>
+                    <option value="Juni" className="border border-gray-300">Juni 2026</option>
+                    <option value="Juli" className="border border-gray-300">Juli 2026</option>
+                    <option value="Agustus" className="border border-gray-300">Agustus 2026</option>
+                    <option value="September" className="border border-gray-300">September 2026</option>
+                    <option value="Oktober" className="border border-gray-300">Oktober 2026</option>
+                    <option value="November" className="border border-gray-300">November 2026</option>
+                    <option value="Desember" className="border border-gray-300">Desember 2026</option>
                   </select>
                 </div>
               </div>
@@ -157,9 +238,11 @@ export default function RiwayatPage() {
                         <th className="py-6 px-6 font-bold">Nama Notaris/PPAT</th>
                         <th className="py-6 px-6 font-bold">Tgl Daftar</th>
                         <th className="py-6 px-6 font-bold">Jenis Pendaftaran</th>
+                        <th className="py-6 px-6 font-bold">Keterangan Lainnya</th>
                         <th className="py-6 px-6 font-bold">Jenis Hak</th>
                         <th className="py-6 px-6 font-bold">No. Sertifikat</th>
                         <th className="py-6 px-6 font-bold">Lokasi</th>
+                        <th className="py-6 px-6 font-bold">Catatan</th>
                         <th className="py-6 px-6 text-center font-bold">Status</th>
                       </tr>
                     </thead>
@@ -173,12 +256,14 @@ export default function RiwayatPage() {
                             </td>
                             <td className="py-6 px-6 font-medium text-gray-600">{row.tglDaftar}</td>
                             <td className="py-6 px-6 font-medium text-gray-600">{row.jenisPendaftaran}</td>
+                            <td className="py-6 px-6 font-medium text-gray-600 text-sm">{row.keteranganLainnya}</td>
                             <td className="py-6 px-6 font-medium text-gray-600">{row.jenisHak}</td>
                             <td className="py-6 px-6 font-medium text-gray-600 tracking-wider">{row.noSertifikat}</td>
                             <td className="py-6 px-6">
                               <div className="font-bold text-gray-800">{row.lokasi}</div>
                               <div className="text-xs text-gray-500">{row.subLokasi}</div>
                             </td>
+                            <td className="py-6 px-6 font-medium text-gray-600 text-sm">{row.catatan}</td>
                             <td className="py-6 px-6 text-center">
                               <span className={`inline-block px-4 py-1 rounded-full border-2 font-bold text-[11px] min-w-[90px] ${row.status === "Disetujui" ? "border-green-500 text-green-600" : "border-red-400 text-red-500"}`}>
                                 {row.status}
@@ -187,7 +272,7 @@ export default function RiwayatPage() {
                           </tr>
                         ))
                       ) : (
-                        <tr><td colSpan={7} className="py-20 text-center text-gray-400 font-bold text-lg">Data tidak ditemukan...</td></tr>
+                        <tr><td colSpan={9} className="py-20 text-center text-gray-400 font-bold text-lg">Data tidak ditemukan...</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -277,11 +362,12 @@ export default function RiwayatPage() {
               >
             Batal
               </button>
-              <Link href="/">
-                <button className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200">
+              <button 
+                onClick={handleLogout}
+                className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200"
+              >
                   Ya, Keluar
                 </button>
-              </Link>
             </div>
        </div>
         </div>
