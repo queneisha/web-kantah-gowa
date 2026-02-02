@@ -5,240 +5,143 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import {
-
   LayoutDashboard,
-
   FileEdit,
-
   History,
-
   Bell,
-
   LogOut,
-
   FileText,
-
   Send,
-
   RotateCcw,
-
   ChevronDown,
-
   CheckCircle2,
-
   AlertTriangle,
-
   Menu
-
 } from "lucide-react";
-
-
 
 // --- KOMPONEN CUSTOM DROPDOWN ---
 
 interface AdminSelectProps {
-
   label: string;
-
   options: string[];
-
   value: string;
-
   onChange: (name: string, value: string) => void;
-
   placeholder: string;
-
   name: string;
-
 }
 
 
-
 const AdminStyleSelect: React.FC<AdminSelectProps> = ({ label, options, value, onChange, placeholder, name }) => {
-
   const [isOpen, setIsOpen] = useState(false);
-
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-
-
   useEffect(() => {
-
     const handleClickOutside = (event: MouseEvent) => {
-
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-
         setIsOpen(false);
-
       }
-
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-
     return () => document.removeEventListener("mousedown", handleClickOutside);
-
   }, []);
 
-
-
   return (
-
     <div className="space-y-1.5 relative" ref={dropdownRef}>
-
       {label && <label className="text-sm font-bold text-gray-700 ml-1">{label}</label>}
-
       <button
-
         type="button"
-
         onClick={() => setIsOpen(!isOpen)}
-
         className={`w-full flex items-center justify-between px-5 py-3 rounded-xl font-medium transition-all border-none outline-none
-
           ${isOpen ? "ring-2 ring-[#56b35a] bg-white shadow-md" : "bg-[#e9e9e9] text-black"}`}
-
       >
-
         <span className={value ? "text-black" : "text-gray-500"}>
-
           {value || placeholder}
-
         </span>
 
         <ChevronDown
-
           size={20}
-
           className={`transition-transform duration-300 ${isOpen ? "rotate-180 text-[#56b35a]" : "text-gray-500"}`}
-
         />
-
       </button>
 
-
-
       {isOpen && (
-
         <div className="absolute z-[100] w-full mt-2 bg-white border border-gray-100 shadow-2xl rounded-[25px] p-2 animate-in fade-in zoom-in duration-200">
-
           {options.map((opt) => (
-
             <button
-
               key={opt}
-
               type="button"
-
               onClick={() => {
-
                 onChange(name, opt);
-
                 setIsOpen(false);
-
               }}
-
               className={`w-full text-center py-3 px-4 my-1 rounded-full text-sm font-bold transition-all
-
                 ${value === opt
-
                   ? "bg-[#56b35a] text-white shadow-lg"
-
                   : "bg-gray-50 text-gray-700 hover:bg-gray-100"}`}
-
             >
-
               {opt}
-
             </button>
-
           ))}
-
         </div>
-
       )}
-
     </div>
-
   );
-
 };
 
-
-
 export default function PermohonanPage() {
-
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
   const [mounted, setMounted] = useState(false);
-
   const [isLoading, setIsLoading] = useState(false);
+  const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
   const router = useRouter();
 
-
-
   const [userData, setUserData] = useState({
-
     id: null,
-
     nama: "Guest",
-
     email: "guest@mail.com"
-
   });
-
-
 
   const [formData, setFormData] = useState({
-
     jenisPendaftaran: "",
-
     catatanPendaftaran: "",
-
     jenisHak: "",
-
     noSertipikat: "",
-
     desa: "",
-
     kecamatan: ""
-
   });
 
-
-
   useEffect(() => {
-
     setMounted(true);
-
     const storedUser = sessionStorage.getItem("user");
-
     if (storedUser) {
-
       const user = JSON.parse(storedUser);
-
       // PROTEKSI: Jika user adalah admin, redirect ke AdminDashboard
       if (user.role === 'admin') {
         router.push('/AdminDashboard');
         return;
       }
 
+    // Fetch navbar icon dari backend
+    const fetchNavbarIcon = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/hero-display");
+        const data = await res.json();
+        setNavbarIconUrl(data.navbarIcon || "/logo.png");
+      } catch (error) {
+        console.error("Gagal fetch navbar icon:", error);
+      }
+    };
+
+    fetchNavbarIcon();
+
       setUserData({
-
         id: user.id,
-
         nama: user.nama_lengkap || user.nama || "User",
-
         email: user.email || ""
-
       });
-
     } else {
       // PROTEKSI: Jika tidak ada user data, redirect ke login
       router.push('/Login');
@@ -246,25 +149,15 @@ export default function PermohonanPage() {
     }
 
     const saved = localStorage.getItem("sidebarStatus");
-
     if (saved !== null) {
-
       setIsSidebarOpen(JSON.parse(saved));
-
     }
-
   }, [router]);
 
-
-
   useEffect(() => {
-
     if (mounted) {
-
       localStorage.setItem("sidebarStatus", JSON.stringify(isSidebarOpen));
-
     }
-
   }, [isSidebarOpen, mounted]);
 
   const handleLogout = async () => {
@@ -276,80 +169,42 @@ export default function PermohonanPage() {
     router.push("/");
   };
 
-
-
   const handleCustomChange = (name: string, value: string) => {
-
     setFormData(prev => ({
-
       ...prev,
-
       [name]: value,
-
       catatanPendaftaran: name === "jenisPendaftaran" && value !== "Lainnya" ? "" : prev.catatanPendaftaran
-
     }));
-
   };
-
-
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-
     const { name, value } = e.target;
-
     setFormData(prev => ({ ...prev, [name]: value }));
-
   };
-
-
 
   const handleNoSertipikatChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-
     const value = e.target.value;
-
     if (value === "" || (/^\d+$/.test(value) && value.length <= 5)) {
-
       setFormData(prev => ({ ...prev, noSertipikat: value }));
-
     }
-
   };
-
-
 
   const handleReset = () => {
-
     setFormData({
-
       jenisPendaftaran: "",
-
       catatanPendaftaran: "",
-
       jenisHak: "",
-
       noSertipikat: "",
-
       desa: "",
-
       kecamatan: ""
-
     });
-
   };
 
-
-
   const triggerConfirm = (e: React.FormEvent) => {
-
     e.preventDefault();
-
     if (!formData.jenisPendaftaran || !formData.jenisHak || !formData.noSertipikat || !formData.desa || !formData.kecamatan) {
-
         alert("Harap lengkapi seluruh data form!");
-
         return;
-
     }
 
     // Validasi: jika jenis pendaftaran "Lainnya", catatan harus diisi
@@ -501,37 +356,24 @@ export default function PermohonanPage() {
     <div className="flex flex-col h-screen bg-[#f5f5f5] font-sans overflow-hidden relative">
 
       <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
-
         <div className="flex items-center">
-
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg mr-4">
-
-            <Menu size={24} />
-
-          </button>
-
-          <div className="flex items-center gap-3">
-
-            <img src="/logo.png" alt="Logo" className="h-10 w-auto" />
-
-            <div className="flex flex-col">
-
-              <h1 className="font-bold text-lg leading-none">KANTAH Gowa - User</h1>
-
-              <p className="text-[10px] opacity-70">Sistem Manajemen Internal</p>
-
+            <div className="w-12 flex justify-start items-center">
+              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                <Menu size={24} />
+              </button>
             </div>
-
-          </div>
-
+            <div className="flex items-center gap-3 ml-4">
+              <img src={navbarIconUrl} alt="Logo" className="h-10 w-auto shrink-0" />
+                <div className="flex flex-col min-w-max">
+                  <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - User</h1>
+                  <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
+                </div>
+            </div>
         </div>
 
         <div className="text-right hidden sm:block">
-
           <h2 className="text-sm font-bold tracking-tight">{userData.nama}</h2>
-
           <p className="text-[10px] opacity-70">{userData.email}</p>
-
         </div>
 
       </header>

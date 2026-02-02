@@ -270,6 +270,34 @@ const handleNavbarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     </Link>
   );
 
+  const [loginBgFile, setLoginBgFile] = useState<File | null>(null);
+const loginBgInputRef = React.useRef<HTMLInputElement>(null);
+
+const handleLoginBgClick = () => {
+  loginBgInputRef.current?.click();
+};
+
+const handleLoginBgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files && e.target.files[0]) {
+    setLoginBgFile(e.target.files[0]);
+  }
+};
+
+
+  const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
+  // Fetch navbar icon dari backend
+    const fetchNavbarIcon = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/hero-display");
+        const data = await res.json();
+        setNavbarIconUrl(data.navbarIcon || "/logo.png");
+      } catch (error) {
+        console.error("Gagal fetch navbar icon:", error);
+      }
+    };
+
+    fetchNavbarIcon();
+
   // Jangan render apapun sebelum mounted untuk menghindari mismatch HTML server vs client
   if (!mounted) return null;
 
@@ -278,24 +306,20 @@ const handleNavbarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       
       {/* NAVBAR HITAM */}
       <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
-              <div className="flex items-center">
-                <div className="w-12 flex justify-start items-center">
-                  <button 
-                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    <Menu size={24} />
-                  </button>
-                </div>
-                
-                <div className="flex items-center gap-3 ml-4">
-                  <img src="/logo.png" alt="Logo" className="h-10 w-auto shrink-0" />
-                  <div className="flex flex-col min-w-max">
-                    <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - Admin</h1>
-                    <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
-                  </div>
-                </div>
+        <div className="flex items-center">
+          <div className="w-12 flex justify-start items-center">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+              <Menu size={24} />
+            </button>
+          </div>
+          <div className="flex items-center gap-3 ml-4">
+            <img src={navbarIconUrl} alt="Logo" className="h-10 w-auto shrink-0" />
+              <div className="flex flex-col min-w-max">
+                <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - User</h1>
+                <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
               </div>
+          </div>
+        </div>
               <h2 className="text-sm font-bold tracking-widest opacity-90 hidden sm:block">Administrator</h2>
             </header>
       
@@ -769,13 +793,40 @@ const handleNavbarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                             </div>
 
                             <div className="space-y-3">
-                            <label className="text-[16px] font-bold text-gray-700 ml-1">Gambar Background</label>
-                            <div className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-4 flex flex-col items-center justify-center min-h-[150px] hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300">
-                                <Monitor className="text-gray-900 mb-2 group-hover:text-[#56b35a] transition-colors" size={32} />
-                                <p className="text-[12px] text-gray-500 font-medium group-hover:text-[#56b35a] transition-colors">Klik untuk ganti background kantor</p>
-                                <div className="mt-2 text-[10px] bg-gray-700 text-white px-2 py-1 rounded shadow-sm group-hover:bg-[#56b35a] transition-colors">Rekomendasi: 1920 x 1080 px</div>
-                            </div>
-                            </div>
+  <label className="text-[16px] font-bold text-gray-700 ml-1">
+    Gambar Background
+  </label>
+
+  {/* INPUT FILE TERSEMBUNYI */}
+  <input
+    type="file"
+    ref={loginBgInputRef}
+    onChange={handleLoginBgChange}
+    accept="image/*"
+    className="hidden"
+  />
+
+  <div
+    onClick={handleLoginBgClick}
+    className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-4 flex flex-col items-center justify-center min-h-[150px] hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300"
+  >
+    <Monitor
+      className="text-gray-900 mb-2 group-hover:text-[#56b35a] transition-colors"
+      size={32}
+    />
+
+    <p className="text-[12px] font-bold text-gray-700 group-hover:text-[#56b35a] transition-colors">
+      {loginBgFile
+        ? `File: ${loginBgFile.name}`
+        : "Klik untuk ganti background kantor"}
+    </p>
+
+    <div className="mt-2 text-[10px] bg-gray-700 text-white px-2 py-1 rounded shadow-sm group-hover:bg-[#56b35a] transition-colors">
+      Rekomendasi: 1920 x 1080 px
+    </div>
+  </div>
+</div>
+
                         </div>
                         </div>
                     </div>

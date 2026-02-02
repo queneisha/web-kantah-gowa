@@ -34,6 +34,20 @@ export default function RiwayatPage() {
   const [riwayatData, setRiwayatData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
+  // Fetch navbar icon dari backend
+    const fetchNavbarIcon = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/hero-display");
+        const data = await res.json();
+        setNavbarIconUrl(data.navbarIcon || "/logo.png");
+      } catch (error) {
+        console.error("Gagal fetch navbar icon:", error);
+      }
+    };
+
+    fetchNavbarIcon();
+
   // Fetch riwayat permohonan
   const fetchRiwayatPermohonan = async () => {
     try {
@@ -154,12 +168,12 @@ export default function RiwayatPage() {
             </button>
           </div>
           <div className="flex items-center gap-3 ml-4">
-            <img src="/logo.png" alt="Logo" className="h-10 w-auto shrink-0" />
-            <div className="flex flex-col min-w-max">
-              <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - Admin</h1>
-              <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
-            </div>
-          </div>
+            <img src={navbarIconUrl} alt="Logo" className="h-10 w-auto shrink-0" />
+              <div className="flex flex-col min-w-max">
+                <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - User</h1>
+                <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
+              </div>
+           </div>
         </div>
         <h2 className="text-sm font-bold tracking-widest opacity-90 hidden sm:block">Administrator</h2>
       </header>

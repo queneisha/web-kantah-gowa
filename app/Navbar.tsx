@@ -11,6 +11,7 @@ export default function Navbar() {
     navbarIcon: "/logo.png",
   });
 
+
   // Fetch navbar data dari backend
   useEffect(() => {
     const fetchNavbarData = async () => {

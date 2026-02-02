@@ -335,6 +335,20 @@ export default function DataPermohonanPage() {
     </Link>
   );
 
+  const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
+  // Fetch navbar icon dari backend
+    const fetchNavbarIcon = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/hero-display");
+        const data = await res.json();
+        setNavbarIconUrl(data.navbarIcon || "/logo.png");
+      } catch (error) {
+        console.error("Gagal fetch navbar icon:", error);
+      }
+    };
+
+    fetchNavbarIcon();
+
   if (!mounted) return null;
 
   return (
@@ -351,15 +365,17 @@ export default function DataPermohonanPage() {
       )}
       <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
         <div className="flex items-center">
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg mr-4">
-            <Menu size={24} />
-          </button>
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Logo" className="h-10 w-auto" />
-            <div className="flex flex-col">
-              <h1 className="font-bold text-lg leading-none">KANTAH Gowa - Admin</h1>
-              <p className="text-[10px] opacity-70 uppercase tracking-widest">Sistem Manajemen Internal</p>
-            </div>
+          <div className="w-12 flex justify-start items-center">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+              <Menu size={24} />
+            </button>
+          </div>
+          <div className="flex items-center gap-3 ml-4">
+            <img src={navbarIconUrl} alt="Logo" className="h-10 w-auto shrink-0" />
+              <div className="flex flex-col min-w-max">
+                <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - User</h1>
+                <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
+              </div>
           </div>
         </div>
        <h2 className="text-sm font-bold tracking-widest opacity-90 hidden sm:block">Administrator</h2>
