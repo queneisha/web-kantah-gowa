@@ -23,6 +23,7 @@ export default function UserDashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
   
   // State untuk menyimpan data user dari login
   const [userData, setUserData] = useState<any>(null);
@@ -51,7 +52,23 @@ export default function UserDashboardPage() {
       setIsSidebarOpen(JSON.parse(savedSidebar));
     }
 
-    // 2. Ambil data user yang login (Dihubungkan ke sistem Login)
+    // 2. Fetch navbar icon dari backend
+    const fetchNavbarIcon = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/hero-display");
+        const data = await res.json();
+        setNavbarIconUrl(data.navbarIcon || "/logo.png");
+      } catch (error) {
+        console.error("Gagal fetch navbar icon:", error);
+      }
+    };
+
+    fetchNavbarIcon();
+
+    // Listen untuk event update dari EditKonten
+    window.addEventListener("heroUpdated", fetchNavbarIcon);
+
+    // 3. Ambil data user yang login (Dihubungkan ke sistem Login)
     const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
       const user = JSON.parse(storedUser);
@@ -66,6 +83,10 @@ export default function UserDashboardPage() {
       router.push('/Login');
       return;
     }
+
+    return () => {
+      window.removeEventListener("heroUpdated", fetchNavbarIcon);
+    };
   }, [router]);
 
   // 3. Fetch data permohonan dari backend berdasarkan user_id
@@ -187,7 +208,7 @@ export default function UserDashboardPage() {
             </div>
             
             <div className="flex items-center gap-3 ml-4">
-              <img src="/logo.png" alt="Logo" className="h-10 w-auto shrink-0" />
+              <img src={navbarIconUrl} alt="Logo" className="h-10 w-auto shrink-0" />
               <div className="flex flex-col min-w-max">
                 <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - User</h1>
                 <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
@@ -225,6 +246,13 @@ export default function UserDashboardPage() {
                <button onClick={() => setIsLogoutModalOpen(true)} className={`group relative flex items-center w-full py-3.5 hover:bg-red-600 rounded-xl font-bold transition-all whitespace-nowrap ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}>
                 <LogOut size={22} className="shrink-0 text-white" /> 
                 {isSidebarOpen && <span className="text-white">Keluar</span>}
+                
+                {!isSidebarOpen && (
+                  <div className="absolute left-full ml-4 px-3 py-2 bg-red-600 text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl top-1/2 -translate-y-1/2 whitespace-nowrap">
+                    Keluar
+                    <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-red-600 rotate-45"></div>
+                  </div>
+                )}
               </button>
             </div>
           </nav>
@@ -236,7 +264,7 @@ export default function UserDashboardPage() {
             <div className="w-full text-left">
               <div className="mb-8">
                 <h3 className="text-3xl font-black text-gray-900">Beranda</h3>
-                <p className="text-gray-500 font-medium">Selamat datang, {userData.name || userData.nama_lengkap}</p>
+                <p className="text-gray-600 font-medium">Selamat datang, {userData.name || userData.nama_lengkap}</p>
                 <hr className="mt-5 border-b-2 border-gray-200" />
               </div>
 
@@ -245,7 +273,7 @@ export default function UserDashboardPage() {
                 {stats.map((stat, idx) => (
                   <div key={idx} className={`bg-white p-7 rounded-[25px] shadow-sm border-2 ${stat.borderColor} flex justify-between items-start transition-transform hover:scale-[1.02]`}>
                     <div>
-                      <p className="text-gray-400 text-[13px] font-bold mb-1 tracking-tight">{stat.label}</p>
+                      <p className="text-gray-500 text-[13px] font-bold mb-5 tracking-tight">{stat.label}</p>
                       <h4 className={`text-6xl font-black ${stat.textColor}`}>{stat.value}</h4>
                     </div>
                     <div className="mt-1">{stat.icon}</div>
@@ -260,33 +288,33 @@ export default function UserDashboardPage() {
   </div>
   <div className="p-8 space-y-6">
     <div>
-      <p className="text-sm text-gray-400 font-bold tracking-tight">Nama Lengkap</p>
-      <p className="font-semibold text-gray-800 text-lg break-words">{userData.name || userData.nama_lengkap}</p>
+      <p className="text-lg text-gray-800 font-bold tracking-tight">Nama Lengkap</p>
+      <p className="font-semibold text-gray-600 text-m break-words">{userData.name || userData.nama_lengkap}</p>
     </div>
     <div>
-      <p className="text-sm text-gray-400 font-bold tracking-tight">Email</p>
-      <p className="font-semibold text-gray-800 text-lg break-all">{userData.email}</p>
+      <p className="text-lg text-gray-800 font-bold tracking-tight">Email</p>
+      <p className="font-semibold text-gray-600 text-m break-all">{userData.email}</p>
     </div>
     
     {/* BAGIAN JABATAN YANG DIPERBARUI */}
     <div>
-      <p className="text-sm text-gray-400 font-bold tracking-tight">Jabatan</p>
-      <p className="font-semibold text-gray-800 text-lg break-words">{userData.jabatan || userData.role}</p>
+      <p className="text-lg text-gray-800 font-bold tracking-tight">Jabatan</p>
+      <p className="font-semibold text-gray-600 text-m break-words">{userData.jabatan || userData.role}</p>
       
       {/* Logika: Jika jabatan mengandung kata Sekretaris, munculkan Nama Notaris */}
       {(userData.jabatan || "").toLowerCase().includes('sekretaris') && userData.nama_notaris && (
-        <p className="text-sm font-normal italic text-gray-600 mt-1 leading-tight">
-          Nama Notaris/PPAT: <span className="font-medium text-gray-700 break-words">{userData.nama_notaris}</span>
+        <p className="text-lg font-normal italic text-gray-800 mt-1 leading-tight">
+          Nama Notaris/PPAT: <span className="font-medium text-gray-600 break-words">{userData.nama_notaris}</span>
         </p>
       )}
     </div>
 
     <div>
-      <p className="text-sm text-gray-400 font-bold tracking-tight">No HP.</p>
-      <p className="font-semibold text-gray-800 text-lg break-words">{userData.nomor_hp || userData.phone || "-"}</p>
+      <p className="text-lg text-gray-800 font-bold tracking-tight">No HP.</p>
+      <p className="font-semibold text-gray-600 text-m break-words">{userData.nomor_hp || userData.phone || "-"}</p>
     </div>
     <div>
-      <p className="text-sm text-gray-400 font-bold mb-2 tracking-tight">Status</p>
+      <p className="text-lg text-gray-800 font-bold mb-2 tracking-tight">Status</p>
       <span className="px-5 py-1 bg-green-500 text-white text-[11px] font-bold rounded-full uppercase inline-block">
         {userData.status || "Aktif"}
       </span>
@@ -307,7 +335,7 @@ export default function UserDashboardPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl">
             <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
-            <p className="text-gray-500 font-medium mt-2">Anda perlu login kembali untuk mengakses sistem.</p>
+            <p className="text-gray-600 font-medium mt-2">Anda perlu login kembali untuk mengakses sistem.</p>
             <div className="flex justify-end gap-3 mt-10">
               <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold">Batal</button>
               <button onClick={handleLogout} className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold shadow-lg">Ya, Keluar</button>

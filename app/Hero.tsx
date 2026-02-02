@@ -5,39 +5,19 @@ import { useEffect, useState } from "react";
 export default function Hero() {
 
   interface HeroData {
-    background?: string;
     heroTitle1?: string;
     heroTitle2?: string;
     heroTitle3?: string;
+    background?: string;
   }
-
-interface HeroData {
-  heroTitle1?: string;
-  heroTitle2?: string;
-  heroTitle3?: string;
-  background?: string | null;
-}
-const [heroData, setHeroData] = useState<HeroData | null>(null);
-  
-useEffect(() => {
-  const fetchHero = async () => {
-    const res = await fetch("http://localhost:8000/api/hero-display");
-    const data = await res.json();
-    setHeroData(data);
-  };
-
-  fetchHero();
-
-  window.addEventListener("heroUpdated", fetchHero);
-  return () => window.removeEventListener("heroUpdated", fetchHero);
-}, []);
 
   //siapkan state untk tampung data dri laravel
   const [data, setData] = useState({
     heroTitle1: "Selamat Datang !",
     heroTitle2: "Sistem Informasi Kantor Pertanahan Gowa",
     heroTitle3: "Platform digital untuk Notaris dan PPAT dalam melakukan pendaftaran, pengajuan permohonan, dan pemantauan status layanan pertanahan secara efisien dan terpadu.",
-    background:"", //nti diambil dri laravel
+    background: null as string | null, //nti diambil dri laravel
+    navbarIcon: null as string | null,
   });
 
   //ambil data saat halaman dibuka
@@ -65,10 +45,9 @@ useEffect(() => {
       {/* Background Image - Pastikan file ada di folder public */}
       <div className="absolute inset-0 bg-cover bg-center brightness-90 z-0">
         <img
-        //kalau background kosong, pake gambar default. Klu ada, ambil dri laravel
-        src= {heroData?.background ?? "/background.jpg"} 
-        alt="Background"
-        className="w-full h-full object-cover transition-opacity duration-700"
+          src={data?.background || "/background.jpg"} 
+          alt="Background"
+          className="w-full h-full object-cover transition-opacity duration-700"
         />
         <div className="absolute inset-0 bg-black/40"></div>
       </div>

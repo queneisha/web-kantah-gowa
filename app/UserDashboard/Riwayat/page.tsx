@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Menu,
   RefreshCw,
+  
 } from "lucide-react";
 
 export default function RiwayatPage() {
@@ -127,6 +128,17 @@ export default function RiwayatPage() {
     }
   }, [isSidebarOpen, mounted]);
 
+  // Local logout handler
+  const handleLogout = () => {
+    try {
+      sessionStorage.removeItem("user");
+      localStorage.removeItem("sidebarStatus");
+    } catch (e) {
+      // ignore
+    }
+    router.push("/Login");
+  };
+
   // Helper untuk Sidebar Item
   const SidebarItem = ({ href, icon: Icon, label, active = false }: any) => (
     <Link href={href} className="block group relative">
@@ -218,7 +230,7 @@ export default function RiwayatPage() {
               
               <div className="mb-8">
                 <h3 className="text-3xl font-black text-gray-900">Riwayat Permohonan</h3>
-                <p className="text-gray-500 font-medium text-sm">Data historis seluruh permohonan Anda</p>
+                <p className="text-gray-600 font-medium text-sm">Data historis seluruh permohonan Anda</p>
                 <hr className="mt-5 border-b-2 border-gray-200" />
               </div>
 
@@ -259,13 +271,13 @@ export default function RiwayatPage() {
                   <table className="w-full text-left">
                     <thead className="border-b-3 border-gray-200">
                       <tr>
-                        <th className="px-8 text-sm py-4 text-[13px] font-bold text-gray-600">Tanggal Daftar</th>
-                        <th className="px-6 text-sm py-4 text-[13px] font-bold text-gray-600">Jenis Pendaftaran</th>
-                        <th className="px-6 text-sm py-4 text-[13px] font-bold text-gray-600">Jenis Hak</th>
-                        <th className="px-6 text-sm py-4 text-[13px] font-bold text-gray-600">No. Sertipikat</th>
-                        <th className="px-6 text-sm py-4 text-[13px] font-bold text-gray-600">Lokasi</th>
-                        <th className="px-6 text-sm py-4 text-[13px] font-bold text-gray-600 text-center">Status</th>
-                        <th className="px-8 text-sm py-4 text-[13px] font-bold text-gray-600">Catatan Admin</th>
+                        <th className="px-8 text-sm py-4 text-[14px] font-bold text-gray-600">Tanggal Daftar</th>
+                        <th className="px-6 text-sm py-4 text-[14px] font-bold text-gray-600">Jenis Pendaftaran</th>
+                        <th className="px-6 text-sm py-4 text-[14px] font-bold text-gray-600">Jenis Hak</th>
+                        <th className="px-6 text-sm py-4 text-[14px] font-bold text-gray-600">No. Sertipikat</th>
+                        <th className="px-6 text-sm py-4 text-[14px] font-bold text-gray-600">Lokasi</th>
+                        <th className="px-6 text-sm py-4 text-[14px] font-bold text-gray-600 text-center">Status</th>
+                        <th className="px-8 text-sm py-4 text-[14px] font-bold text-gray-600">Catatan Admin</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-300">
@@ -278,29 +290,29 @@ export default function RiwayatPage() {
                       ) : dataTerfilter.length > 0 ? (
                         dataTerfilter.map((item, index) => (
                           <tr key={index} className="hover:bg-gray-100 transition-colors">
-                            <td className="px-8 py-5 text-sm font-medium text-gray-500">{item.tgl}</td>
+                            <td className="px-8 py-5 text-sm font-medium text-gray-600">{item.tgl}</td>
                             <td className="px-6 py-5">
-                              <p className="text-sm font-semibold text-gray-800">{item.jenis}</p>
+                              <p className="text-sm font-medium text-gray-600">{item.jenis}</p>
                               {item.jenis_lainnya && (
-                                <p className="text-[11px] text-gray-400 italic mt-1">"{item.jenis_lainnya}"</p>
+                                <p className="text-[11px] text-gray-600 italic mt-1">"{item.jenis_lainnya}"</p>
                               )}
                             </td>
                             <td className="px-6 py-5 text-sm font-medium text-gray-600">{item.hak}</td>
-                            <td className="px-6 py-5 text-sm font-semibold text-gray-800">{item.no}</td>
+                            <td className="px-6 py-5 text-sm font-medium text-gray-600">{item.no}</td>
                             <td className="px-6 py-5">
-                               <div className="text-sm font-semibold text-gray-800">{item.lokasi}</div>
-                               <div className="text-[10px] text-gray-400 font-semibold">{item.desa}</div>
+                               <div className="text-sm font-medium text-gray-600">{item.lokasi}</div>
+                               <div className="text-[10px] text-gray-500 font-medium">{item.desa}</div>
                             </td>
                             <td className="px-6 py-5 text-center">
-                              <span className={`px-4 py-1 rounded-full text-[10px] font-bold inline-block min-w-[90px] text-center
-                                ${item.status === "Disetujui" ? "border-green-500 text-green-500 bg-green-50" : 
+                              <span className={`px-4 py-1 rounded-full inline-block px-5 py-1 rounded-full text-[10px] font-bold border-2 transition-all duration-300text-[10px] font-bold inline-block min-w-[90px] text-center
+                                ${item.status === "Disetujui" ? "border-green-500 text-green-500 bg-white" : 
                                   item.status === "Ditolak" ? "border-red-500 text-red-500 bg-red-50" : 
                                   item.status === "Proses" ? "border-blue-500 text-blue-500 bg-blue-50" : 
                                   "border-orange-500 text-orange-500 bg-orange-50"}`}>
                                 {item.status}
                               </span>
                             </td>
-                            <td className="px-8 py-5 text-xs text-gray-500 italic">{item.catatan}</td>
+                            <td className="px-8 py-5 text-sm text-gray-600 italic">{item.catatan}</td>
                           </tr>
                         ))
                       ) : (
@@ -327,33 +339,22 @@ export default function RiwayatPage() {
       {/* MODAL POP UP KELUAR */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="space-y-4">
-              <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
-              <p className="text-gray-500 font-medium leading-relaxed">
-                Anda akan keluar dari user panel. Anda perlu login kembali untuk mengakses sistem.
-              </p>
-            </div>
 
-            <div className="flex justify-end gap-3 mt-10">
-              <button 
-                onClick={() => setIsLogoutModalOpen(false)}
-                className="px-8 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition"
-              >
-                Batal
-              </button>
+          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl">
+            <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
+            <p className="text-gray-600 font-medium mt-2">Anda perlu login kembali untuk mengakses sistem.</p>
 
-              <button 
-                onClick={() => {
-                  setIsLogoutModalOpen(false);
-                  handleLogout();
-                }}
-                className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200"
-              >
-                Ya, Keluar
-              </button>
-            </div>
+             <div className="flex justify-end gap-3 mt-10">
+              
+
+               <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold">Batal</button>
+
+               <button onClick={handleLogout} className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold">Ya, Keluar</button>
+
+             </div>
+
           </div>
+
         </div>
       )}
     </div>

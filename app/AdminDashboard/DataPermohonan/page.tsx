@@ -325,6 +325,13 @@ export default function DataPermohonanPage() {
         <Icon size={22} className="shrink-0" /> 
         {isSidebarOpen && <span>{label}</span>}
       </button>
+
+      {!isSidebarOpen && (
+        <div className="absolute left-full ml-4 px-3 py-2 bg-[#1a1a1a] text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl border border-white/10 top-1/2 -translate-y-1/2 whitespace-nowrap">
+          {label}
+          <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-[#1a1a1a] rotate-45"></div>
+        </div>
+      )}
     </Link>
   );
 
@@ -368,8 +375,15 @@ export default function DataPermohonanPage() {
             <SidebarItem href="/AdminDashboard/EditKonten" icon={Edit3} label="Edit Konten" />
             <SidebarItem href="/AdminDashboard/Riwayat" icon={FileSpreadsheet} label="Riwayat" />
             <div className="pt-4 mt-4 border-t border-white/20">
-              <button onClick={() => setIsLogoutModalOpen(true)} className={`flex items-center w-full py-3.5 hover:bg-red-600 rounded-xl font-bold transition-all ${isSidebarOpen ? "px-5 gap-3" : "justify-center"}`}>
+              <button onClick={() => setIsLogoutModalOpen(true)} className={`group relative flex items-center w-full py-3.5 hover:bg-red-600 rounded-xl font-bold transition-all whitespace-nowrap ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}>
                 <LogOut size={22} /> {isSidebarOpen && <span>Keluar</span>}
+                
+                {!isSidebarOpen && (
+                  <div className="absolute left-full ml-4 px-3 py-2 bg-red-600 text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl top-1/2 -translate-y-1/2 whitespace-nowrap">
+                    Keluar
+                    <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-red-600 rotate-45"></div>
+                  </div>
+                )}
               </button>
             </div>
           </nav>
@@ -378,7 +392,7 @@ export default function DataPermohonanPage() {
         <main className="flex-1 overflow-y-auto bg-[#f8f9fa] p-10">
           <div className="mx-auto text-left">
             <h3 className="text-3xl font-black text-gray-900">Manajemen Permohonan</h3>
-            <p className="text-gray-500 border-b-2 border-gray-200 pb-4 font-medium mb-8">Kelola dan verifikasi permohonan</p>
+            <p className="text-gray-600 border-b-2 border-gray-200 pb-4 font-medium mb-8">Kelola dan verifikasi permohonan</p>
 
             <div className="relative max-w-md mb-8">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-700" size={20} />
@@ -427,11 +441,11 @@ export default function DataPermohonanPage() {
                 ) : (
                   <table className="w-full text-sm text-left border-separate border-spacing-y-4">
                     <thead>
-                      <tr className="text-gray-800 font-bold text-[13px]">
+                      <tr className="text-gray-800 font-bold text-[16px]">
                         <th className="px-6 py-2">Nama Pemohon</th>
-                        <th className="px-6 py-2">Tgl Daftar</th>
-                        <th className="px-6 py-2">Jenis</th>
-                        <th className="px-6 py-2">Hak</th>
+                        <th className="px-6 py-2">Tanggal Daftar</th>
+                        <th className="px-6 py-2">Jenis Pendaftaran</th>
+                        <th className="px-6 py-2">Jenis Hak</th>
                         <th className="px-6 py-2">No. Sertipikat</th>
                         <th className="px-6 py-2">Lokasi</th>
                         <th className="px-6 py-2 text-center">Status</th>
@@ -450,17 +464,17 @@ export default function DataPermohonanPage() {
                           >
                             <td className={`px-6 py-5 first:rounded-l-2xl transition-all duration-700 ${mohon.status === "Menunggu" ? "blur-[5px] select-none opacity-40" : "blur-0"}`}>
                               {/* PERBAIKAN: Menampilkan nama dari user yang login */}
-                              <p className="font-bold text-gray-800 text-[14px] uppercase">{mohon.nama || "PENGGUNA"}</p>
+                              <p className="font-semibold text-gray-600 text-[14px] uppercase">{mohon.nama || "PENGGUNA"}</p>
                               <div className="flex flex-col">
-                                <p className="text-[11px] text-[#56b35a] font-bold uppercase">{mohon.jabatan || "-"}</p>
+                                <p className="text-[11px] text-gray-500 font-medium uppercase">{mohon.jabatan || "-"}</p>
                                 {mohon.nama_notaris && (
-                                  <p className="text-[9px] text-gray-400 italic">{mohon.nama_notaris}</p>
+                                  <p className="text-[10px] text-gray-400 italic">{mohon.nama_notaris}</p>
                                 )}
                               </div>
                             </td>
                             <td className={`px-6 py-5 text-gray-600 font-medium text-[13px] transition-all duration-700 ${mohon.status === "Menunggu" ? "blur-[5px] select-none opacity-40" : "blur-0"}`}>{mohon.tgl}</td>
                             <td className={`px-6 py-5 transition-all duration-700 ${mohon.status === "Menunggu" ? "blur-[5px] select-none opacity-40" : "blur-0"}`}>
-                              <p className="text-gray-600 font-medium text-[13px]">{mohon.jenis}</p>
+                              <p className="text-gray-600 font-medium text-[14px]">{mohon.jenis}</p>
                               {mohon.jenis_lainnya && (
                                 <p className="text-[11px] text-gray-400 italic mt-1">"{mohon.jenis_lainnya}"</p>
                               )}
@@ -468,8 +482,8 @@ export default function DataPermohonanPage() {
                             <td className={`px-6 py-5 text-gray-600 font-medium text-[13px] transition-all duration-700 ${mohon.status === "Menunggu" ? "blur-[5px] select-none opacity-40" : "blur-0"}`}>{mohon.hak}</td>
                             <td className={`px-6 py-5 text-gray-600 font-medium text-[13px] transition-all duration-700 ${mohon.status === "Menunggu" ? "blur-[5px] select-none opacity-40" : "blur-0"}`}>{mohon.noSertifikat}</td>
                             <td className={`px-6 py-5 transition-all duration-700 ${mohon.status === "Menunggu" ? "blur-[5px] select-none opacity-40" : "blur-0"}`}>
-                              <p className="font-bold text-gray-700 text-[13px] uppercase">{mohon.lokasi}</p>
-                              <p className="text-[11px] text-gray-400 font-medium uppercase">{mohon.kecamatan}</p>
+                              <p className="font-semibold text-gray-600 text-[14px] uppercase">{mohon.lokasi}</p>
+                              <p className="text-[11px] text-gray-500 font-medium uppercase">{mohon.kecamatan}</p>
                             </td>
                             <td className="px-6 py-5 text-center">
                               <span className={`inline-block px-5 py-1 rounded-full text-[12px] font-bold border-2 transition-all duration-300 ${
@@ -481,7 +495,7 @@ export default function DataPermohonanPage() {
                                 {mohon.status}
                               </span>
                             </td>
-                            <td className="px-6 py-5 text-xs text-gray-600 italic max-w-xs truncate" title={mohon.catatan || ""}>
+                            <td className="px-6 py-5 text-medium text-gray-600 italic max-w-xs truncate" title={mohon.catatan || ""}>
                               {mohon.catatan ? mohon.catatan : "-"}
                             </td>
                             <td className="px-6 py-5 last:rounded-r-2xl">
@@ -526,7 +540,7 @@ export default function DataPermohonanPage() {
             <p className="text-[18px] font-semibold text-gray-700 ">{selectedMohon.nama}</p>
             <p className="text-gray-600 font-medium text-[15px] mb-8">Data ini akan dihapus permanen. Lanjutkan?</p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setIsDeletePopupOpen(false)} disabled={isSaving} className="px-8 py-2.5 rounded-full border-2 border-gray-100 font-bold text-gray-400 disabled:opacity-50">Batal</button>
+              <button onClick={() => setIsDeletePopupOpen(false)} disabled={isSaving} className="px-8 py-2.5 rounded-full border-2 border-gray-600 font-bold text-gray-600 disabled:opacity-50">Batal</button>
               <button onClick={confirmDelete} disabled={isSaving} className="px-8 py-2.5 rounded-full bg-[#e60000] text-white font-bold shadow-lg disabled:opacity-50">{isSaving ? 'Menghapus...' : 'Ya, Hapus'}</button>
             </div>
           </div>
@@ -540,21 +554,21 @@ export default function DataPermohonanPage() {
             <div className="p-8 overflow-y-auto flex-1">
             <div className="flex justify-between items-start mb-5">
                 <h2 className="text-xl font-black text-gray-900">Detail Permohonan</h2>
-                <span className="px-4 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black tracking-widest border border-blue-100 uppercase">Verifikasi Data</span>
+                <span className="px-4 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black tracking-widest  border-blue-100 uppercase">Verifikasi Data</span>
             </div>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4 mb-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
-              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nama Pemohon</p><p className="text-gray-800 font-bold text-[14px]">{selectedMohon.nama}</p></div>
-              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Kecamatan</p><p className="text-gray-800 font-bold text-[14px]">{selectedMohon.kecamatan}</p></div>
-              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Jenis Pendaftaran</p><p className="text-gray-800 font-bold text-[14px]">{selectedMohon.jenis}</p></div>
-              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Desa/Kelurahan</p><p className="text-gray-800 font-bold text-[14px]">{selectedMohon.lokasi}</p></div>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4 mb-6 bg-gray-100 p-6 rounded-2xl border border-gray-300">
+              <div><p className="text-[14px] font-bold text-gray-600 uppercase tracking-wider mb-1">Nama Pemohon</p><p className="text-gray-500 font-semibold text-[14px]">{selectedMohon.nama}</p></div>
+              <div><p className="text-[14px] font-bold text-gray-600 uppercase tracking-wider mb-1">Kecamatan</p><p className="text-gray-500 font-semibold text-[14px]">{selectedMohon.kecamatan}</p></div>
+              <div><p className="text-[14px] font-bold text-gray-600 uppercase tracking-wider mb-1">Jenis Pendaftaran</p><p className="text-gray-500 font-semibold text-[14px]">{selectedMohon.jenis}</p></div>
+              <div><p className="text-[14px] font-bold text-gray-600 uppercase tracking-wider mb-1">Desa/Kelurahan</p><p className="text-gray-500 font-semibold text-[14px]">{selectedMohon.lokasi}</p></div>
               {selectedMohon.jenis_lainnya && (
-                <div className="col-span-2 bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500"><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Keterangan Lainnya</p><p className="text-gray-700 font-medium text-[13px] italic">'{selectedMohon.jenis_lainnya}'</p></div>
+                <div className="col-span-2 bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500"><p className="text-[14px] font-bold text-gray-600 uppercase tracking-wider mb-1">Keterangan Lainnya</p><p className="text-gray-500 font-semibold text-[14px] italic">'{selectedMohon.jenis_lainnya}'</p></div>
               )}
-              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Jenis Hak</p><p className="text-gray-800 font-bold text-[14px]">{selectedMohon.hak}</p></div>
-              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Tanggal Pendaftaran</p><p className="text-gray-800 font-bold text-[14px]">{selectedMohon.tgl}</p></div>
-              <div><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">No. Sertipikat</p><p className="text-blue-600 font-black text-[15px]">{selectedMohon.noSertifikat}</p></div>
+              <div><p className="text-[14px] font-bold text-gray-600 uppercase tracking-wider mb-1">Jenis Hak</p><p className="text-gray-500 font-semibold text-[14px]">{selectedMohon.hak}</p></div>
+              <div><p className="text-[14px] font-bold text-gray-600 uppercase tracking-wider mb-1">Tanggal Pendaftaran</p><p className="text-gray-500 font-semibold text-[14px]">{selectedMohon.tgl}</p></div>
+              <div><p className="text-[14px] font-bold text-gray-600 uppercase tracking-wider mb-1">No. Sertipikat</p><p className="text-gray-600 font-semibold text-[14px]">{selectedMohon.noSertifikat}</p></div>
               <div>
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Status Saat ini</p>
+                <p className="text-[14px] font-bold text-gray-600 uppercase tracking-wider mb-1">Status Saat ini</p>
                 <span className={`inline-block px-4 py-0.5 rounded-full border-2 font-bold text-[11px] bg-white ${
                   selectedMohon.status === "Disetujui" ? "border-green-500 text-green-500" :
                   selectedMohon.status === "Proses" ? "border-blue-400 text-blue-500" :
@@ -567,7 +581,7 @@ export default function DataPermohonanPage() {
               )}
             </div>
             
-            <h3 className="text-lg font-black text-gray-900 mb-3">Tentukan Keputusan</h3>
+            <h3 className="text-lg font-black text-gray-900 mb-3">Update Status</h3>
             <div className="mb-6 relative" ref={updateDropdownRef}> 
               <div 
                 onClick={() => setIsUpdateStatusOpen(!isUpdateStatusOpen)}
@@ -604,13 +618,13 @@ export default function DataPermohonanPage() {
                   />
                 )}
                 {selectedMohon?.catatan && (
-                  <p className="text-xs text-red-700 mt-2 font-semibold italic">✓ Alasan penolakan sudah ditulis dan tidak dapat diubah</p>
+                  <p className="text-xs text-red-700 mt-2 font-semibold italic">Alasan penolakan sudah ditulis dan tidak dapat diubah</p>
                 )}
               </div>
             )}
             
             <div className="flex justify-end gap-3 pt-4 px-8 pb-8 bg-white border-t border-gray-100">
-              <button onClick={() => setIsEditPopupOpen(false)} disabled={isSaving} className="px-8 py-3 rounded-full border-2 border-gray-100 font-bold text-gray-400 hover:bg-gray-50 transition text-sm disabled:opacity-50">Batal</button>
+              <button onClick={() => setIsEditPopupOpen(false)} disabled={isSaving} className="px-8 py-3 rounded-full border-2 border-gray-600 font-bold text-gray-600 hover:bg-gray-50 transition text-sm disabled:opacity-50">Batal</button>
               <button onClick={handleUpdateStatus} disabled={isSaving || !newStatus} className="px-10 py-3 rounded-full bg-[#1a1a1a] text-white font-bold hover:bg-black transition shadow-lg text-sm disabled:opacity-50">{isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}</button>
             </div>
             </div>

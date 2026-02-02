@@ -96,9 +96,15 @@ export default function EditKontenPage() {
 ]);
 
 const fileInputRef = React.useRef<HTMLInputElement>(null);
+const navbarFileInputRef = React.useRef<HTMLInputElement>(null);
+
 //untuk trigger klik pada input file yg tersembunyi
 const handleUploadClick = () => {
   fileInputRef.current?.click();
+};
+
+const handleNavbarUploadClick = () => {
+  navbarFileInputRef.current?.click();
 };
 
 //fungsi waktu file dipilih
@@ -110,70 +116,68 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   }
 };
 
-   const handleSave = async () => {
-  const formData = new FormData();
-
-  // teks
-  formData.append("heroTitle1", konten.heroTitle1);
-  formData.append("heroTitle2", konten.heroTitle2);
-  formData.append("heroTitle3", konten.heroTitle3);
-
-  // gambar
-  if (selectedFile) {
-    formData.append("image", selectedFile);
-  }
-
-  try {
-    const response = await fetch("http://localhost:8000/api/hero-update", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) throw new Error("Gagal menyimpan");
-
-    // 🔥 trigger Hero reload
-    window.dispatchEvent(new Event("heroUpdated"));
-
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
-
-    alert("Berhasil! Hero Section diperbarui.");
-  } catch (error) {
-    console.error("Gagal simpan:", error);
-    alert("Gagal menyimpan data");
+//fungsi untuk navbar icon
+const [selectedNavbarIcon, setSelectedNavbarIcon] = useState<File | null>(null);
+const handleNavbarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files && e.target.files[0]) {
+    setSelectedNavbarIcon(e.target.files[0]);
+    alert(`File dipilih: ${e.target.files[0].name}`);
   }
 };
-  // // --- FUNGSI SIMPAN KE BACKEND ---
-  // const handleSave = async (e?: React.FormEvent) => {
-  //   if (e) e.preventDefault();
 
-  //   try {
-  //     const formData = new FormData();
-  //     // Pastikan nama state-nya 'registerKonten', kalau 'konten' silakan ganti
-  //     formData.append("heroTitle1", konten.heroTitle1);
-  //     formData.append("heroTitle2", konten.heroTitle2);
-  //     formData.append("heroTitle3", konten.heroTitle3);
-      
-  //     if (selectedFile) {
-  //       formData.append("image", selectedFile);
-  //     }
+  const handleSave = async () => {
+    try {
+      const formData = new FormData();
 
-  //     const response = await fetch("http://localhost:8000/api/hero-update", {
-  //       method: "POST",
-  //       body: formData,
-  //     });
+      // teks hero
+      formData.append("heroTitle1", konten.heroTitle1);
+      formData.append("heroTitle2", konten.heroTitle2);
+      formData.append("heroTitle3", konten.heroTitle3);
 
-  //     if (response.ok) {
-  //       setIsSaved(true);
-  //       setTimeout(() => setIsSaved(false), 3000);
-  //       alert("Berhasil disimpan ke Database!");
-  //     }
-  //   } catch (err) {
-  //     console.error("Error:", err);
-  //     alert("Gagal koneksi ke Laravel!");
-  //   }
-  // }; // <--- PENUTUP HANDLE SAVE HARUS DI SINI
+      // teks navbar
+      formData.append("navText1", konten.navText1);
+      formData.append("navText2", konten.navText2);
+      formData.append("navText3", konten.navText3);
 
+      // gambar hero
+      if (selectedFile) {
+        formData.append("image", selectedFile);
+      }
+
+      // gambar navbar icon/logo
+      if (selectedNavbarIcon) {
+        formData.append("navbarIcon", selectedNavbarIcon);
+      }
+
+      const response = await fetch("http://localhost:8000/api/hero-update", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Accept": "application/json",
+        }
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || `HTTP Error: ${response.status}`);
+      }
+
+      // 🔥 trigger Hero & Navbar reload
+      window.dispatchEvent(new Event("heroUpdated"));
+
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+
+      alert("Berhasil! Hero Section & Navbar diperbarui.");
+      setSelectedFile(null);
+      setSelectedNavbarIcon(null);
+    } catch (error) {
+      console.error("Gagal simpan:", error);
+      alert(`Gagal menyimpan data: ${error instanceof Error ? error.message : 'Kesalahan tidak diketahui'}`);
+    }
+  };
+ 
       // --- FUNGSI UPDATE LAINNYA ---
       const updateFitur = (id: number, field: string, value: string) => {
         setFiturUtama(fiturUtama.map(item => item.id === id ? { ...item, [field]: value } : item));
@@ -189,6 +193,29 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (savedBg) {
           setBgHero(savedBg);
         }
+      }, []);
+
+      // Fetch data dari backend saat halaman dimuat
+      useEffect(() => {
+        const fetchContentData = async () => {
+          try {
+            const res = await fetch("http://localhost:8000/api/hero-display");
+            const data = await res.json();
+            setKonten({
+              heroTitle1: data.heroTitle1 || "Selamat Datang",
+              heroTitle2: data.heroTitle2 || "Sistem Informasi Kantor Pertanahan Gowa",
+              heroTitle3: data.heroTitle3 || "Platform digital untuk Notaris dan PPAT dalam melakukan pendaftaran, pengajuan permohonan, dan pemantauan status layanan pertanahan secara efisien dan terpadu.",
+              footerText1: data.footerText1 || "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
+              footerText2: data.footerText2 || "Sistem Informasi Internal untuk Notaris dan PPAT",
+              navText1: data.navText1 || "KANTAH Gowa",
+              navText2: data.navText2 || "Sistem Informasi & Layanan Internal",
+              navText3: data.navText3 || "Administrator",
+            });
+          } catch (error) {
+            console.error("Gagal fetch konten:", error);
+          }
+        };
+        fetchContentData();
       }, []);
 
       useEffect(() => {
@@ -309,7 +336,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           <div className="p-10">
             <div className="max-w-350 mx-auto">
               <h3 className="text-3xl font-black text-gray-900">Edit Konten Website</h3>
-              <p className="border-b-2 border-gray-200 pb-4 text-gray-500 font-medium mb-8">Kelola informasi yang tampil di halaman depan Website</p>
+              <p className="border-b-2 border-gray-200 pb-4 text-gray-600 font-medium mb-8">Kelola informasi yang tampil di halaman depan Website</p>
               {isSaved && (
                 <div className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-[12px] font-bold animate-pulse flex items-center gap-2">
                   <Save size={14} /> Perubahan Disimpan
@@ -366,7 +393,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                         type="text" 
                         value={konten.heroTitle1}
                         onChange={(e) => setKonten({...konten, heroTitle1: e.target.value})}
-                        className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-[16px] font-semibold"
+                        className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-[16px] font-semibold"
                     />
                     </div>
 
@@ -376,7 +403,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                         type="text" 
                         value={konten.heroTitle2}
                         onChange={(e) => setKonten({...konten, heroTitle2: e.target.value})}
-                        className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-[16px] font-semibold"
+                        className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-[16px] font-semibold"
                     />
                     </div>
 
@@ -386,7 +413,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                         rows={3}
                         value={konten.heroTitle3}
                         onChange={(e) => setKonten({...konten, heroTitle3: e.target.value})}
-                        className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-[16px] resize-none leading-relaxed font-semibold"
+                        className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-[16px] resize-none leading-relaxed font-semibold"
                     />
                     </div>
 
@@ -445,7 +472,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                       type="text" 
                       value={konten.footerText1} 
                       onChange={(e) => setKonten({ ...konten, footerText1: e.target.value })}
-                      className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-100 rounded-xl text-[16px] font-semibold focus:border-[#56b35a] focus:outline-none transition" 
+                      className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-200 rounded-xl text-[16px] font-semibold focus:border-[#56b35a] focus:outline-none transition" 
                     />
                   </div>
                   <div className="space-y-1">
@@ -454,7 +481,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                       type="text" 
                       value={konten.footerText2} 
                       onChange={(e) => setKonten({ ...konten, footerText2: e.target.value })}
-                      className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-100 rounded-xl text-[16px] font-semibold focus:border-[#56b35a] focus:outline-none transition" 
+                      className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-200 rounded-xl text-[16px] font-semibold focus:border-[#56b35a] focus:outline-none transition" 
                     />
                   </div>
                 </div>
@@ -483,7 +510,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                         type="text" 
                         value={konten.navText1}
                         onChange={(e) => setKonten({...konten, navText1: e.target.value})}
-                        className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-[16px] font-semibold"
+                        className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-[16px] font-semibold"
                     />
                     </div>
 
@@ -493,18 +520,33 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                         type="text" 
                         value={konten.navText2}
                         onChange={(e) => setKonten({...konten, navText2: e.target.value})}
-                        className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-[16px] font-semibold"
+                        className="w-full px-4 py-3 text-gray-700 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-[16px] font-semibold"
                     />
                     </div>
 
                     <div className="space-y-1">
                     <label className="text-[15px] font-bold text-gray-900 ml-1 block mb-3">Icon</label>
-                    <div className="group bg-gray-50 p-6 rounded-[20px] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-center space-y-3 hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300">
+                    
+                    {/* Input File Tersembunyi */}
+                    <input 
+                      type="file" 
+                      ref={navbarFileInputRef} 
+                      onChange={handleNavbarFileChange} 
+                      accept="image/*" 
+                      className="hidden" 
+                    />
+
+                    <div 
+                      onClick={handleNavbarUploadClick}
+                      className="group bg-gray-50 p-6 rounded-[20px] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-center space-y-3 hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300"
+                    >
                         <div className="p-3 bg-white rounded-full text-gray-900 shadow-sm group-hover:text-[#56b35a] transition-colors">
                         <ImageIcon size={24} />
                         </div>
                         <div className="space-y-1">
-                        <p className="text-[13px] font-bold text-gray-800 group-hover:text-[#56b35a] transition-colors">Ganti Icon</p>
+                        <p className="text-[13px] font-bold text-gray-800 group-hover:text-[#56b35a] transition-colors">
+                          {selectedNavbarIcon ? `File: ${selectedNavbarIcon.name}` : "Ganti Icon Navbar"}
+                        </p>
                         <p className="text-[10px] text-gray-900 font-black">Maksimal 2MB • JPG/PNG</p>
                         </div>
                         <button className="text-[11px] font-black bg-gray-900 text-white px-5 py-2 rounded-lg tracking-widest group-hover:bg-[#56b35a] transition-all">
@@ -527,7 +569,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 <div className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {alurSistem.map((step) => (
-                      <div key={step.id} className="p-5 bg-gray-50 rounded-[20px] border border-gray-100 space-y-4 relative">
+                      <div key={step.id} className="p-5 bg-gray-100 rounded-[20px] border border-gray-200 space-y-4 relative">
                         <div className="space-y-1">
                           <label className="text-[15px] font-bold text-gray-900 ml-1">Judul Langkah</label>
                           <input 
@@ -577,7 +619,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 <div className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {fiturUtama.map((fitur) => (
-                        <div key={fitur.id} className="p-5 bg-gray-50 rounded-[20px] border border-gray-100 space-y-4 relative">
+                        <div key={fitur.id} className="p-5 bg-gray-100 rounded-[20px] border border-gray-200 space-y-4 relative">
                         <div className="space-y-1">
                             <label className="text-[15px] font-bold text-gray-900 ml-1">Judul Fitur</label>
                             <input 
@@ -634,7 +676,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={loginKonten.headerTitle}
                                 onChange={(e) => setLoginKonten({...loginKonten, headerTitle: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                                 placeholder="Contoh: Selamat Datang Kembali"
                             />
                             </div>
@@ -644,7 +686,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 rows={2}
                                 value={loginKonten.subHeader}
                                 onChange={(e) => setLoginKonten({...loginKonten, subHeader: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                                 placeholder="Masukkan deskripsi singkat di bawah judul"
                             />
                             </div>
@@ -660,7 +702,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={loginKonten.formTitle}
                                 onChange={(e) => setLoginKonten({...loginKonten, formTitle: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                             <div className="space-y-2">
@@ -669,7 +711,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={loginKonten.labelEmail}
                                 onChange={(e) => setLoginKonten({...loginKonten, labelEmail: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                             <div className="space-y-2">
@@ -678,7 +720,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={loginKonten.placeholderEmail}
                                 onChange={(e) => setLoginKonten({...loginKonten, placeholderEmail: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                         </div>
@@ -690,7 +732,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={loginKonten.labelPassword}
                                 onChange={(e) => setLoginKonten({...loginKonten, labelPassword: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                             <div className="space-y-2">
@@ -699,7 +741,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={loginKonten.placeholderPassword}
                                 onChange={(e) => setLoginKonten({...loginKonten, placeholderPassword: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                             <div className="space-y-2">
@@ -708,18 +750,18 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={loginKonten.textLupaPassword}
                                 onChange={(e) => setLoginKonten({...loginKonten, textLupaPassword: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                         </div>
                         </div>
 
-                        <div className="space-y-4 pt-6 border-t border-gray-100">
+                        <div className="space-y-4 pt-6 border-t border-gray-200">
                         <h4 className="text-[16px] font-bold text-gray-900 border-b pb-2">Pengaturan Gambar & Media</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-3">
                             <label className="text-[16px] font-bold text-gray-700 ml-1">Gambar Maskot</label>
-                            <div className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-4 flex flex-col items-center justify-center min-h-[150px] hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300">
+                            <div className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-4 flex flex-col items-center justify-center min-h-[150px] hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300">
                                 <ImageIcon className="text-gray-900 mb-2 group-hover:text-[#56b35a] transition-colors" size={32} />
                                 <p className="text-[12px] text-gray-500 font-medium group-hover:text-[#56b35a] transition-colors">Klik untuk ganti karakter petugas</p>
                                 <div className="mt-2 text-[10px] bg-[#8b5e3c] text-white px-2 py-1 rounded shadow-sm group-hover:bg-[#56b35a] transition-colors">Format: PNG (Transparan)</div>
@@ -728,7 +770,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
                             <div className="space-y-3">
                             <label className="text-[16px] font-bold text-gray-700 ml-1">Gambar Background</label>
-                            <div className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-4 flex flex-col items-center justify-center min-h-[150px] hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300">
+                            <div className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-4 flex flex-col items-center justify-center min-h-[150px] hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300">
                                 <Monitor className="text-gray-900 mb-2 group-hover:text-[#56b35a] transition-colors" size={32} />
                                 <p className="text-[12px] text-gray-500 font-medium group-hover:text-[#56b35a] transition-colors">Klik untuk ganti background kantor</p>
                                 <div className="mt-2 text-[10px] bg-gray-700 text-white px-2 py-1 rounded shadow-sm group-hover:bg-[#56b35a] transition-colors">Rekomendasi: 1920 x 1080 px</div>
@@ -755,11 +797,11 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[16px] font-bold text-gray-700 ml-1">Judul Utama (Header)</label>
-                      <input type="text" value={registerKonten.headerTitle} onChange={(e) => setRegisterKonten({...registerKonten, headerTitle: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900" />
+                      <input type="text" value={registerKonten.headerTitle} onChange={(e) => setRegisterKonten({...registerKonten, headerTitle: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[16px] font-bold text-gray-700 ml-1">Sub-judul (Keterangan)</label>
-                      <textarea rows={2} value={registerKonten.subHeader} onChange={(e) => setRegisterKonten({...registerKonten, subHeader: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900" />
+                      <textarea rows={2} value={registerKonten.subHeader} onChange={(e) => setRegisterKonten({...registerKonten, subHeader: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900" />
                     </div>
                   </div>
                 </div>
@@ -774,7 +816,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={registerKonten.formTitle2}
                                 onChange={(e) => setRegisterKonten({...registerKonten, formTitle2: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                             <div className="space-y-2">
@@ -783,7 +825,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={registerKonten.labelNama}
                                 onChange={(e) => setRegisterKonten({...registerKonten, labelNama: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                             <div className="space-y-2">
@@ -792,7 +834,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={registerKonten.placeholderNama}
                                 onChange={(e) => setRegisterKonten({...registerKonten, placeholderNama: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                         </div>
@@ -804,7 +846,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={registerKonten.labelEmail}
                                 onChange={(e) => setRegisterKonten({...registerKonten, labelEmail: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                             <div className="space-y-2">
@@ -813,7 +855,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={registerKonten.placeholderEmail}
                                 onChange={(e) => setRegisterKonten({...registerKonten, placeholderEmail: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                             <div className="space-y-2">
@@ -822,7 +864,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={registerKonten.labelNoHp}
                                 onChange={(e) => setRegisterKonten({...registerKonten, labelNoHp: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                         </div>
@@ -834,7 +876,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={registerKonten.placeholderNoHp}
                                 onChange={(e) => setRegisterKonten({...registerKonten, placeholderNoHp: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                             <div className="space-y-2">
@@ -843,7 +885,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={registerKonten.labelPassword}
                                 onChange={(e) => setRegisterKonten({...registerKonten, labelPassword: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                             <div className="space-y-2">
@@ -852,7 +894,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={registerKonten.placeholderPassword}
                                 onChange={(e) => setRegisterKonten({...registerKonten, placeholderPassword: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                         </div>
@@ -864,7 +906,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={registerKonten.labelKonfirmasi}
                                 onChange={(e) => setRegisterKonten({...registerKonten, labelKonfirmasi: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                             <div className="space-y-2">
@@ -873,7 +915,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                 type="text" 
                                 value={registerKonten.placeholderKonfirmasi}
                                 onChange={(e) => setRegisterKonten({...registerKonten, placeholderKonfirmasi: e.target.value})}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#56b35a] focus:outline-none transition text-gray-900"
                             />
                             </div>
                         </div>
@@ -883,7 +925,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-3">
                             <label className="text-[16px] font-bold text-gray-700 ml-1">Gambar Maskot</label>
-                            <div className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-4 flex flex-col items-center justify-center min-h-[150px] hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300">
+                            <div className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-4 flex flex-col items-center justify-center min-h-[150px] hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300">
                                 <ImageIcon className="text-gray-900 mb-2 group-hover:text-[#56b35a] transition-colors" size={32} />
                                 <p className="text-[12px] text-gray-500 font-medium group-hover:text-[#56b35a] transition-colors">Klik untuk ganti karakter petugas</p>
                                 <div className="mt-2 text-[10px] bg-[#8b5e3c] text-white px-2 py-1 rounded shadow-sm group-hover:bg-[#56b35a] transition-colors">Format: PNG (Transparan)</div>
@@ -892,7 +934,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
                             <div className="space-y-3">
                             <label className="text-[16px] font-bold text-gray-700 ml-1">Gambar Background</label>
-                            <div className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-4 flex flex-col items-center justify-center min-h-[150px] hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300">
+                            <div className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-4 flex flex-col items-center justify-center min-h-[150px] hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300">
                                 <Monitor className="text-gray-900 mb-2 group-hover:text-[#56b35a] transition-colors" size={32} />
                                 <p className="text-[12px] text-gray-500 font-medium group-hover:text-[#56b35a] transition-colors">Klik untuk ganti background kantor</p>
                                 <div className="mt-2 text-[10px] bg-gray-700 text-white px-2 py-1 rounded shadow-sm group-hover:bg-[#56b35a] transition-colors">Rekomendasi: 1920 x 1080 px</div>
@@ -920,7 +962,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                               newList[index] = e.target.value;
                               setRegisterKonten({...registerKonten, listJabatan: newList});
                             }} 
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl focus:border-[#56b35a] focus:outline-none font-medium text-sm transition"
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 text-gray-900 rounded-xl focus:border-[#56b35a] focus:outline-none font-medium text-sm transition"
                           />
                         </div>
                         <button 
@@ -936,7 +978,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                     ))}
                     <button 
                       onClick={() => setRegisterKonten({...registerKonten, listJabatan: [...registerKonten.listJabatan, "Jabatan Baru"]})}
-                      className="flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 hover:border-[#56b35a] hover:text-[#56b35a] hover:bg-green-50/50 transition text-sm font-bold"
+                      className="flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-[#56b35a] hover:text-[#56b35a] hover:bg-green-50/50 transition text-sm font-bold"
                     >
                       <Plus size={18} /> Tambah Opsi Jabatan
                     </button>
@@ -956,7 +998,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       </div>
       {/* MODAL POP UP KELUAR */}
       {isLogoutModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="space-y-4">
               <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
@@ -964,15 +1006,13 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 Anda akan keluar dari admin panel. Anda perlu login kembali untuk mengakses sistem.
               </p>
             </div>
-
             <div className="flex justify-end gap-3 mt-10">
               <button 
                 onClick={() => setIsLogoutModalOpen(false)}
                 className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold hover:bg-gray-50 transition"
               >
-                Batal
+            Batal
               </button>
-
               <button 
                 onClick={handleLogout}
                 className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200"

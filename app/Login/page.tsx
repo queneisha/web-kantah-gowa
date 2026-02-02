@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Navbar from "../Navbar";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -70,18 +71,7 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen relative flex flex-col font-sans">
-      <nav className="flex items-center justify-between px-12 py-4 bg-[#1a1a1a] text-white z-20">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Logo" className="h-10 w-auto" /> 
-          <div className="flex flex-col">
-            <h1 className="font-bold text-xl leading-none">KANTAH Gowa</h1>
-            <p className="text-[10px] tracking-tighter text-gray-400">Sistem Informasi & Layanan Internal</p>
-          </div>
-        </div>
-        <Link href="/" className="px-8 py-2 bg-[#8b5e3c] text-white rounded-full text-sm font-bold hover:bg-[#724d31] transition">
-          Beranda
-        </Link>
-      </nav>
+      <Navbar />
 
       <section className="flex-1 relative flex items-center justify-center overflow-hidden py-12">
         <div className="absolute inset-0 bg-[url('/background.jpg')] bg-cover bg-center -z-10 brightness-75" />

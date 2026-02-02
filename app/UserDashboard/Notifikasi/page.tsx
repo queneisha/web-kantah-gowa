@@ -222,7 +222,7 @@ export default function NotifikasiPage() {
                   <p className="text-gray-500 font-medium">Pemberitahuan resmi terkait permohonan Anda</p>
                 </div>
                 {unreadCount > 0 && (
-                  <span className="bg-[#e62b2b] text-white px-4 py-1.5 rounded-full text-[10px] font-black shadow-lg">
+                  <span className="bg-[#e62b2b] text-white px-4 py-1.5 rounded-full text-[10px] font-semibold shadow-lg">
                     {unreadCount} Belum Dibaca
                   </span>
                 )}
@@ -252,36 +252,36 @@ export default function NotifikasiPage() {
                       <div className="flex-1">
                         <div className="flex justify-between items-center mb-1">
                           <h4 className="font-bold text-gray-800 text-sm">{notif.title}</h4>
-                          <span className="text-[9px] font-bold text-gray-400 tracking-tighter">{notif.date}</span>
+                          <span className="text-[10px] font-semibold text-gray-600 tracking-tighter">{notif.date}</span>
                         </div>
                         
-                        <p className="text-gray-500 text-[11px] font-medium leading-relaxed mb-3">{notif.message}</p>
+                        <p className="text-gray-600 text-[11px] font-medium leading-relaxed mb-3">{notif.message}</p>
                         
                         {/* Box Detail Pengajuan */}
-                        <div className="bg-white/80 rounded-xl p-3 border border-gray-100 flex gap-5 items-center flex-wrap">
+                        <div className="bg-white/80 rounded-xl p-3 border border-gray-400 flex gap-5 items-center flex-wrap">
                           <div className="flex gap-4">
                             <div>
-                              <p className="text-[8px] text-gray-400 font-bold tracking-widest">Jenis</p>
-                              <p className="text-[10px] font-bold text-gray-700">{notif.detail.jenis}</p>
+                              <p className="text-[10px] text-gray-800 font-bold tracking-widest">Jenis</p>
+                              <p className="text-[10px] font-medium text-gray-700">{notif.detail.jenis}</p>
                               {notif.detail.jenis_lainnya && (
-                                <p className="text-[9px] text-gray-500 italic mt-1 font-medium">({notif.detail.jenis_lainnya})</p>
+                                <p className="text-[10px] text-gray-500 italic mt-1 font-medium">({notif.detail.jenis_lainnya})</p>
                               )}
                             </div>
                             <div className="border-l border-gray-100 pl-4">
-                              <p className="text-[8px] text-gray-400 font-bold tracking-widest">No. Sertipikat</p>
-                              <p className="text-[10px] font-bold text-gray-700">{notif.detail.no}</p>
+                              <p className="text-[10px] text-gray-800 font-bold tracking-widest">No. Sertipikat</p>
+                              <p className="text-[10px] font-medium text-gray-700">{notif.detail.no}</p>
                             </div>
                             <div className="border-l border-gray-100 pl-4">
-                              <p className="text-[8px] text-gray-400 font-bold tracking-widest">Lokasi</p>
-                              <p className="text-[10px] font-bold text-gray-700">{notif.detail.lokasi}</p>
+                              <p className="text-[10px] text-gray-800 font-bold tracking-widest">Lokasi</p>
+                              <p className="text-[10px] font-medium text-gray-700">{notif.detail.lokasi}</p>
                             </div>
                           </div>
                         </div>
 
                         {notif.detail.catatan && (
-                          <div className="mt-3 bg-yellow-50 rounded-xl p-3 border border-yellow-200">
-                            <p className="text-[8px] text-gray-500 font-bold tracking-widest uppercase mb-1">Catatan Admin</p>
-                            <p className="text-[10px] text-gray-700 font-medium">{notif.detail.catatan}</p>
+                          <div className="mt-3 bg-white rounded-xl p-3 border border-white">
+                            <p className="text-[8px] text-gray-600 font-bold tracking-widest uppercase mb-1">Catatan Admin</p>
+                            <p className="text-[10px] text-gray-600 font-medium">{notif.detail.catatan}</p>
                           </div>
                         )}
 
@@ -290,7 +290,7 @@ export default function NotifikasiPage() {
                         {!notif.is_read && (
                           <button 
                             onClick={() => markAsRead(notif.id)}
-                            className={`text-[9px] font-black tracking-tight transition-colors hover:underline
+                            className={`text-[10px] font-semibold tracking-tight transition-colors hover:underline
                               ${notif.status === 'ditolak' ? 'text-red-600' : 
                                 notif.status === 'disetujui' ? 'text-green-600' : 
                                 'text-blue-600'}`}
@@ -321,33 +321,22 @@ export default function NotifikasiPage() {
       {/* Logout Modal */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="space-y-4">
-              <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
-              <p className="text-gray-500 font-medium leading-relaxed">
-                Anda akan keluar dari user panel. Anda perlu login kembali untuk mengakses sistem.
-              </p>
-            </div>
 
-            <div className="flex justify-end gap-3 mt-10">
-              <button 
-                onClick={() => setIsLogoutModalOpen(false)}
-                className="px-8 py-2.5 rounded-full border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition"
-              >
-                Batal
-              </button>
+          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl">
+            <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
+            <p className="text-gray-600 font-medium mt-2">Anda perlu login kembali untuk mengakses sistem.</p>
 
-              <button 
-                onClick={() => {
-                  setIsLogoutModalOpen(false);
-                  handleLogout();
-                }}
-                className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200"
-              >
-                Ya, Keluar
-              </button>
-            </div>
+             <div className="flex justify-end gap-3 mt-10">
+              
+
+               <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold">Batal</button>
+
+               <button onClick={handleLogout} className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold">Ya, Keluar</button>
+
+             </div>
+
           </div>
+
         </div>
       )}
     </div>

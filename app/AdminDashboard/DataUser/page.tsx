@@ -44,6 +44,9 @@ export default function DataUserPage() {
   const [selectedFilter, setSelectedFilter] = useState("Semua Status");
   const [searchTerm, setSearchTerm] = useState("");
 
+  const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
+  
+
   const [users, setUsers] = useState<UserData[]>([]);
 
   useEffect(() => {
@@ -197,6 +200,7 @@ export default function DataUserPage() {
       {!isSidebarOpen && (
         <div className="absolute left-full ml-4 px-3 py-2 bg-[#1a1a1a] text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl border border-white/10 top-1/2 -translate-y-1/2 whitespace-nowrap">
           {label}
+          <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-[#1a1a1a] rotate-45"></div>
         </div>
       )}
     </Link>
@@ -207,18 +211,21 @@ export default function DataUserPage() {
   return (
     <div className="flex flex-col h-screen bg-[#f5f5f5] font-sans overflow-hidden">
       <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
-        <div className="flex items-center">
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-            <Menu size={24} />
-          </button>
-          <div className="flex items-center gap-3 ml-4">
-            <img src="/logo.png" alt="Logo" className="h-10 w-auto" />
-            <div className="flex flex-col">
-              <h1 className="font-bold text-lg leading-none">KANTAH Gowa - Admin</h1>
-              <p className="text-[10px] opacity-70">Sistem Manajemen Internal</p>
-            </div>
-          </div>
-        </div>
+       <div className="flex items-center">
+                   <div className="w-12 flex justify-start items-center">
+                     <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                       <Menu size={24} />
+                     </button>
+                   </div>
+                   
+                   <div className="flex items-center gap-3 ml-4">
+                     <img src={navbarIconUrl} alt="Logo" className="h-10 w-auto shrink-0" />
+                     <div className="flex flex-col min-w-max">
+                       <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - Admin</h1>
+                       <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
+                     </div>
+                   </div>
+                 </div>
         <h2 className="text-sm font-bold tracking-widest opacity-90 hidden sm:block">Administrator</h2>
       </header>
 
@@ -244,7 +251,7 @@ export default function DataUserPage() {
             <div className="max-w-7xl mx-auto space-y-6">
               <div className="pb-4 border-b-2 border-gray-200">
                 <h3 className="text-3xl font-black text-gray-900">Manajemen User</h3>
-                <p className="text-gray-500 font-medium">Kelola data pendaftaran akun</p>
+                <p className="text-gray-600 font-medium">Kelola data pendaftaran akun</p>
               </div>
 
               <div className="relative max-w-md group">
@@ -445,11 +452,26 @@ export default function DataUserPage() {
       {/* MODAL KELUAR */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl">
-            <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
+          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="space-y-4">
+              <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
+              <p className="text-gray-500 font-medium leading-relaxed">
+                Anda akan keluar dari admin panel. Anda perlu login kembali untuk mengakses sistem.
+              </p>
+            </div>
             <div className="flex justify-end gap-3 mt-10">
-              <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 text-gray-600 border-gray-600 font-bold">Batal</button>
-              <button onClick={handleLogout} className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold shadow-lg">Ya, Keluar</button>
+              <button 
+                onClick={() => setIsLogoutModalOpen(false)}
+                className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold hover:bg-gray-50 transition"
+              >
+            Batal
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200"
+              >
+                  Ya, Keluar
+                </button>
             </div>
           </div>
         </div>

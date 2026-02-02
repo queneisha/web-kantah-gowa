@@ -21,6 +21,7 @@ export default function AdminDashboard() {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
 
   const [stats, setStats] = useState({
     total_user: 0,
@@ -39,9 +40,29 @@ export default function AdminDashboard() {
       setIsSidebarOpen(JSON.parse(saved));
     }
 
+    // Fetch navbar icon dari backend
+    const fetchNavbarIcon = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/hero-display");
+        const data = await res.json();
+        setNavbarIconUrl(data.navbarIcon || "/logo.png");
+      } catch (error) {
+        console.error("Gagal fetch navbar icon:", error);
+      }
+    };
+
+    fetchNavbarIcon();
+
+    // Listen untuk event update dari EditKonten
+    window.addEventListener("heroUpdated", fetchNavbarIcon);
+
     fetchStats();
     fetchUsers();
     fetchPermohonan();
+
+    return () => {
+      window.removeEventListener("heroUpdated", fetchNavbarIcon);
+    };
   }, []);
 
   const fetchStats = async () => {
@@ -125,7 +146,7 @@ export default function AdminDashboard() {
             </button>
           </div>
           <div className="flex items-center gap-3 ml-4">
-            <img src="/logo.png" alt="Logo" className="h-10 w-auto shrink-0" />
+            <img src={navbarIconUrl} alt="Logo" className="h-10 w-auto shrink-0" />
             <div className="flex flex-col min-w-max">
               <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - Admin</h1>
               <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
@@ -160,6 +181,13 @@ export default function AdminDashboard() {
               >
                 <LogOut size={22} className="shrink-0 text-white" />
                 {isSidebarOpen && <span className="text-white">Keluar</span>}
+                
+                {!isSidebarOpen && (
+                  <div className="absolute left-full ml-4 px-3 py-2 bg-red-600 text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl top-1/2 -translate-y-1/2 whitespace-nowrap">
+                    Keluar
+                    <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-red-600 rotate-45"></div>
+                  </div>
+                )}
               </button>
             </div>
           </nav>
@@ -170,15 +198,15 @@ export default function AdminDashboard() {
           <div className="p-10 space-y-10 max-w-7xl mx-auto w-full flex-grow">
             <div className="border-b-2 border-gray-200 pb-4">
               <h3 className="text-3xl font-black text-gray-900">Beranda</h3>
-              <p className="text-gray-500 font-medium">Selamat datang di Panel Administrasi KANTAH Gowa</p>
+              <p className="text-gray-600 font-medium">Selamat datang di Panel Administrasi KANTAH Gowa</p>
             </div>
 
             {/* STAT CARDS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                <StatCard label="User Menunggu ACC" value={stats.user_menunggu.toString()} sub="Perlu Verifikasi" color="border-orange-500" textColor="text-orange-500" icon={<UserCheck className="text-orange-500" />} />
                 <StatCard label="Total User Terdaftar" value={stats.total_user.toString()} sub="Notaris & PPAT" color="border-black" textColor="text-black" icon={<Users className="text-black" />} />
                <StatCard label="Permohonan Masuk" value={stats.permohonan_masuk.toString()} sub="Menunggu Verifikasi" color="border-blue-500" textColor="text-blue-500" icon={<Clock className="text-blue-500" />} />
-               <StatCard label="Total Permohonan" value={stats.total_permohonan.toString()} sub="Semua Permohonan" color="border-green-500" textColor="text-green-500" icon={<FileText className="text-green-500" />} />
+               <StatCard label="Total Permohonan" value={stats.total_permohonan.toString()} sub="Semua Permohonan" color="border-green-500" textColor="text-green-500" icon={<FileText className="text-green-500 " />} />
              </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -234,13 +262,22 @@ export default function AdminDashboard() {
       {/* MODAL KELUAR */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+
           <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl">
             <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
-            <div className="flex justify-end gap-3 mt-10">
-              <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold">Batal</button>
-              <button onClick={handleLogout} className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold shadow-lg">Ya, Keluar</button>
-            </div>
+            <p className="text-gray-600 font-medium mt-2">Anda perlu login kembali untuk mengakses sistem.</p>
+
+             <div className="flex justify-end gap-3 mt-10">
+              
+
+               <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold">Batal</button>
+
+               <button onClick={handleLogout} className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold">Ya, Keluar</button>
+
+             </div>
+
           </div>
+
         </div>
       )}
     </div>
@@ -253,7 +290,7 @@ function StatCard({ label, value, sub, color, icon, textColor }: any) {
     <div className={`bg-white p-6 rounded-[25px] border-2 ${color} shadow-sm transition-transform hover:scale-[1.02]`}>
       <div className="flex justify-between items-start">
         <div className="space-y-1">
-          <p className="text-[10px] font-bold text-gray-600">{label}</p>
+          <p className="text-[10px] mb-5 font-bold text-gray-600">{label}</p>
           <h4 className={`text-5xl font-black ${textColor}`}>{value}</h4>
         </div>
         <div className="p-2.5 bg-gray-50 rounded-xl">{icon}</div>
