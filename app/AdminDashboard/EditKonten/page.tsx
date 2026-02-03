@@ -183,8 +183,10 @@ const handleNavbarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFiturUtama(fiturUtama.map(item => item.id === id ? { ...item, [field]: value } : item));
       };
 
-      const updateAlur = (id: number, field: string, value: string) => {
-        setAlurSistem(alurSistem.map(item => item.id === id ? { ...item, [field]: value } : item));
+      const updateAlur = (id: number, field: string, value: any) => {
+         setAlurSistem(alurSistem.map(item => 
+         item.id === id ? { ...item, [field]: value } : item
+        ));
       };
 
       // --- USE EFFECTS ---
@@ -304,7 +306,10 @@ const handleLoginBgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   return (
     <div className="flex flex-col h-screen bg-[#f5f5f5] font-sans overflow-hidden">
       
-      {/* NAVBAR HITAM */}
+
+
+
+
       <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
         <div className="flex items-center">
           <div className="w-12 flex justify-start items-center">

@@ -16,7 +16,7 @@ export default function Navbar() {
   useEffect(() => {
     const fetchNavbarData = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
+        const res = await fetch("http://127.0.0.1:8000/api/hero-display");
         const data = await res.json();
         setNavData({
           navText1: data.navText1 || "KANTAH Gowa",
