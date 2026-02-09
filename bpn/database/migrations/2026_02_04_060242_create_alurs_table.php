@@ -11,8 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('hero_settings', function (Blueprint $table) {
-            $table->string('navbar_icon_path')->nullable()->after('image_path');
+        Schema::create('alurs', function (Blueprint $table) {
+            $table->id();
+            $table->string('judul');
+            $table->text('deskripsi');
+            $table->string('icon')->nullable();
+            $table->integer('urutan')->default(1);
+            $table->timestamps();
         });
     }
 
@@ -21,8 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('hero_settings', function (Blueprint $table) {
-            $table->dropColumn('navbar_icon_path');
-        });
+        Schema::dropIfExists('alurs');
     }
 };

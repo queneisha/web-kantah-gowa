@@ -10,6 +10,12 @@ class HeroController extends Controller
 {
     public function getHero() {
         $hero = HeroSetting::where('type', 'background')->first();
+     
+        if (!$hero ) {
+            return response()->json(['message' => 'Data tidak ditemukan'], 404);
+        }
+
+
         return response()->json([
             'heroTitle1' => $hero?->heroTitle1 ?? 'Selamat Datang',
             'heroTitle2' => $hero?->heroTitle2 ?? 'Website Kantah Gowa',
@@ -17,13 +23,19 @@ class HeroController extends Controller
             'navText1' => $hero?->navText1 ?? 'KANTAH Gowa',
             'navText2' => $hero?->navText2 ?? 'Sistem Informasi & Layanan Internal',
             'navText3' => $hero?->navText3 ?? 'Administrator',
+            'footerText1' => $hero?->footerText1 ?? '© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.',
+            'footerText2' => $hero?->footerText2 ?? 'Sistem Informasi Internal untuk Notaris dan PPAT',
+           
             'background' => $hero && $hero->image_path 
                 ? asset('storage/' . $hero->image_path) 
                 : null,
-            'navbarIcon' => $hero && $hero->navbar_icon_path
-                ? asset('storage/' . $hero->navbar_icon_path)
+            'navbarIcon' => $hero && $hero->navbarIcon
+                ? asset('storage/' . $hero->navbarIcon)
                 : '/logo.png',
         ]);
+
+     
+
     }
 
     public function updateHero(Request $request) {
@@ -36,11 +48,13 @@ class HeroController extends Controller
                 'navText1' => 'nullable|string|max:255',
                 'navText2' => 'nullable|string|max:255',
                 'navText3' => 'nullable|string|max:255',
+                'footerText1' => 'nullable|string',
+                'footerText2' => 'nullable|string',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // max 5MB
                 'navbarIcon' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // max 5MB
             ]);
 
-            $hero = HeroSetting::where('type', 'background')->first() 
+            $hero = HeroSetting::where('type', 'background')->first()
                 ?: new HeroSetting(['type' => 'background']);
 
             // Update teks hero
@@ -65,6 +79,14 @@ class HeroController extends Controller
                 $hero->navText3 = $request->navText3;
             }
 
+            if ($request->has('footerText1')){
+                $hero->footerText1 = $request->footerText1;
+            }
+            if ($request->has('footerText2')){
+                $hero->footerText2 = $request->footerText2;
+            }
+
+
             // Proses Foto Hero
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
@@ -76,10 +98,19 @@ class HeroController extends Controller
             if ($request->hasFile('navbarIcon')) {
                 $file = $request->file('navbarIcon');
                 $path = $file->store('navbar', 'public'); // Simpan di storage/app/public/navbar
-                $hero->navbar_icon_path = $path;
+                $hero->navbarIcon = $path;
             }
-
+            
             $hero->save();
+
+            return response()->json([
+
+                'navbarIcon' => $hero && $hero->navbarIcon
+                    ? asset('storage/' . $hero->navbarIcon)
+                    : '/logo.png',
+            ]);
+
+
             return response()->json([
                 'message' => 'Berhasil diperbarui!', 
                 'data' => $hero
@@ -88,6 +119,8 @@ class HeroController extends Controller
             return response()->json([
                 'message' => 'Gagal menyimpan: ' . $e->getMessage()
             ], 500);
+            
         }
+
     }
 }

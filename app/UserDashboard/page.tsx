@@ -27,6 +27,36 @@ export default function UserDashboardPage() {
   
   // State untuk menyimpan data user dari login
   const [userData, setUserData] = useState<any>(null);
+
+   //navbar ni boshh
+   const [navData, setNavData] = useState({
+    navText1:"KANTAH Gowa", 
+    navText2: "Sistem Informasi & Layanan Internal",
+    navbarIcon:"/logo.png",
+  });
+
+  const isAdmin = false;
+  
+
+  useEffect(() => {
+    const fetchNavbarData = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/hero-display");
+        const data = await res.json();
+        
+        if (res.ok) {
+          setNavData({
+            navText1: data.navText1 || "KANTAH Gowa",
+            navText2: data.navText2 || "Sistem Informasi & Layanan Internal",
+            navbarIcon: data.navbarIcon || "/logo.png",
+          });
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data navbar:", error);
+      }
+    };
+    fetchNavbarData();
+  }, []);
   
   // State untuk statistik permohonan
   const [permohonanStats, setPermohonanStats] = useState({
@@ -52,15 +82,20 @@ export default function UserDashboardPage() {
       setIsSidebarOpen(JSON.parse(savedSidebar));
     }
 
+
     // 2. Fetch navbar icon dari backend
     const fetchNavbarIcon = async () => {
       try {
         const res = await fetch("http://localhost:8000/api/hero-display");
+        if (!res.ok) return;
         const data = await res.json();
+      if (data && data.navbarIcon){
         setNavbarIconUrl(data.navbarIcon || "/logo.png");
-      } catch (error) {
+      } 
+    }catch (error) {
         console.error("Gagal fetch navbar icon:", error);
       }
+       
     };
 
     fetchNavbarIcon();
@@ -194,11 +229,12 @@ export default function UserDashboardPage() {
     router.push("/");
   };
 
+
   if (!mounted || !userData) return null;
 
   return (
     <div className="flex flex-col h-screen bg-[#f5f5f5] font-sans overflow-hidden">
-      {/* HEADER */}
+      {/* Navbar  */}
       <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
           <div className="flex items-center">
             <div className="w-12 flex justify-start items-center">
@@ -208,10 +244,10 @@ export default function UserDashboardPage() {
             </div>
             
             <div className="flex items-center gap-3 ml-4">
-              <img src={navbarIconUrl} alt="Logo" className="h-10 w-auto shrink-0" />
+            <img src={navData.navbarIcon} alt="Logo" className="h-10 w-auto shrink-0" />
               <div className="flex flex-col min-w-max">
-                <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - User</h1>
-                <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
+                <h1 className="font-bold text-lg leading-none whitespace-nowrap">{navData.navText1} {isAdmin ? "" : "- User"}</h1>
+                <p className="text-[10px] opacity-70 whitespace-nowrap">{navData.navText2}</p>
               </div>
             </div>
           </div>

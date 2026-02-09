@@ -96,15 +96,26 @@ export default function EditKontenPage() {
 ]);
 
 const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+//fungsi navbar icon
+
+const [selectedNavbarIcon, setSelectedNavbarIcon] = useState<File | null>(null);
 const navbarFileInputRef = React.useRef<HTMLInputElement>(null);
+
+const handleNavbarUploadClick = () => {
+  navbarFileInputRef.current?.click();
+};
+
+const handleNavbarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files && e.target.files[0]) {
+    setSelectedNavbarIcon(e.target.files[0]);
+  }
+};
+
 
 //untuk trigger klik pada input file yg tersembunyi
 const handleUploadClick = () => {
   fileInputRef.current?.click();
-};
-
-const handleNavbarUploadClick = () => {
-  navbarFileInputRef.current?.click();
 };
 
 //fungsi waktu file dipilih
@@ -116,14 +127,6 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   }
 };
 
-//fungsi untuk navbar icon
-const [selectedNavbarIcon, setSelectedNavbarIcon] = useState<File | null>(null);
-const handleNavbarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  if (e.target.files && e.target.files[0]) {
-    setSelectedNavbarIcon(e.target.files[0]);
-    alert(`File dipilih: ${e.target.files[0].name}`);
-  }
-};
 
   const handleSave = async () => {
     try {
@@ -138,6 +141,10 @@ const handleNavbarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       formData.append("navText1", konten.navText1);
       formData.append("navText2", konten.navText2);
       formData.append("navText3", konten.navText3);
+
+      //footer 
+      formData.append("footerText1", konten.footerText1);
+      formData.append("footerText2", konten.footerText2);
 
       // gambar hero
       if (selectedFile) {
@@ -169,7 +176,7 @@ const handleNavbarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
 
-      alert("Berhasil! Hero Section & Navbar diperbarui.");
+      alert("Berhasil! data diperbarui.");
       setSelectedFile(null);
       setSelectedNavbarIcon(null);
     } catch (error) {
@@ -177,10 +184,55 @@ const handleNavbarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       alert(`Gagal menyimpan data: ${error instanceof Error ? error.message : 'Kesalahan tidak diketahui'}`);
     }
   };
+
  
       // --- FUNGSI UPDATE LAINNYA ---
       const updateFitur = (id: number, field: string, value: string) => {
         setFiturUtama(fiturUtama.map(item => item.id === id ? { ...item, [field]: value } : item));
+      };
+ 
+      //alurr
+      const handleAlurIconChange = (id:number, file: File) => {
+        setAlurSistem(prev => 
+          prev.map(item => 
+            item.id === id ? { ...item, newIconFile: file } : item
+          )
+        );
+      };
+      
+      const handleSaveAlur = async () => {
+        try {
+          const formData = new FormData();
+      
+          // Loop data alur dan masukkan ke FormData
+          alurSistem.forEach((step, index) => {
+            formData.append(`alurs[${index}][id]`, String(step.id));
+            formData.append(`alurs[${index}][judul]`, step.judul);
+            formData.append(`alurs[${index}][deskripsi]`, step.deskripsi);
+            
+            // Cek jika ada file icon baru
+            if ((step as any).newIconFile) {
+              formData.append(`alurs[${index}][icon]`, (step as any).newIconFile);
+            }
+          });
+      
+          const response = await fetch("http://localhost:8000/api/alur-update", {
+            method: "POST",
+            body: formData, // Jangan pakai JSON.stringify
+            headers: {
+              "Accept": "application/json",
+              // PENTING: Jangan set Content-Type manual jika menggunakan FormData
+            },
+          });
+      
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.message);
+      
+          alert("Alur Sistem berhasil diperbarui!");
+        } catch (error) {
+          console.error("Gagal simpan alur:", error);
+          alert('Gagal menyimpan alur sistem');
+        }
       };
 
       const updateAlur = (id: number, field: string, value: any) => {
@@ -188,6 +240,21 @@ const handleNavbarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
          item.id === id ? { ...item, [field]: value } : item
         ));
       };
+
+      useEffect(() => {
+        const fetchAlurData = async () => {
+            try{
+                const res = await fetch("http://localhost:8000/api/alurs");
+                const data = await res.json();
+                if (data.length > 0){
+                    setAlurSistem(data);
+                }
+            } catch (error){
+                console.error("Gagal fetch alur:", error);
+            }
+        }; 
+        fetchAlurData();
+      }, []);
 
       // --- USE EFFECTS ---
       useEffect(() => {
@@ -285,18 +352,78 @@ const handleLoginBgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   }
 };
 
+//logika fitur
+interface Fitur {
+  id:number;
+  judul: string;
+  deskripsi: string;
+  icon: string;
+  newIconFile? :File;
+}
+
+const handleIconChange = (id: any, file: File) => {
+  setFiturUtama((prev: any) => 
+    prev.map((f: any) => 
+      f.id === id ? { ...f, newIconFile: file } : f
+    )
+  );
+};
+
+const handleSaveFitur = async () => {
+  try {
+    const formData = new FormData();
+
+    fiturUtama.forEach((fitur, index) => {
+      formData.append(`features[${index}][id]`, String(fitur.id));
+      formData.append(`features[${index}][judul]`, fitur.judul);
+      formData.append(`features[${index}][deskripsi]`, fitur.deskripsi);
+      
+      if ((fitur as any).newIconFile) {
+        formData.append(`features[${index}][icon]`, (fitur as any).newIconFile);
+      }
+    });
+
+    const response = await fetch("http://localhost:8000/api/fitur/update", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Accept": "application/json",
+      }
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) throw new Error(result.message);
+
+    alert("Fitur Utama berhasil diperbarui!");
+  } catch (error) {
+    console.error("Gagal simpan fitur:", error);
+    alert("Gagal menyimpan fitur utama.");
+  }
+};
+
+
+useEffect(() => {
+  fetchNavbarIcon();
+}, []);
 
   const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
   // Fetch navbar icon dari backend
     const fetchNavbarIcon = async () => {
       try {
         const res = await fetch("http://localhost:8000/api/hero-display");
+
         const data = await res.json();
-        setNavbarIconUrl(data.navbarIcon || "/logo.png");
-      } catch (error) {
-        console.error("Gagal fetch navbar icon:", error);
-      }
-    };
+
+if (data.navbarIcon) {
+      setNavbarIconUrl(data.navbarIcon);
+    } else {
+      setNavbarIconUrl("/logo.png");
+    }
+  } catch (error) {
+    console.error("Gagal fetch navbar icon:", error);
+  }
+};
 
     fetchNavbarIcon();
 
@@ -592,7 +719,7 @@ const handleLoginBgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               <section className="bg-white rounded-[25px] shadow-sm border border-gray-200 overflow-hidden">
                 <div className="bg-[#8b5e3c] p-4 px-6 text-white font-bold text-[16px] flex items-center justify-between">
                     <div className="flex items-center gap-2"><ListOrdered size={18} /> Alur Penggunaan Sistem</div>
-                    <button onClick={() => handleSave()} className="flex items-center gap-2 bg-[#56b35a] hover:bg-[#469e4a] text-white px-4 py-1.5 rounded-lg font-bold transition text-[15px] shadow-sm"><Save size={14} /> Simpan</button>
+                    <button onClick={() => handleSaveAlur()} className="flex items-center gap-2 bg-[#56b35a] hover:bg-[#469e4a] text-white px-4 py-1.5 rounded-lg font-bold transition text-[15px] shadow-sm"><Save size={14} /> Simpan</button>
                 </div>
                 
                 <div className="p-6">
@@ -618,10 +745,21 @@ const handleLoginBgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                           />
                         </div>
                         <div className="pt-2">
-                           <div className="group w-full h-8 bg-white rounded-lg border border-dashed border-gray-300 flex items-center justify-center text-[10px] text-gray-900 font-bold hover:bg-green-50/50 hover:border-[#56b35a] cursor-pointer transition-all duration-300">
-                             <ImageIcon size={12} className="mr-2 group-hover:text-[#56b35a] transition-colors"/> 
-                             <span className="group-hover:text-[#56b35a] transition-colors">Ganti Icon Langkah</span>
-                           </div>
+                        <label className="group w-full h-8 bg-white rounded-lg border border-dashed border-gray-300 flex items-center justify-center text-[10px] text-gray-900 font-bold hover:bg-green-50/50 hover:border-[#56b35a] cursor-pointer transition-all duration-300">
+    <ImageIcon size={12} className="mr-2 group-hover:text-[#56b35a] transition-colors"/> 
+    <span className="group-hover:text-[#56b35a] transition-colors">
+      {(step as any).newIconFile ? (step as any).newIconFile.name : "Ganti Icon Langkah"}
+    </span>
+    <input 
+      type="file" 
+      className="hidden" 
+      accept="image/*"
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (file) handleAlurIconChange(step.id, file);
+      }}
+    />
+  </label>
                         </div>
                       </div>
                     ))}
@@ -638,7 +776,7 @@ const handleLoginBgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                     <Settings size={18} /> Fitur Utama Website
                     </div>
                     <button 
-                    onClick={() => handleSave()} 
+                    onClick={() => handleSaveFitur()} 
                     className="flex items-center gap-2 bg-[#56b35a] hover:bg-[#469e4a] text-white px-4 py-1.5 rounded-lg font-bold transition text-[15px] shadow-sm"
                     >
                     <Save size={14} /> Simpan
@@ -668,10 +806,25 @@ const handleLoginBgChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                             />
                         </div>
                         <div className="pt-2">
-                            <div className="group w-full h-8 bg-white rounded-lg border border-dashed border-gray-300 flex items-center justify-center text-[10px] text-gray-900 font-bold hover:bg-green-50/50 hover:border-[#56b35a] cursor-pointer transition-all duration-300">
+                            <label className="group w-full h-8 bg-white rounded-lg border border-dashed border-gray-300 flex items-center justify-center text-[10px] text-gray-900 font-bold hover:bg-green-50/50 hover:border-[#56b35a] cursor-pointer transition-all duration-300">
                             <ImageIcon size={12} className="mr-2 group-hover:text-[#56b35a] transition-colors"/> 
-                            <span className="group-hover:text-[#56b35a] transition-colors">Ganti Icon Fitur</span>
-                            </div>
+                            <span className="group-hover:text-[#56b35a] transition-colors">
+                              {(fitur as any).newIconFile ? (fitur as any).newIconFile.name : "Ganti Icon Fitur"}
+                              </span>
+
+                              <input 
+                              type="file"
+                              className="hidden"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file){
+                                  handleIconChange(fitur.id, file);
+                                }
+                              }
+                                }
+                              />
+                            </label>
                         </div>
                         </div>
                     ))}

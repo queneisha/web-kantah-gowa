@@ -8,7 +8,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\PermohonanController;
 use App\Http\Controllers\Api\HeroController;
-
+use App\Http\Controllers\Api\KontenControllers;
+use App\Http\Controllers\Api\FiturController;
 
 Route::get('/users', [UserController::class, 'index']);
 
@@ -90,3 +91,12 @@ Route::prefix('admin')->group(function () {
     Route::post('/users/{id}/approve', [AdminController::class, 'approveUser']);
     Route::delete('/users/{id}/reject', [AdminController::class, 'destroy']);
 });
+
+ Route::get('/hero-update', [HeroController::class, 'updateHero']);
+ Route::post('/hero-display', [HeroController::class, 'getHero']);
+
+ Route::get('/alurs', [KontenControllers::class, 'indexAlur']);
+ Route::post('/alur-update', [KontenControllers::class, 'updateAlur']);
+
+ Route::get('/fiturs', [FiturController::class, 'index']);
+ Route::post('/fitur/update', [FiturController::class, 'update']);

@@ -33,6 +33,34 @@ export default function AdminDashboard() {
   const [latestUsers, setLatestUsers] = useState([]);
   const [latestPermohonan, setLatestPermohonan] = useState([]);
 
+   //navbar ni boshh
+   const [navData, setNavData] = useState({
+    navText1:"KANTAH Gowa", 
+    navText2: "Sistem Informasi & Layanan Internal",
+    navbarIcon:"/logo.png",
+  });
+  
+
+  useEffect(() => {
+    const fetchNavbarData = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/hero-display");
+        const data = await res.json();
+        
+        if (res.ok) {
+          setNavData({
+            navText1: data.navText1 || "KANTAH Gowa",
+            navText2: data.navText2 || "Sistem Informasi & Layanan Internal",
+            navbarIcon: data.navbarIcon || "/logo.png",
+          });
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data navbar:", error);
+      }
+    };
+    fetchNavbarData();
+  }, []);
+
   useEffect(() => {
     setMounted(true);
     const saved = localStorage.getItem("sidebarStatus");
@@ -143,11 +171,11 @@ export default function AdminDashboard() {
             </button>
           </div>
           <div className="flex items-center gap-3 ml-4">
-            <img src={navbarIconUrl} alt="Logo" className="h-10 w-auto shrink-0" />
-            <div className="flex flex-col min-w-max">
-              <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - User</h1>
-              <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
-            </div>
+          <img src={navData.navbarIcon} alt="Logo" className="h-10 w-auto shrink-0" />
+              <div className="flex flex-col min-w-max">
+                <h1 className="font-bold text-lg leading-none whitespace-nowrap">{navData.navText1} - Admin</h1>
+                <p className="text-[10px] opacity-70 whitespace-nowrap">{navData.navText2}</p>
+              </div>
           </div>
       </div>
         <h2 className="text-sm font-bold tracking-widest opacity-90 hidden sm:block">Administrator</h2>

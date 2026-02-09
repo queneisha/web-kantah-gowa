@@ -19,10 +19,10 @@ export default function Navbar() {
         const res = await fetch("http://127.0.0.1:8000/api/hero-display");
         const data = await res.json();
         setNavData({
-          navText1: data.navText1 || "KANTAH Gowa",
-          navText2: data.navText2 || "Sistem Informasi & Layanan Internal",
-          navText3: data.navText3 || "Administrator",
-          navbarIcon: data.navbarIcon || "/logo.png",
+          navText1: data.navText1||"KANTAH Gowa", 
+          navText2: data.navText2||"Sistem Informasi & Layanan Internal",
+          navText3: data.navText3||"Administrator",
+          navbarIcon: data.navbarIcon||"/logo.png",
         });
       } catch (error) {
         console.error("Gagal mengambil navbar data:", error);
@@ -49,7 +49,7 @@ export default function Navbar() {
           <div className="flex flex-col">
             <h1 className="font-bold text-lg leading-none">{navData.navText1}</h1>
             <p className="text-[10px] opacity-70">{navData.navText2}</p>
-            <p className="text-[9px] opacity-60">{navData.navText3}</p>
+           
           </div>
         </div>
 
