@@ -29,6 +29,30 @@ export default function AdminDashboard() {
     total_permohonan: 0,
     permohonan_masuk: 0
   });
+  const [konten, setKonten] = useState({
+    footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
+    footerText2: "Sistem Informasi Internal untuk Notaris dan PPAT",
+  });
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try { 
+        const response = await fetch('http://localhost:8000/api/hero-display');
+        const data = await response.json();
+
+        if (data) {
+          setKonten({
+            footerText1: data.footerText1,
+            footerText2: data.footerText2
+          });
+        }
+      } catch (error){
+        console.error('gagal mengambil data: ', error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const [latestUsers, setLatestUsers] = useState([]);
   const [latestPermohonan, setLatestPermohonan] = useState([]);
@@ -278,8 +302,8 @@ export default function AdminDashboard() {
           </div>
 
           <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center mt-auto">
-            <p className="text-[10px] font-bold">© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.</p>
-            <p className="text-[9px] opacity-50 tracking-widest mt-1">Sistem Informasi Internal untuk Notaris dan PPAT</p>
+            <p className="text-[10px] font-bold">{konten.footerText1}</p>
+            <p className="text-[9px] opacity-50 tracking-widest mt-1">{konten.footerText2}</p>
           </footer>
         </main>
       </div>

@@ -19,6 +19,7 @@ class HeroSetting extends Model
         'heroTitle2',
         'heroTitle3',
         'image_path',
+        'maskot_path',
         'navbarIcon',
         'navText1',
         'navText2',

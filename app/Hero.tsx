@@ -18,13 +18,14 @@ export default function Hero() {
     heroTitle3: "Platform digital untuk Notaris dan PPAT dalam melakukan pendaftaran, pengajuan permohonan, dan pemantauan status layanan pertanahan secara efisien dan terpadu.",
     background: null as string | null, //nti diambil dri laravel
     navbarIcon: null as string | null,
+    maskot: null,
   });
 
   //ambil data saat halaman dibuka
   useEffect(() => {
     const fetchHeroData = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
+        const res = await fetch("http://localhost:8000/api/hero-display", { cache: 'no-store' });
         const data = await res.json();
         setData(data);
       } catch (error) {
@@ -68,7 +69,7 @@ export default function Hero() {
 
         {/* Gambar Maskot */}
         <div className="hidden lg:block relative mt-35">
-          <img src="/maskot.png" alt="Maskot" className="h-[700px] object-contain drop-shadow-2xl" />
+          <img src={data.maskot || "/maskot.png"} alt="Maskot" className="h-[700px] object-contain drop-shadow-2xl" />
         </div>
       </div>
     </section>

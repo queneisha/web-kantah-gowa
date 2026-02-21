@@ -10,6 +10,11 @@ use App\Http\Controllers\PermohonanController;
 use App\Http\Controllers\Api\HeroController;
 use App\Http\Controllers\Api\KontenControllers;
 use App\Http\Controllers\Api\FiturController;
+use App\Http\Controllers\LoginConfigController;
+use App\Http\Controllers\RegisterConfigController;
+use App\Http\Controllers\ExportController;
+use App\Http\Controllers\Auth\LupaPasswordController;
+use Illuminate\Auth\Notifications\ResetPassword;
 
 Route::get('/users', [UserController::class, 'index']);
 
@@ -100,3 +105,17 @@ Route::prefix('admin')->group(function () {
 
  Route::get('/fiturs', [FiturController::class, 'index']);
  Route::post('/fitur/update', [FiturController::class, 'update']);
+
+ Route::post('/loginconfig', [LoginConfigController::class, 'update']);
+ Route::get('/loginconfig', [LoginConfigController::class, 'index']);
+
+ Route::get('/registerconfig', [RegisterConfigController::class, 'index']);
+ Route::post('/registerconfig', [RegisterConfigController::class, 'update']);
+
+ Route::get('/export-permohonan', [ExportController::class, 'export']);
+ Route::post('/lupa-password', [LupaPasswordController::class, 'sendResetLink']);
+ Route::post('/reset-password', [LupaPasswordController::class, 'resetPassword']);
+
+ ResetPassword::createUrlUsing(function ($user, string $token){
+    return 'http://localhost:3000/reset-password?token='.$token.'&email='.$user->email;
+ });

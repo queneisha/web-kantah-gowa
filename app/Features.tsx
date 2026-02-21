@@ -24,7 +24,7 @@ export default function Features() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const resFitur = await fetch("http://localhost:8000/api/fiturs");
+        const resFitur = await fetch("http://localhost:8000/api/fiturs", { cache: 'no-store' });
         const dataFitur = await resFitur.json();
         setFeatures(dataFitur);
       } catch (error) {
@@ -39,7 +39,7 @@ export default function Features() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const resAlur = await fetch("http://localhost:8000/api/alurs");
+        const resAlur = await fetch("http://localhost:8000/api/alurs", { cache: 'no-store' });
         const dataAlur = await resAlur.json();
         setSteps(dataAlur);
       } catch (error) {
@@ -100,12 +100,13 @@ export default function Features() {
               whileHover={{ scale: 1.02 }}
               className="bg-white rounded-[35px] p-5 flex items-center gap-6 shadow-2xl transition-all"
             >
-              <div className="bg-[#7c4d2d] text-white w-20 h-20 rounded-[25px] flex items-center justify-center text-4xl shadow-lg shrink-0">
+              <div className="bg-[#7c4d2d] text-white w-20 h-20 rounded-[25px] flex items-center justify-center text-4xl shadow-lg shrink-0 overflow-hidden relative">
               {s.icon && s.icon.length > 4 ? ( // Cek jika icon adalah nama file (bukan emotikon)
     <img 
       src={`http://localhost:8000/storage/icons/${s.icon}`} 
-      className="w-full h-full object-cover"
+      className="w-full h-full object-contain p-3 opacity-100 relative z-10 block"
       alt={s.judul}
+      style={{ opacity: 1 }}
     />
   ) : (
     <span>{s.icon || "✨"}</span> // Tampilkan emotikon lama jika bukan file
@@ -146,17 +147,19 @@ export default function Features() {
               whileHover={{ y: -8 }}
               className="bg-white p-10 rounded-[50px] shadow-[0_20px_50px_rgba(0,0,0,0.08)] flex items-center gap-8 border border-gray-50 hover:border-green-100 transition-all"
             >
-              <div className="bg-green-50 p-6 rounded-[30px] text-[#56b35a] text-4xl shadow-inner flex shrink-0">
-                {f.icon && f.icon.length > 2 ? (
-                  <img
-                    src={`http://localhost:8000/storage/icons/${f.icon}`}
-                    className="w-10 h-10 object-contain"
-                  />
-                ) : (
-                  <span>{f.icon || "✨"}</span>
-                )}
-              </div>
-
+           <div className="!bg-green-200 flex items-center justify-center rounded-[30px] shadow-[inset_0_2px_10px_rgba(0,0,0,0.1)] shrink-0 w-20 h-20 md:w-24 md:h-24 overflow-hidden">
+  {f.icon && f.icon.length > 2 ? (
+    <img
+      src={`http://localhost:8000/storage/icons/${f.icon}`}
+      className="w-12 h-12 md:w-14 md:h-14 object-contain"
+      alt={f.judul}
+      // Kita tambahkan drop-shadow kecil agar ikon putihnya makin tegas
+      style={{ filter: 'brightness(0) invert(1) drop-shadow(0px 2px 2px rgba(0,0,0,0.2))' }}
+    />
+  ) : (
+    <span className="text-white text-4xl">{f.icon || "✨"}</span>
+  )}
+</div>
               <div>
                 <h4 className="font-semibold text-[#56b35a] text-2xl mb-2 tracking-tight">
                   {f?.judul}

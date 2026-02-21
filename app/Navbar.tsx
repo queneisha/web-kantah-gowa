@@ -16,7 +16,7 @@ export default function Navbar() {
   useEffect(() => {
     const fetchNavbarData = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/hero-display");
+        const res = await fetch("http://127.0.0.1:8000/api/hero-display", { cache: 'no-store' });
         const data = await res.json();
         setNavData({
           navText1: data.navText1||"KANTAH Gowa", 
@@ -42,7 +42,7 @@ export default function Navbar() {
   return (
     <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
       <div className="flex items-center gap-3">
-          <button className="p-2 hover:bg-white/10 rounded-lg transition lg:hidden">
+          <button suppressHydrationWarning  className="p-2 hover:bg-white/10 rounded-lg transition lg:hidden">
             <Menu size={24} />
           </button>
           <img src={navData.navbarIcon} alt="Logo" className="h-10 w-auto" />

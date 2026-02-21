@@ -106,6 +106,67 @@ export default function RiwayatPage() {
     }
   };
 
+  //exporttt
+  const handleExport = () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/export-permohonan';
+    window.location.href = apiUrl;
+
+  };
+
+  const [navData, setNavData] = useState({
+    navText1:"KANTAH Gowa", 
+    navText2: "Sistem Informasi & Layanan Internal",
+    navbarIcon:"/logo.png",
+  });
+  
+
+  useEffect(() => {
+    const fetchNavbarData = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/hero-display");
+        const data = await res.json();
+        
+        if (res.ok) {
+          setNavData({
+            navText1: data.navText1 || "KANTAH Gowa",
+            navText2: data.navText2 || "Sistem Informasi & Layanan Internal",
+            navbarIcon: data.navbarIcon || "/logo.png",
+          });
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data navbar:", error);
+      }
+    };
+    fetchNavbarData();
+  }, []);
+
+
+
+  const [konten, setKonten] = useState({
+    footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
+    footerText2: "Sistem Informasi Internal untuk Notaris dan PPAT",
+  });
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try { 
+        const response = await fetch('http://localhost:8000/api/hero-display');
+        const data = await response.json();
+
+        if (data) {
+          setKonten({
+            footerText1: data.footerText1,
+            footerText2: data.footerText2
+          });
+        }
+      } catch (error){
+        console.error('gagal mengambil data: ', error);
+      }
+    };
+    fetchData();
+  }, []);
+
   const getMonthName = (monthNum: string) => {
     const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
     const num = parseInt(monthNum);
@@ -143,6 +204,8 @@ export default function RiwayatPage() {
     router.push("/");
   };
 
+
+
   const SidebarItem = ({ href, icon: Icon, label, active = false }: any) => (
     <Link href={href} className="block group relative">
       <button className={`flex items-center w-full py-3.5 transition-all rounded-xl font-bold whitespace-nowrap ${active ? "bg-[#56b35a] text-white shadow-lg" : "text-white hover:bg-white/10"} ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}>
@@ -168,12 +231,13 @@ export default function RiwayatPage() {
             </button>
           </div>
           <div className="flex items-center gap-3 ml-4">
-            <img src={navbarIconUrl} alt="Logo" className="h-10 w-auto shrink-0" />
+            <img src={navData.navbarIcon} alt="Logo" className="h-10 w-auto shrink-0" />
               <div className="flex flex-col min-w-max">
-                <h1 className="font-bold text-lg leading-none whitespace-nowrap">KANTAH Gowa - User</h1>
-                <p className="text-[10px] opacity-70 whitespace-nowrap">Sistem Manajemen Internal</p>
+                <h1 className="font-bold text-lg leading-none whitespace-nowrap">{navData.navText1} - Admin </h1>
+                <p className="text-[10px] opacity-70 whitespace-nowrap">{navData.navText2}</p>
               </div>
-           </div>
+            </div>
+
         </div>
         <h2 className="text-sm font-bold tracking-widest opacity-90 hidden sm:block">Administrator</h2>
       </header>
@@ -205,7 +269,7 @@ export default function RiwayatPage() {
                   <p className="text-gray-500 font-medium">Menampilkan {filteredData.length} data laporan</p>
                 </div>
                 <button 
-                  onClick={() => setIsExportModalOpen(true)} 
+                  onClick={handleExport} 
                   className="flex items-center gap-2 bg-[#56b35a] hover:bg-[#469e4a] text-white px-6 py-3 rounded-xl font-bold transition shadow-md"
                 >
                   <Download size={20} /> Export Laporan
@@ -312,8 +376,8 @@ export default function RiwayatPage() {
           </div>
 
           <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center mt-10">
-            <p className="text-[10px] font-bold">© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.</p>
-            <p className="text-[9px] opacity-50 tracking-widest mt-1">Sistem Informasi Internal untuk Notaris dan PPAT</p>
+            <p className="text-[10px] font-bold">{konten.footerText1}</p>
+            <p className="text-[9px] opacity-50 tracking-widest mt-1">{konten.footerText2}</p>
           </footer>
         </main>
       </div>

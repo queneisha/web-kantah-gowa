@@ -9,11 +9,12 @@ export default function Home() {
     footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
     footerText2: "Sistem Informasi Internal untuk Notaris dan PPAT",
   });
-  
+
+
   useEffect(() => {
     const fetchData = async () => {
       try { 
-        const response = await fetch('http://localhost:8000/api/hero-display');
+        const response = await fetch('http://localhost:8000/api/hero-display',{ cache: 'no-store' });
         const data = await response.json();
 
         if (data) {

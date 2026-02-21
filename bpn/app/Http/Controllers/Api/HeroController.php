@@ -29,6 +29,9 @@ class HeroController extends Controller
             'background' => $hero && $hero->image_path 
                 ? asset('storage/' . $hero->image_path) 
                 : null,
+            'maskot' => $hero && $hero->maskot_path 
+            ? asset('storage/' . $hero->maskot_path) 
+            : '/maskot.png',
             'navbarIcon' => $hero && $hero->navbarIcon
                 ? asset('storage/' . $hero->navbarIcon)
                 : '/logo.png',
@@ -50,8 +53,9 @@ class HeroController extends Controller
                 'navText3' => 'nullable|string|max:255',
                 'footerText1' => 'nullable|string',
                 'footerText2' => 'nullable|string',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // max 5MB
-                'navbarIcon' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // max 5MB
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', 
+                'navbarIcon' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', 
+                'maskot' => 'nullable|image|mimes:png|max:5120'
             ]);
 
             $hero = HeroSetting::where('type', 'background')->first()
@@ -92,6 +96,10 @@ class HeroController extends Controller
                 $file = $request->file('image');
                 $path = $file->store('hero', 'public'); // Simpan di storage/app/public/hero
                 $hero->image_path = $path;
+            }
+            
+            if ($request->hasFile('maskot')) {
+                $hero->maskot_path = $request->file('maskot')->store('hero', 'public');
             }
 
             // Proses Foto Navbar Icon

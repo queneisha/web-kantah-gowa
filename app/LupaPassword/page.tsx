@@ -4,11 +4,35 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "../Navbar";
 
-export default function LoginPage() {
+export default function LupaPasswordPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const handleLupaPassword = async (e: React.FormEvent<HTMLFormElement>) =>{
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    try{
+      const response = await fetch('http://localhost:8000/api/lupa-password', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json' 
+        },
+        body: JSON.stringify({ email: formData.get("email")}),
+      });
+
+      const result = await response.json();
+      if (response.ok){
+        alert("sukses! " + result.message);
+        router.push('/Login');
+      } else {
+        alert(result.message || "Email tidak ditemukan.");
+      }
+    } catch (error){
+      alert("Gagal terhubung ke server.");
+    }
+  };
 
   const [konten, setKonten] = useState({
     footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
@@ -24,10 +48,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     const fetchAllData = async () => {
-      setIsLoading(true)
       try { 
         const [resHero, resConfig] = await Promise.all([
-          fetch ('http://localhost:8000/api/hero-display',{ cache: 'no-store' }),
+          fetch ('http://localhost:8000/api/hero-display', { cache: 'no-store' }),
           fetch ('http://localhost:8000/api/loginconfig', { cache: 'no-store' }),
         ]);
         const dataHero = await resHero.json();
@@ -68,7 +91,7 @@ export default function LoginPage() {
     };
 
     try {
-      const response = await fetch('http://localhost:8000/api/login' , {
+      const response = await fetch('http://localhost:8000/api/login', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -120,10 +143,8 @@ export default function LoginPage() {
 
   }; 
 
-
   return (
     <main className="min-h-screen relative flex flex-col font-sans">
-
       <Navbar />
 
       <section className="flex-1 relative flex items-center justify-center overflow-hidden py-12">
@@ -146,16 +167,16 @@ export default function LoginPage() {
           <div className="flex-1 flex flex-col items-center z-20">
             <div className="bg-white/90 backdrop-blur-xl p-10 rounded-[50px] shadow-2xl w-full max-w-xl border border-white/40">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-[#7c4d2d] mb-2">{loginKonten.headerTitle}</h2>
+                <h2 className="text-3xl font-bold text-[#7c4d2d] mb-2">Lupa Password?</h2>
                 <p className="text-[#7c4d2d] text-sm font-medium">
-                {loginKonten.subHeader}
+                Masukkan email Anda untuk menerima link reset password.
                 </p>
               </div>
 
               <div className="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100">
-                <h3 className="text-2xl font-bold text-[#7c4d2d] mb-6">Login</h3>
+                <h3 className="text-2xl font-bold text-[#7c4d2d] mb-6"> Reset Password   </h3>
                 
-                <form onSubmit={handleLogin} className="space-y-5" autoComplete="off">
+                <form onSubmit={handleLupaPassword} className="space-y-5" autoComplete="off">
                   <div className="space-y-2">
                     <label htmlFor="email-input" className="block text-sm font-bold text-[#7c4d2d] ml-2">Email</label>
                     <input 
@@ -169,44 +190,11 @@ export default function LoginPage() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="block text-sm font-bold text-[#7c4d2d] ml-2">Password</label>
-                    <div className="relative">
-                      <input 
-                      id ="password"
-                        name="password" 
-                        type={showPassword ? "text" : "password"} 
-                        suppressHydrationWarning={true}
-                        required
-                        placeholder="Masukan Password Anda" 
-                        className="w-full px-5 py-3 bg-white rounded-full border-2 border-[#7c4d2d]/30 focus:border-[#7c4d2d] outline-none text-[#7c4d2d] placeholder:text-gray-400 font-medium text-xs transition-all" 
-                      />
-                      <button 
-                        type="button" 
-                        suppressHydrationWarning={true}
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-5 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity"
-                      >
-                        <img src="/icon_mata.png" alt="toggle" className="w-5 h-5 object-contain" />
-                      </button>
-                    </div>
-                    
-                    <div className="text-right pr-4">
-                      <Link href="/LupaPassword"
-                       type="button" 
-                       className="text-xs font-bold text-[#7c4d2d]/70 hover:text-[#7c4d2d]">Lupa Password?
-                       </Link>
-                    </div>
-                  </div>
-
                   <div className="flex flex-col items-center pt-4">
-                    <button type="submit" className="w-1/2 bg-[#56b35a] hover:bg-[#43a047] text-white py-3.5 rounded-full font-bold text-xl shadow-lg transition-transform active:scale-95">
-                      Login
-                    </button>
+                  <button className="w-full bg-[#56b35a] text-white py-4 rounded-2xl font-bold hover:bg-[#469e4a] transition">
+                     Kirim Link Reset
+                  </button>
                     
-                    <p className="text-center text-xs mt-8 font-bold text-[#7c4d2d]/70">
-                      Belum Punya Akun? <Link href="/Register" className="text-green-600 hover:underline">Daftar disini</Link>
-                    </p>
                   </div>
                 </form>
               </div>

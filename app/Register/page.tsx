@@ -1,15 +1,88 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "../Navbar";
 
 export default function RegisterPage() {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedJabatan, setSelectedJabatan] = useState("Notaris/PPAT");
+
   const opsiJabatan = ["Notaris/PPAT", "Sekretaris Notaris/PPAT", "Anggota ATR BPN"];
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [config, setConfig]= useState({
+     judul_utama: 'Buat Akun Anda!',
+     sub_judul: 'Silahkan daftar untuk membat akun di sistem layanan pertanahan kantah Gowa.',
+     maskot_path: 'maskot_daftar.png',
+     background_path:'/background.jpg',
+     opsi_jabatan:["Notaris/PPAT", "Sekretaris Notaris/PPAT", "Anggota ATR BPN"],
+      });
+
+      const [selectedJabatan, setSelectedJabatan] = useState("");
+
+
+      useEffect(() => {
+        
+        const fetchConfig = async () => {
+          try {
+            const response = await fetch('http://localhost:8000/api/registerconfig',);
+            const result = await response.json();
+
+            if (result && !result.error) {
+              const dbJabatan = result.opsi_jabatan && result.opsi_jabatan.length > 0 
+                          ? result.opsi_jabatan 
+                          : config.opsi_jabatan;
+             
+              setConfig((prev) => ({
+                ...prev,
+                judul_utama: result.judul_utama || prev.judul_utama,
+                sub_judul: result.sub_judul || prev.sub_judul,
+                
+                maskot_path: result.maskot_path 
+                  ? `http://localhost:8000/storage/${result.maskot_path}` 
+                  : prev.maskot_path,
+                background_path: result.background_path 
+                  ? `http://localhost:8000/storage/${result.background_path.replace(/^\/+/g, '')}` 
+                  : prev.background_path,
+                opsi_jabatan: dbJabatan
+              }));
+    
+                setSelectedJabatan(dbJabatan[0]);
+              }
+          } catch (error) {
+            console.error("Gagal mengambil config:", error);
+          }
+        };
+        
+        fetchConfig();
+      }, []);
+
+      
+        const [konten, setKonten] = useState({
+          footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
+          footerText2: "Sistem Informasi Internal untuk Notaris dan PPAT",
+        });
+      
+      
+        useEffect(() => {
+          const fetchData = async () => {
+            try { 
+              const response = await fetch('http://localhost:8000/api/hero-display', { cache: 'no-store' })
+              const data = await response.json();
+      
+              if (data) {
+                setKonten({
+                  footerText1: data.footerText1,
+                  footerText2: data.footerText2
+                });
+              }
+            } catch (error){
+              console.error('gagal mengambil data: ', error);
+            }
+          };
+          fetchData();
+        }, []);
 
   // State untuk popup berhasil
   const [showPopup, setShowPopup] = useState(false);
@@ -95,14 +168,14 @@ export default function RegisterPage() {
       <Navbar />
 
       <section className="flex-1 relative flex items-center justify-center overflow-hidden py-12">
-        <div className="absolute inset-0 bg-[url('/background.jpg')] bg-cover bg-center -z-10 brightness-90" />
+        <div className="absolute inset-0 bg-cover bg-center -z-10 brightness-90" style={{ backgroundImage: `url("${config.background_path}")`}} />
         
         <div className="container mx-auto px-16 flex items-center gap-10">
           <div className="flex-1 flex justify-end">
             <div className="bg-white/90 backdrop-blur-xl p-10 rounded-[50px] shadow-2xl w-full max-w-xl border border-white/40">
               <div className="text-center mb-6">
-                <h2 className="text-3xl font-bold text-[#7c4d2d] mb-2">Buat Akun Anda!</h2>
-                <p className="text-[#7c4d2d] text-sm font-medium">Silahkan daftar untuk membuat akun di sistem layanan pertanahan kantah Gowa.</p>
+                <h2 className="text-3xl font-bold text-[#7c4d2d] mb-2">{config.judul_utama}</h2>
+                <p className="text-[#7c4d2d] text-sm font-medium">{config.sub_judul}</p>
               </div>
 
               <div className="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100">
@@ -125,8 +198,9 @@ export default function RegisterPage() {
                       </div>
                       {isOpen && (
                         <div className="absolute z-50 w-full mt-2 bg-white border-2 border-[#7c4d2d]/30 rounded-[25px] overflow-hidden shadow-xl">
-                          {opsiJabatan.map((item) => (
-                            <div key={item} onClick={() => { setSelectedJabatan(item); setIsOpen(false); }} className="px-5 py-2.5 text-xs text-[#7c4d2d] hover:bg-[#7c4d2d]/10 cursor-pointer border-b border-gray-50 last:border-none">
+                          {config.opsi_jabatan.map((item, index) => (
+                            <div key={index} onClick={() => { setSelectedJabatan(item); setIsOpen(false); }} 
+                            className="px-5 py-2.5 text-xs text-[#7c4d2d] hover:bg-[#7c4d2d]/10 cursor-pointer border-b border-gray-50 last:border-none">
                               {item}
                             </div>
                           ))}
@@ -210,14 +284,14 @@ export default function RegisterPage() {
           </div>
 
           <div className="hidden lg:block w-1/3 transform translate-y-16 translate-x-10">
-            <img src="/maskot_daftar.png" alt="Maskot" className="h-[600px] object-contain drop-shadow-2xl" />
+            <img src={config.maskot_path} alt="Maskot" className="h-[600px] object-contain drop-shadow-2xl" />
           </div>
         </div>
       </section>
       
       <footer className="bg-[#1a1a1a] text-white py-6 text-center">
-        <p className="text-[10px] font-bold">© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.</p>
-        <p className="text-[9px] opacity-60 mt-1 uppercase tracking-widest">Sistem Informasi Internal untuk Notaris dan PPAT</p>
+        <p className="text-[10px] font-bold">{konten.footerText1}.</p>
+        <p className="text-[9px] opacity-60 mt-1 uppercase tracking-widest">{konten.footerText2}</p>
       </footer>
     </main>
   );

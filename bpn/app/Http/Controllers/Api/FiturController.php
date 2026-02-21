@@ -25,6 +25,7 @@ class FiturController extends Controller
 
         foreach ($features as $index => $item) {
 
+            
 
             $fitur = Fitur::find($item['id']);
             if ($fitur) {

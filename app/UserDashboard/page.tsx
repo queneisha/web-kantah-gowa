@@ -65,6 +65,30 @@ export default function UserDashboardPage() {
     ditolak: 0,
     total: 0
   });
+  const [konten, setKonten] = useState({
+    footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
+    footerText2: "Sistem Informasi Internal untuk Notaris dan PPAT",
+  });
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try { 
+        const response = await fetch('http://localhost:8000/api/hero-display');
+        const data = await response.json();
+
+        if (data) {
+          setKonten({
+            footerText1: data.footerText1,
+            footerText2: data.footerText2
+          });
+        }
+      } catch (error){
+        console.error('gagal mengambil data: ', error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const [stats, setStats] = useState([
     { label: "Diproses", value: 0, icon: <Clock size={20} className="text-orange-500" />, borderColor: "border-orange-500", textColor: "text-orange-500" },
@@ -246,7 +270,7 @@ export default function UserDashboardPage() {
             <div className="flex items-center gap-3 ml-4">
             <img src={navData.navbarIcon} alt="Logo" className="h-10 w-auto shrink-0" />
               <div className="flex flex-col min-w-max">
-                <h1 className="font-bold text-lg leading-none whitespace-nowrap">{navData.navText1} {isAdmin ? "" : "- User"}</h1>
+                <h1 className="font-bold text-lg leading-none whitespace-nowrap">{navData.navText1} - User </h1>
                 <p className="text-[10px] opacity-70 whitespace-nowrap">{navData.navText2}</p>
               </div>
             </div>
@@ -361,7 +385,7 @@ export default function UserDashboardPage() {
           </div>
 
           <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center mt-10">
-            <p className="text-[10px] font-bold">© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.</p>
+            <p className="text-[10px] font-bold">{konten.footerText1}</p>
           </footer>
         </main>
       </div>
