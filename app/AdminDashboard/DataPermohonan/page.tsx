@@ -75,7 +75,15 @@ export default function DataPermohonanPage() {
   useEffect(() => {
     const fetchNavbarData = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
+        const token = typeof window !== 'undefined' ? sessionStorage.getItem('token'): null;
+        const res = await fetch("http://localhost:8000/api/hero-display"  , {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        });
         const data = await res.json();
         
         if (res.ok) {
@@ -418,7 +426,7 @@ export default function DataPermohonanPage() {
             <SidebarItem href="/AdminDashboard/DataUser" icon={Users} label="Data User" />
             <SidebarItem href="/AdminDashboard/DataPermohonan" icon={FileText} label="Data Permohonan" active={true} />
             <SidebarItem href="/AdminDashboard/Pengaturan" icon={Settings} label="Pengaturan" />
-            <SidebarItem href="/AdminDashboard/EditKonten" icon={Edit3} label="Edit Konten" />
+            <SidebarItem href="/AdminDashboard/EditKonten" icon={Edit} label="Edit Konten" />
             <SidebarItem href="/AdminDashboard/Riwayat" icon={FileSpreadsheet} label="Riwayat" />
             <div className="pt-4 mt-4 border-t border-white/20">
               <button onClick={() => setIsLogoutModalOpen(true)} className={`group relative flex items-center w-full py-3.5 hover:bg-red-600 rounded-xl font-bold transition-all whitespace-nowrap ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}>
@@ -495,7 +503,6 @@ export default function DataPermohonanPage() {
                         <th className="px-6 py-2">No. Sertipikat</th>
                         <th className="px-6 py-2">Lokasi</th>
                         <th className="px-6 py-2 text-center">Status</th>
-                        <th className="px-6 py-2">Catatan</th>
                         <th className="px-6 py-2 text-center">Aksi</th>
                       </tr>
                     </thead>
@@ -541,9 +548,7 @@ export default function DataPermohonanPage() {
                                 {mohon.status}
                               </span>
                             </td>
-                            <td className="px-6 py-5 text-medium text-gray-600 italic max-w-xs truncate" title={mohon.catatan || ""}>
-                              {mohon.catatan ? mohon.catatan : "-"}
-                            </td>
+                           
                             <td className="px-6 py-5 last:rounded-r-2xl">
                               <div className="flex justify-center gap-2">
                                 {mohon.status === "Menunggu" ? (
@@ -622,9 +627,7 @@ export default function DataPermohonanPage() {
                   "border-[#ff8a3d] text-[#ff8a3d]"
                 }`}>{selectedMohon.status}</span>
               </div>
-              {selectedMohon.catatan && (
-                <div className="col-span-2 bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-500"><p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Catatan Admin</p><p className="text-gray-700 font-medium text-[13px]">{selectedMohon.catatan}</p></div>
-              )}
+             
             </div>
             
             <h3 className="text-lg font-black text-gray-900 mb-3">Update Status</h3>

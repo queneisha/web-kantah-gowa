@@ -22,6 +22,7 @@ export default function AdminDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const [stats, setStats] = useState({
     total_user: 0,
@@ -38,7 +39,9 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try { 
-        const response = await fetch('http://localhost:8000/api/hero-display');
+        const token = sessionStorage.getItem('token');
+        const response = await fetch('http://localhost:8000/api/hero-display', {  headers: { ...(token ? {Authorization: `Bearer ${token}`} : {})}
+      });
         const data = await response.json();
 
         if (data) {
@@ -68,7 +71,9 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchNavbarData = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
+        const token = sessionStorage.getItem('token');
+        const res = await fetch("http://localhost:8000/api/hero-display", {  headers: { ...(token ? {Authorization: `Bearer ${token}`} : {})}
+      });
         const data = await res.json();
         
         if (res.ok) {
@@ -94,8 +99,10 @@ export default function AdminDashboard() {
 
     // Fetch navbar icon dari backend
     const fetchNavbarIcon = async () => {
+      const token = sessionStorage.getItem('token');
       try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
+        const res = await fetch("http://localhost:8000/api/hero-display", {  headers: { ...(token ? {Authorization: `Bearer ${token}`} : {})}
+      });
         const data = await res.json();
         setNavbarIconUrl(data.navbarIcon || "/logo.png");
       } catch (error) {
@@ -118,8 +125,11 @@ export default function AdminDashboard() {
   }, []);
 
   const fetchStats = async () => {
+    const token = sessionStorage.getItem('token');
     try {
-      const response = await fetch('http://localhost:8000/api/dashboard-stats');
+      const response = await fetch('http://localhost:8000/api/dashboard-stats', {
+        headers: { ...(token ? {Authorization: `Bearer ${token}`} : {})}
+      });
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -128,8 +138,30 @@ export default function AdminDashboard() {
   };
 
   const fetchUsers = async () => {
+    const token = sessionStorage.getItem('token');
     try {
-      const response = await fetch('http://localhost:8000/api/latest-users');
+      const response = await fetch('http://localhost:8000/api/latest-users', {
+        headers: {...(token ? {Authorization: `Bearer ${token}`} : {}) }
+      });
+      if (response.status === 401 || response.status === 403) {
+        setNotification({ 
+          type: 'error', 
+          message: 'Sesi berakhir atau tidak memiliki akses. Silakan login ulang.' 
+        });
+        
+        try {
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('user');
+        } catch (e) {
+          // ignore
+        }
+      
+        setTimeout(() => {
+          if (typeof window !== 'undefined') window.location.href = '/Login';
+        }, 1200);
+        
+        return;
+      }
       const data = await response.json();
       setLatestUsers(data);
     } catch (error) {
@@ -139,7 +171,34 @@ export default function AdminDashboard() {
 
   const fetchPermohonan = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/latest-permohonan');
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+      const response = await fetch('http://localhost:8000/api/latest-permohonan', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          ...(token ? {Authorization: `Bearer ${token}`} : {}) 
+        }
+      });
+      if (response.status === 401 || response.status === 403) {
+        setNotification({ 
+          type: 'error', 
+          message: 'Sesi berakhir atau tidak memiliki akses. Silakan login ulang.' 
+        });
+        
+        try {
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('user');
+        } catch (e) {
+          // ignore
+        }
+      
+        setTimeout(() => {
+          if (typeof window !== 'undefined') window.location.href = '/Login';
+        }, 1200);
+        
+        return;
+      }
       const data = await response.json();
       setLatestPermohonan(data);
     } catch (error) {
@@ -244,6 +303,15 @@ export default function AdminDashboard() {
 
         {/* AREA KONTEN UTAMA */}
         <main className="flex-1 overflow-y-auto bg-[#f8f9fa] flex flex-col">
+        {notification && (
+        <div className={`fixed top-5 right-5 z-[200] px-6 py-4 rounded-2xl shadow-lg animate-in fade-in slide-in-from-top duration-300 ${
+          notification.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+        }`}>
+          <p className="font-bold text-sm">{notification.message}</p>
+        </div>
+      )}
           <div className="p-10 space-y-10 max-w-7xl mx-auto w-full flex-grow">
             <div className="border-b-2 border-gray-200 pb-4">
               <h3 className="text-3xl font-black text-gray-900">Beranda</h3>
@@ -378,7 +446,7 @@ function TableRow({ name, role, status, notaris, jenis_lainnya }: any) {
 
         {isSekretaris && notaris && (
           <span className="text-[10px] italic text-gray-600 font-semibold mt-0.5">
-            Nama Notaris: {notaris}
+            Nama Notaris/PPAT/PPATS: {notaris}
           </span>
         )}
       </div>

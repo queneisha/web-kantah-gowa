@@ -195,13 +195,7 @@ if (!token || !email) {
         }} />
         
         <div className="container mx-auto px-16 flex items-center gap-10">
-          <div className="hidden lg:block w-1/3 transform translate-y-24 translate-x-20">
-            <img src={loginKonten.maskot_path}
-             alt="Maskot" className="h-[600px] object-contain drop-shadow-2xl" 
-             onError={(e) => {
-              (e.target as HTMLImageElement).src = "/maskot_login.png";
-             }}/>
-          </div>
+        
 
           <div className="flex-1 flex flex-col items-center z-20">
             <div className="bg-white/90 backdrop-blur-xl p-10 rounded-[50px] shadow-2xl w-full max-w-xl border border-white/40">

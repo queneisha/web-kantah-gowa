@@ -278,7 +278,7 @@ class PermohonanController extends Controller
                                               'id' => $item->id,
                                               'title' => $item->title,
                                               'message' => $item->message,
-                                              'date' => $item->created_at->format('d M Y \p\u\k\u\l H:i'),
+                                              'date' => $item->created_at->timezone('Asia/Makassar')->format('d M Y \p\u\k\u\l H:i'),
                                               'status' => strtolower($item->status),
                                               'jenis' => $item->jenis,
                                               'jenis_lainnya' => $item->jenis_lainnya,

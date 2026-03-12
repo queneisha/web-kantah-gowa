@@ -18,7 +18,6 @@ export default function Hero() {
     heroTitle3: "Platform digital untuk Notaris dan PPAT dalam melakukan pendaftaran, pengajuan permohonan, dan pemantauan status layanan pertanahan secara efisien dan terpadu.",
     background: null as string | null, //nti diambil dri laravel
     navbarIcon: null as string | null,
-    maskot: null,
   });
 
   //ambil data saat halaman dibuka
@@ -53,7 +52,8 @@ export default function Hero() {
         <div className="absolute inset-0 bg-black/40"></div>
       </div>
       
-      <div className="container mx-auto px-16 relative z-10 flex justify-between items-center w-full">
+      {/* justify between kalau mau dikasi ke samping */}
+      <div className="container mx-auto px-16 relative z-10 flex justify-center items-center w-full">
         <div className="bg-white/95 p-12 rounded-[50px] max-w-2xl shadow-2xl border border-white/20">
           <h1 className="text-5xl font-black text-[#7c4d2d] mb-4">{data.heroTitle1}</h1>
           <h2 className="text-2xl font-bold text-gray-800 mb-4">{data.heroTitle2}</h2>
@@ -65,11 +65,6 @@ export default function Hero() {
             Mulai Sekarang
           </button>
         </Link>
-        </div>
-
-        {/* Gambar Maskot */}
-        <div className="hidden lg:block relative mt-35">
-          <img src={data.maskot || "/maskot.png"} alt="Maskot" className="h-[700px] object-contain drop-shadow-2xl" />
         </div>
       </div>
     </section>

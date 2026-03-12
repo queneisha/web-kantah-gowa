@@ -13,7 +13,6 @@ import {
   Clock,
   XCircle,
   Menu,
-  RefreshCw,
 } from "lucide-react";
 
 export default function UserDashboardPage() {
@@ -21,74 +20,21 @@ export default function UserDashboardPage() {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
-  
-  // State untuk menyimpan data user dari login
   const [userData, setUserData] = useState<any>(null);
+  
+  // --- STATE NOTIFIKASI ---
+  const [unreadCount, setUnreadCount] = useState(0);
 
-   //navbar ni boshh
-   const [navData, setNavData] = useState({
+  const [navData, setNavData] = useState({
     navText1:"KANTAH Gowa", 
     navText2: "Sistem Informasi & Layanan Internal",
     navbarIcon:"/logo.png",
   });
 
-  const isAdmin = false;
-  
-
-  useEffect(() => {
-    const fetchNavbarData = async () => {
-      try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
-        const data = await res.json();
-        
-        if (res.ok) {
-          setNavData({
-            navText1: data.navText1 || "KANTAH Gowa",
-            navText2: data.navText2 || "Sistem Informasi & Layanan Internal",
-            navbarIcon: data.navbarIcon || "/logo.png",
-          });
-        }
-      } catch (error) {
-        console.error("Gagal mengambil data navbar:", error);
-      }
-    };
-    fetchNavbarData();
-  }, []);
-  
-  // State untuk statistik permohonan
-  const [permohonanStats, setPermohonanStats] = useState({
-    diproses: 0,
-    disetujui: 0,
-    ditolak: 0,
-    total: 0
-  });
   const [konten, setKonten] = useState({
     footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
-    footerText2: "Sistem Informasi Internal untuk Notaris dan PPAT",
+    footerText2: "Sistem Informasi Internal untuk Notaris/PPATS dan PPAT",
   });
-
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try { 
-        const response = await fetch('http://localhost:8000/api/hero-display');
-        const data = await response.json();
-
-        if (data) {
-          setKonten({
-            footerText1: data.footerText1,
-            footerText2: data.footerText2
-          });
-        }
-      } catch (error){
-        console.error('gagal mengambil data: ', error);
-      }
-    };
-    fetchData();
-  }, []);
 
   const [stats, setStats] = useState([
     { label: "Diproses", value: 0, icon: <Clock size={20} className="text-orange-500" />, borderColor: "border-orange-500", textColor: "text-orange-500" },
@@ -97,108 +43,32 @@ export default function UserDashboardPage() {
     { label: "Total Permohonan", value: 0, icon: <FileText size={20} className="text-black" />, borderColor: "border-black", textColor: "text-black" },
   ]);
 
-  useEffect(() => {
-    setMounted(true);
-    
-    // 1. Ambil status sidebar
-    const savedSidebar = localStorage.getItem("sidebarStatus");
-    if (savedSidebar !== null) {
-      setIsSidebarOpen(JSON.parse(savedSidebar));
-    }
-
-
-    // 2. Fetch navbar icon dari backend
-    const fetchNavbarIcon = async () => {
-      try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
-        if (!res.ok) return;
+  // 1. Fungsi Fetch Notifikasi (Ambil Jumlah Unread)
+  const fetchUnreadNotifications = async (userId: string) => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/notifikasi/${userId}`);
+      if (res.ok) {
         const data = await res.json();
-      if (data && data.navbarIcon){
-        setNavbarIconUrl(data.navbarIcon || "/logo.png");
-      } 
-    }catch (error) {
-        console.error("Gagal fetch navbar icon:", error);
+        const unread = data.filter((n: any) => n.is_read === 0).length;
+        setUnreadCount(unread);
       }
-       
-    };
-
-    fetchNavbarIcon();
-
-    // Listen untuk event update dari EditKonten
-    window.addEventListener("heroUpdated", fetchNavbarIcon);
-
-    // 3. Ambil data user yang login (Dihubungkan ke sistem Login)
-    const storedUser = sessionStorage.getItem("user");
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      // PROTEKSI: Jika user adalah admin, redirect ke AdminDashboard
-      if (user.role === 'admin') {
-        router.push('/AdminDashboard');
-        return;
-      }
-      setUserData(user);
-    } else {
-      // PROTEKSI: Jika tidak ada user data, redirect ke login
-      router.push('/Login');
-      return;
+    } catch (error) {
+      console.error("Gagal ambil notifikasi:", error);
     }
+  };
 
-    return () => {
-      window.removeEventListener("heroUpdated", fetchNavbarIcon);
-    };
-  }, [router]);
-
-  // 3. Fetch data permohonan dari backend berdasarkan user_id
-  useEffect(() => {
-    if (mounted && userData?.id) {
-      fetchPermohonanStats(userData.id);
-      
-      // Setup interval refetch setiap 5 detik untuk update real-time
-      refreshIntervalRef.current = setInterval(() => {
-        fetchPermohonanStats(userData.id);
-      }, 5000); // 5000ms = 5 detik
-
-      // Cleanup interval saat component unmount
-      return () => {
-        if (refreshIntervalRef.current) {
-          clearInterval(refreshIntervalRef.current);
-        }
-      };
-    }
-  }, [mounted, userData]);
-
-  // Fungsi untuk fetch statistik permohonan user
+  // 2. Fungsi Fetch Statistik Permohonan
   const fetchPermohonanStats = async (userId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/riwayat/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        console.error('Gagal fetch permohonan');
-        return;
-      }
-
+      const response = await fetch(`http://localhost:8000/api/riwayat/${userId}`);
+      if (!response.ok) return;
       const data = await response.json();
       
-      // Hitung statistik berdasarkan status
       const diproses = data.filter((item: any) => item.status === 'Proses').length;
       const disetujui = data.filter((item: any) => item.status === 'Disetujui').length;
       const ditolak = data.filter((item: any) => item.status === 'Ditolak').length;
       const total = data.length;
 
-      setPermohonanStats({
-        diproses,
-        disetujui,
-        ditolak,
-        total
-      });
-
-      // Update stats array dengan nilai yang baru
       setStats([
         { label: "Diproses", value: diproses, icon: <Clock size={20} className="text-orange-500" />, borderColor: "border-orange-500", textColor: "text-orange-500" },
         { label: "Disetujui", value: disetujui, icon: <CheckCircle size={20} className="text-green-500" />, borderColor: "border-green-500", textColor: "text-green-500" },
@@ -206,107 +76,165 @@ export default function UserDashboardPage() {
         { label: "Total Permohonan", value: total, icon: <FileText size={20} className="text-black" />, borderColor: "border-black", textColor: "text-black" },
       ]);
     } catch (error) {
-      console.error('Error fetching permohonan stats:', error);
+      console.error('Error fetching stats:', error);
     }
   };
 
-  // Fungsi manual refresh untuk user
-  const handleManualRefresh = async () => {
-    if (userData?.id) {
-      setIsRefreshing(true);
-      await fetchPermohonanStats(userData.id);
-      setIsRefreshing(false);
+  useEffect(() => {
+    setMounted(true);
+    
+    // Load Sidebar Status
+    const savedSidebar = localStorage.getItem("sidebarStatus");
+    if (savedSidebar !== null) {
+      setIsSidebarOpen(JSON.parse(savedSidebar));
     }
-  };
 
+    // Auth Check
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      if (user.role === 'admin') {
+        router.push('/AdminDashboard');
+        return;
+      }
+      setUserData(user);
+      
+      // Initial Fetch
+      fetchPermohonanStats(user.id);
+      fetchUnreadNotifications(user.id);
+
+      // Polling setiap 10 detik agar dashboard tetap update
+      const interval = setInterval(() => {
+        fetchPermohonanStats(user.id);
+        fetchUnreadNotifications(user.id);
+      }, 10000);
+
+      return () => clearInterval(interval);
+    } else {
+      router.push('/Login');
+    }
+  }, [router]);
+
+  // Fetch Navbar & Footer dari API
+  useEffect(() => {
+    const fetchTampilan = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/hero-display");
+        const data = await res.json();
+        if (res.ok) {
+          setNavData({
+            navText1: data.navText1 || "KANTAH Gowa",
+            navText2: data.navText2 || "Sistem Informasi & Layanan Internal",
+            navbarIcon: data.navbarIcon || "/logo.png",
+          });
+          setKonten({
+            footerText1: data.footerText1 || konten.footerText1,
+            footerText2: data.footerText2 || konten.footerText2
+          });
+        }
+      } catch (error) {
+        console.error("Gagal ambil data tampilan:", error);
+      }
+    };
+    if (mounted) fetchTampilan();
+  }, [mounted]);
+
+  // Simpan status sidebar saat berubah
   useEffect(() => {
     if (mounted) {
       localStorage.setItem("sidebarStatus", JSON.stringify(isSidebarOpen));
     }
   }, [isSidebarOpen, mounted]);
 
-  const SidebarItem = ({ href, icon: Icon, label, active = false }: any) => (
+  const handleLogout = () => {
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    router.push("/");
+  };
+
+  // Komponen SidebarItem dengan Badge
+  const SidebarItem = ({ href, icon: Icon, label, active = false, badgeCount = 0 }: any) => (
     <Link href={href} className="block group relative">
       <button 
         className={`flex items-center w-full py-3.5 transition-all rounded-xl font-bold whitespace-nowrap
         ${active ? "bg-[#56b35a] shadow-lg text-white" : "text-white hover:bg-white/10"} 
         ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}
       >
-        <Icon size={22} className="shrink-0" /> 
-        {isSidebarOpen && <span>{label}</span>}
+        <div className="relative">
+          <Icon size={22} className="shrink-0" /> 
+          {!isSidebarOpen && badgeCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white border-2 border-[#7c4d2d]">
+              {badgeCount > 9 ? '9+' : badgeCount}
+            </span>
+          )}
+        </div>
+        {isSidebarOpen && (
+          <div className="flex justify-between items-center w-full">
+            <span>{label}</span>
+            {badgeCount > 0 && (
+              <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                {badgeCount}
+              </span>
+            )}
+          </div>
+        )}
       </button>
 
       {!isSidebarOpen && (
         <div className="absolute left-full ml-4 px-3 py-2 bg-[#1a1a1a] text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl border border-white/10 top-1/2 -translate-y-1/2 whitespace-nowrap">
-          {label}
+          {label} {badgeCount > 0 && `(${badgeCount})`}
           <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-[#1a1a1a] rotate-45"></div>
         </div>
       )}
     </Link>
   );
 
-  // Fungsi Logout untuk membersihkan storage
-  const handleLogout = async () => {
-    sessionStorage.removeItem("user");
-    sessionStorage.removeItem("token");
-    localStorage.removeItem("sidebarStatus");
-    router.push("/");
-  };
-
-
   if (!mounted || !userData) return null;
 
   return (
     <div className="flex flex-col h-screen bg-[#f5f5f5] font-sans overflow-hidden">
-      {/* Navbar  */}
+      {/* Header */}
       <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
-          <div className="flex items-center">
-            <div className="w-12 flex justify-start items-center">
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                <Menu size={24} />
-              </button>
-            </div>
-            
-            <div className="flex items-center gap-3 ml-4">
-            <img src={navData.navbarIcon} alt="Logo" className="h-10 w-auto shrink-0" />
-              <div className="flex flex-col min-w-max">
-                <h1 className="font-bold text-lg leading-none whitespace-nowrap">{navData.navText1} - User </h1>
-                <p className="text-[10px] opacity-70 whitespace-nowrap">{navData.navText2}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Dinamis berdasarkan User Login */}
-          <div className="text-right hidden sm:block flex items-center gap-6">
-            <button 
-              onClick={handleManualRefresh}
-              disabled={isRefreshing}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
-              title="Refresh data"
-            >
-              <RefreshCw size={20} className={`${isRefreshing ? 'animate-spin' : ''}`} />
+        <div className="flex items-center">
+          <div className="w-12 flex justify-start items-center">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+              <Menu size={24} />
             </button>
-            <div>
-              <h2 className="text-sm font-bold tracking-tight">{userData.name || userData.nama_lengkap}</h2>
-              <p className="text-[10px] opacity-70">{userData.email}</p>
+          </div>
+          <div className="flex items-center gap-3 ml-4">
+            <img src={navData.navbarIcon} alt="Logo" className="h-10 w-auto shrink-0" />
+            <div className="flex flex-col min-w-max">
+              <h1 className="font-bold text-lg leading-none whitespace-nowrap">{navData.navText1} - User</h1>
+              <p className="text-[10px] opacity-70 whitespace-nowrap">{navData.navText2}</p>
             </div>
           </div>
+        </div>
+        <div className="text-right hidden sm:block">
+          <h2 className="text-sm font-bold tracking-tight">{userData.nama_lengkap || userData.name}</h2>
+          <p className="text-[10px] opacity-70">{userData.email}</p>
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* SIDEBAR */}
+        {/* Sidebar */}
         <aside className={`${isSidebarOpen ? "w-72" : "w-20"} bg-[#7c4d2d] text-white flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out relative`}>
           <nav className="flex-1 px-3 py-8 space-y-4">
             <SidebarItem href="/UserDashboard" icon={LayoutDashboard} label="Beranda" active={true} />
             <SidebarItem href="/UserDashboard/Permohonan" icon={FileEdit} label="Permohonan" />
             <SidebarItem href="/UserDashboard/Riwayat" icon={History} label="Riwayat" />
-            <SidebarItem href="/UserDashboard/Notifikasi" icon={Bell} label="Notifikasi" />
+            
+            {/* Notifikasi dengan Badge */}
+            <SidebarItem 
+              href="/UserDashboard/Notifikasi" 
+              icon={Bell} 
+              label="Notifikasi" 
+              badgeCount={unreadCount} 
+            />
 
             <div className="pt-4 mt-4 border-t border-white/20">
                <button onClick={() => setIsLogoutModalOpen(true)} className={`group relative flex items-center w-full py-3.5 hover:bg-red-600 rounded-xl font-bold transition-all whitespace-nowrap ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}>
                 <LogOut size={22} className="shrink-0 text-white" /> 
                 {isSidebarOpen && <span className="text-white">Keluar</span>}
-                
                 {!isSidebarOpen && (
                   <div className="absolute left-full ml-4 px-3 py-2 bg-red-600 text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl top-1/2 -translate-y-1/2 whitespace-nowrap">
                     Keluar
@@ -318,7 +246,7 @@ export default function UserDashboardPage() {
           </nav>
         </aside>
 
-        {/* MAIN CONTENT */}
+        {/* Main Content */}
         <main className="flex-1 overflow-y-auto bg-[#f8f9fa] flex flex-col">
           <div className="p-10 flex-1">
             <div className="w-full text-left">
@@ -328,7 +256,7 @@ export default function UserDashboardPage() {
                 <hr className="mt-5 border-b-2 border-gray-200" />
               </div>
 
-              {/* STAT CARDS */}
+              {/* Stat Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
                 {stats.map((stat, idx) => (
                   <div key={idx} className={`bg-white p-7 rounded-[25px] shadow-sm border-2 ${stat.borderColor} flex justify-between items-start transition-transform hover:scale-[1.02]`}>
@@ -341,56 +269,52 @@ export default function UserDashboardPage() {
                 ))}
               </div>
 
-              {/* ACCOUNT INFO CARD - Terhubung ke Database */}
-<div className="w-full bg-white rounded-[30px] shadow-xl border-2 border-[#7c4d2d] overflow-hidden">
-  <div className="bg-[#8b5e3c] p-4 px-8 text-white">
-    <span className="font-bold text-lg">Informasi Akun</span>
-  </div>
-  <div className="p-8 space-y-6">
-    <div>
-      <p className="text-lg text-gray-800 font-bold tracking-tight">Nama Lengkap</p>
-      <p className="font-semibold text-gray-600 text-m break-words">{userData.name || userData.nama_lengkap}</p>
-    </div>
-    <div>
-      <p className="text-lg text-gray-800 font-bold tracking-tight">Email</p>
-      <p className="font-semibold text-gray-600 text-m break-all">{userData.email}</p>
-    </div>
-    
-    {/* BAGIAN JABATAN YANG DIPERBARUI */}
-    <div>
-      <p className="text-lg text-gray-800 font-bold tracking-tight">Jabatan</p>
-      <p className="font-semibold text-gray-600 text-m break-words">{userData.jabatan || userData.role}</p>
-      
-      {/* Logika: Jika jabatan mengandung kata Sekretaris, munculkan Nama Notaris */}
-      {(userData.jabatan || "").toLowerCase().includes('sekretaris') && userData.nama_notaris && (
-        <p className="text-lg font-normal italic text-gray-800 mt-1 leading-tight">
-          Nama Notaris/PPAT: <span className="font-medium text-gray-600 break-words">{userData.nama_notaris}</span>
-        </p>
-      )}
-    </div>
-
-    <div>
-      <p className="text-lg text-gray-800 font-bold tracking-tight">No HP.</p>
-      <p className="font-semibold text-gray-600 text-m break-words">{userData.nomor_hp || userData.phone || "-"}</p>
-    </div>
-    <div>
-      <p className="text-lg text-gray-800 font-bold mb-2 tracking-tight">Status</p>
-      <span className="px-5 py-1 bg-green-500 text-white text-[11px] font-bold rounded-full uppercase inline-block">
-        {userData.status || "Aktif"}
-      </span>
-    </div>
-  </div>
-</div>
+              {/* Account Info Card */}
+              <div className="w-full bg-white rounded-[30px] shadow-xl border-2 border-[#7c4d2d] overflow-hidden">
+                <div className="bg-[#8b5e3c] p-4 px-8 text-white">
+                  <span className="font-bold text-lg">Informasi Akun</span>
+                </div>
+                <div className="p-8 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <p className="text-sm text-gray-400 font-bold uppercase tracking-wider mb-1">Nama Lengkap</p>
+                      <p className="text-lg font-bold text-gray-800">{userData.nama_lengkap || userData.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400 font-bold uppercase tracking-wider mb-1">Email</p>
+                      <p className="text-lg font-bold text-gray-800">{userData.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400 font-bold uppercase tracking-wider mb-1">Jabatan / Role</p>
+                      <p className="text-lg font-bold text-gray-800 capitalize">{userData.jabatan || userData.role}</p>
+                      {(userData.jabatan || "").toLowerCase().includes('sekretaris') && userData.nama_notaris && (
+                        <p className="text-sm italic text-gray-500 mt-1">Notaris: {userData.nama_notaris}</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400 font-bold uppercase tracking-wider mb-1">Nomor HP</p>
+                      <p className="text-lg font-bold text-gray-800">{userData.nomor_hp || userData.phone || "-"}</p>
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-gray-100">
+                    <p className="text-sm text-gray-400 font-bold uppercase tracking-wider mb-2">Status Akun</p>
+                    <span className="px-5 py-1 bg-green-500 text-white text-[11px] font-bold rounded-full uppercase inline-block">
+                      {userData.status || "Aktif"}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center mt-10">
+          <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center">
             <p className="text-[10px] font-bold">{konten.footerText1}</p>
+            <p className="text-[9px] opacity-60 mt-1 tracking-widest">{konten.footerText2}</p>
           </footer>
         </main>
       </div>
 
-      {/* MODAL LOGOUT */}
+      {/* Logout Modal */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl">

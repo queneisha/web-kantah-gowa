@@ -20,6 +20,7 @@ export default function PengaturanPage() {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const [navData, setNavData] = useState({
     navText1:"KANTAH Gowa", 
@@ -33,7 +34,17 @@ export default function PengaturanPage() {
   useEffect(() => {
     const fetchNavbarData = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
+        const token = typeof window !== 'undefined' ? sessionStorage.getItem('token'): null;
+        const res = await fetch("http://localhost:8000/api/hero-display", 
+          {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            }
+          });
+    
         const data = await res.json();
         
         if (res.ok) {
@@ -52,14 +63,22 @@ export default function PengaturanPage() {
 
   const [konten, setKonten] = useState({
     footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
-    footerText2: "Sistem Informasi Internal untuk Notaris dan PPAT",
+    footerText2: "Sistem Informasi Internal untuk Notaris/PPATS dan PPAT",
   });
 
 
   useEffect(() => {
     const fetchData = async () => {
       try { 
-        const response = await fetch('http://localhost:8000/api/hero-display');
+        const token = typeof window !== 'undefined' ? sessionStorage.getItem('token'): null;
+        const response = await fetch('http://localhost:8000/api/hero-display', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        });
         const data = await response.json();
 
         if (data) {
@@ -92,8 +111,8 @@ export default function PengaturanPage() {
 
   const handleLogout = async () => {
     // Clear all user session data from sessionStorage
-    sessionStorage.removeItem("user");
-    sessionStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
     localStorage.removeItem("sidebarStatus");
     // Redirect to home page
     router.push("/");
@@ -124,8 +143,16 @@ export default function PengaturanPage() {
   const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
   // Fetch navbar icon dari backend
     const fetchNavbarIcon = async () => {
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token'): null;
       try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
+        const res = await fetch("http://localhost:8000/api/hero-display", {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        });
         const data = await res.json();
         setNavbarIconUrl(data.navbarIcon || "/logo.png");
       } catch (error) {
@@ -195,6 +222,15 @@ export default function PengaturanPage() {
 
         {/* MAIN CONTENT */}
         <main className="flex-1 overflow-y-auto bg-[#f8f9fa] flex flex-col justify-between">
+        {notification && (
+        <div className={`fixed top-5 right-5 z-[200] px-6 py-4 rounded-2xl shadow-lg animate-in fade-in slide-in-from-top duration-300 ${
+          notification.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+        }`}>
+          <p className="font-bold text-sm">{notification.message}</p>
+        </div>
+      )}
           <div className="p-10">
             <div className="max-w-5xl mx-auto">
               <h3 className="text-3xl font-black text-gray-900">Pengaturan</h3>

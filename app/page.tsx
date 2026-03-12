@@ -7,7 +7,7 @@ import Features from "./Features";
 export default function Home() {
   const [konten, setKonten] = useState({
     footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
-    footerText2: "Sistem Informasi Internal untuk Notaris dan PPAT",
+    footerText2: "Sistem Informasi Internal untuk Notaris/PPATS dan PPAT",
   });
 
 

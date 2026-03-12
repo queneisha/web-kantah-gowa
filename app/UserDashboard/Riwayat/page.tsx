@@ -10,8 +10,6 @@ import {
   LogOut,
   ChevronDown,
   Menu,
-  RefreshCw,
-  
 } from "lucide-react";
 
 export default function RiwayatPage() {
@@ -24,22 +22,28 @@ export default function RiwayatPage() {
   const [userData, setUserData] = useState<any>(null);
   const [riwayatData, setRiwayatData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // --- STATE NOTIFIKASI ---
+  const [notifications, setNotifications] = useState<any[]>([]);
+  // Menghitung jumlah yang belum dibaca (is_read === 0)
+  const unreadCount = notifications.filter(n => n.is_read === 0).length;
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Menutup dropdown saat klik di luar area
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsFilterOpen(false);
+  // 1. Fetch Notifikasi (Agar badge angka muncul)
+  const fetchNotifikasi = async (userId: string) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/notifikasi/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data);
       }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    } catch (error) {
+      console.error("Gagal mengambil notifikasi:", error);
+    }
+  };
 
-  // Fetch riwayat permohonan dari backend
+  // 2. Fetch Riwayat Permohonan
   const fetchRiwayatPermohonan = async (userId: string) => {
     try {
       setIsLoading(true);
@@ -52,13 +56,11 @@ export default function RiwayatPage() {
       });
 
       if (!response.ok) {
-        console.error('Gagal fetch riwayat');
         setRiwayatData([]);
         return;
       }
 
       const data = await response.json();
-      // Transform data dari backend
       const formattedData = data.map((item: any) => ({
         tgl: item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID', { 
           day: '2-digit', 
@@ -88,40 +90,51 @@ export default function RiwayatPage() {
     footerText2: "Sistem Informasi Internal untuk Notaris dan PPAT",
   });
 
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try { 
-        const response = await fetch('http://localhost:8000/api/hero-display');
-        const data = await response.json();
-
-        if (data) {
-          setKonten({
-            footerText1: data.footerText1,
-            footerText2: data.footerText2
-          });
-        }
-      } catch (error){
-        console.error('gagal mengambil data: ', error);
-      }
-    };
-    fetchData();
-  }, []);
-
   const [navData, setNavData] = useState({
     navText1:"KANTAH Gowa", 
     navText2: "Sistem Informasi & Layanan Internal",
     navbarIcon:"/logo.png",
   });
-  
 
+  // Efek Utama (Mounting & Auth)
   useEffect(() => {
-    const fetchNavbarData = async () => {
+    setMounted(true);
+    
+    // Load Sidebar Status
+    const saved = localStorage.getItem("sidebarStatus");
+    if (saved !== null) {
+      setIsSidebarOpen(JSON.parse(saved));
+    }
+
+    // Auth & Data Fetching
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      if (user.role === 'admin') {
+        router.push('/AdminDashboard');
+        return;
+      }
+      setUserData(user);
+      if (user.id) {
+        fetchRiwayatPermohonan(user.id);
+        fetchNotifikasi(user.id);
+      }
+    } else {
+      router.push('/Login');
+    }
+  }, [router]);
+
+  // Fetch data tampilan (Hero/Nav)
+  useEffect(() => {
+    const fetchTampilan = async () => {
       try {
         const res = await fetch("http://localhost:8000/api/hero-display");
         const data = await res.json();
-        
         if (res.ok) {
+          setKonten({
+            footerText1: data.footerText1 || konten.footerText1,
+            footerText2: data.footerText2 || konten.footerText2
+          });
           setNavData({
             navText1: data.navText1 || "KANTAH Gowa",
             navText2: data.navText2 || "Sistem Informasi & Layanan Internal",
@@ -129,105 +142,81 @@ export default function RiwayatPage() {
           });
         }
       } catch (error) {
-        console.error("Gagal mengambil data navbar:", error);
+        console.error("Gagal mengambil data tampilan:", error);
       }
     };
-    fetchNavbarData();
-  }, []);
+    if (mounted) fetchTampilan();
+  }, [mounted]);
 
-  const dataRiwayat = riwayatData.length > 0 ? riwayatData : [];
-
-  // LOGIKA FILTER: Menyaring data tabel berdasarkan pilihan dropdown
-  const dataTerfilter = dataRiwayat.filter((item) => {
-    if (filterStatus === "Semua Status") return true;
-    if (filterStatus === "Proses") return item.status === "Diproses"; // Menyesuaikan teks dropdown dan data
-    return item.status === filterStatus;
-  });
-
-  // 1. Efek untuk menangani mounting dan membaca localStorage (Cegah Hydration Error)
-  useEffect(() => {
-    setMounted(true);
-    const saved = localStorage.getItem("sidebarStatus");
-    if (saved !== null) {
-      setIsSidebarOpen(JSON.parse(saved));
-    }
-
-    // Ambil data user dari sessionStorage
-    const storedUser = sessionStorage.getItem("user");
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      // PROTEKSI: Jika user adalah admin, redirect ke AdminDashboard
-      if (user.role === 'admin') {
-        router.push('/AdminDashboard');
-        return;
-      }
-      setUserData(user);
-      // Fetch riwayat permohonan berdasarkan user_id
-      if (user.id) {
-        fetchRiwayatPermohonan(user.id);
-      }
-    } else {
-      // PROTEKSI: Jika tidak ada user data, redirect ke login
-      router.push('/Login');
-      return;
-    }
-  }, [router]);
-
-  // 2. Simpan status sidebar setiap kali berubah
+  // Save sidebar status
   useEffect(() => {
     if (mounted) {
       localStorage.setItem("sidebarStatus", JSON.stringify(isSidebarOpen));
     }
   }, [isSidebarOpen, mounted]);
 
-  // Local logout handler
+  // Handle outside click for dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsFilterOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleLogout = () => {
-    try {
-      sessionStorage.removeItem("user");
-      localStorage.removeItem("sidebarStatus");
-    } catch (e) {
-      // ignore
-    }
+    sessionStorage.removeItem("user");
     router.push("/Login");
   };
 
-  const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
-  // Fetch navbar icon dari backend
-    const fetchNavbarIcon = async () => {
-      try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
-        const data = await res.json();
-        setNavbarIconUrl(data.navbarIcon || "/logo.png");
-      } catch (error) {
-        console.error("Gagal fetch navbar icon:", error);
-      }
-    };
+  // Filter Logic
+  const dataTerfilter = riwayatData.filter((item) => {
+    if (filterStatus === "Semua Status") return true;
+    if (filterStatus === "Proses") return item.status === "Diproses";
+    return item.status === filterStatus;
+  });
 
-    fetchNavbarIcon();
-
-  // Helper untuk Sidebar Item
-  const SidebarItem = ({ href, icon: Icon, label, active = false }: any) => (
+  // Sidebar Item Component dengan LOGIKA BADGE
+  const SidebarItem = ({ href, icon: Icon, label, active = false, badgeCount = 0 }: any) => (
     <Link href={href} className="block group relative">
       <button 
         className={`flex items-center w-full py-3.5 transition-all rounded-xl font-bold whitespace-nowrap
         ${active ? "bg-[#56b35a] shadow-lg text-white" : "text-white hover:bg-white/10"} 
         ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}
       >
-        <Icon size={22} className="shrink-0" /> 
-        {isSidebarOpen && <span>{label}</span>}
+        <div className="relative">
+          <Icon size={22} className="shrink-0" /> 
+          {/* Badge kecil saat sidebar tertutup */}
+          {!isSidebarOpen && badgeCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white border-2 border-[#7c4d2d]">
+              {badgeCount > 9 ? '9+' : badgeCount}
+            </span>
+          )}
+        </div>
+
+        {isSidebarOpen && (
+          <div className="flex justify-between items-center w-full">
+            <span>{label}</span>
+            {badgeCount > 0 && (
+              <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-sm">
+                {badgeCount}
+              </span>
+            )}
+          </div>
+        )}
       </button>
 
-      {/* TOOLTIP: Muncul saat sidebar tertutup */}
       {!isSidebarOpen && (
         <div className="absolute left-full ml-4 px-3 py-2 bg-[#1a1a1a] text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl border border-white/10 top-1/2 -translate-y-1/2 whitespace-nowrap">
-          {label}
+          {label} {badgeCount > 0 && `(${badgeCount})`}
           <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-[#1a1a1a] rotate-45"></div>
         </div>
       )}
     </Link>
   );
 
-  // Jangan render apapun sebelum mounted untuk menghindari mismatch HTML server vs client
   if (!mounted) return null;
 
   return (
@@ -235,54 +224,59 @@ export default function RiwayatPage() {
       
       {/* --- HEADER --- */}
       <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
-         <div className="flex items-center">
-                    <div className="w-12 flex justify-start items-center">
-                      <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                        <Menu size={24} />
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-3 ml-4">
+        <div className="flex items-center">
+          <div className="w-12 flex justify-start items-center">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+              <Menu size={24} />
+            </button>
+          </div>
+          <div className="flex items-center gap-3 ml-4">
             <img src={navData.navbarIcon} alt="Logo" className="h-10 w-auto shrink-0" />
-              <div className="flex flex-col min-w-max">
-                <h1 className="font-bold text-lg leading-none whitespace-nowrap">{navData.navText1} - User </h1>
-                <p className="text-[10px] opacity-70 whitespace-nowrap">{navData.navText2}</p>
-              </div>
+            <div className="flex flex-col min-w-max">
+              <h1 className="font-bold text-lg leading-none whitespace-nowrap">{navData.navText1} - User </h1>
+              <p className="text-[10px] opacity-70 whitespace-nowrap">{navData.navText2}</p>
             </div>
-                </div>
-                    <div className="text-right hidden sm:block">
-                    <h2 className="text-sm font-bold tracking-tight">{userData?.name || userData?.nama_lengkap || 'User'}</h2>
-                    <p className="text-[10px] opacity-70">{userData?.email || 'email@example.com'}</p>
-                    </div>
-                  </header>
+          </div>
+        </div>
+        <div className="text-right hidden sm:block">
+          <h2 className="text-sm font-bold tracking-tight">{userData?.nama_lengkap || 'User'}</h2>
+          <p className="text-[10px] opacity-70">{userData?.email || 'email@example.com'}</p>
+        </div>
+      </header>
 
       <div className="flex flex-1 overflow-hidden">
         {/* --- SIDEBAR --- */}
-       <aside className={`${isSidebarOpen ? "w-72" : "w-20"} bg-[#7c4d2d] text-white flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out relative`}>
-                 <nav className="flex-1 px-3 py-8 space-y-4">
-                   <SidebarItem href="/UserDashboard" icon={LayoutDashboard} label="Beranda" />
-                   <SidebarItem href="/UserDashboard/Permohonan" icon={FileEdit} label="Permohonan" />
-                   <SidebarItem href="/UserDashboard/Riwayat" icon={History} label="Riwayat" active={true} />
-                   <SidebarItem href="/UserDashboard/Notifikasi" icon={Bell} label="Notifikasi" />
+        <aside className={`${isSidebarOpen ? "w-72" : "w-20"} bg-[#7c4d2d] text-white flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out relative`}>
+          <nav className="flex-1 px-3 py-8 space-y-4">
+            <SidebarItem href="/UserDashboard" icon={LayoutDashboard} label="Beranda" />
+            <SidebarItem href="/UserDashboard/Permohonan" icon={FileEdit} label="Permohonan" />
+            <SidebarItem href="/UserDashboard/Riwayat" icon={History} label="Riwayat" active={true} />
+            
+            {/* Notifikasi dengan Badge Angka */}
+            <SidebarItem 
+              href="/UserDashboard/Notifikasi" 
+              icon={Bell} 
+              label="Notifikasi" 
+              badgeCount={unreadCount} 
+            />
        
-                   {/* Tombol Keluar */}
-                   <div className="pt-4 mt-4 border-t border-white/20">
-                      <button 
-                       onClick={() => setIsLogoutModalOpen(true)}
-                       className={`group relative flex items-center w-full py-3.5 hover:bg-red-600 rounded-xl font-bold transition-all whitespace-nowrap ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}
-                      >
-                       <LogOut size={22} className="shrink-0 text-white" /> 
-                       {isSidebarOpen && <span className="text-white">Keluar</span>}
-                       
-                       {!isSidebarOpen && (
-                         <div className="absolute left-full ml-4 px-3 py-2 bg-red-600 text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl top-1/2 -translate-y-1/2 whitespace-nowrap">
-                           Keluar
-                           <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-red-600 rotate-45"></div>
-                         </div>
-                       )}
-                     </button>
-                   </div>
-                 </nav>
-               </aside>
+            <div className="pt-4 mt-4 border-t border-white/20">
+              <button 
+                onClick={() => setIsLogoutModalOpen(true)}
+                className={`group relative flex items-center w-full py-3.5 hover:bg-red-600 rounded-xl font-bold transition-all whitespace-nowrap ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}
+              >
+                <LogOut size={22} className="shrink-0 text-white" /> 
+                {isSidebarOpen && <span className="text-white">Keluar</span>}
+                {!isSidebarOpen && (
+                  <div className="absolute left-full ml-4 px-3 py-2 bg-red-600 text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl top-1/2 -translate-y-1/2 whitespace-nowrap">
+                    Keluar
+                    <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-red-600 rotate-45"></div>
+                  </div>
+                )}
+              </button>
+            </div>
+          </nav>
+        </aside>
 
         {/* --- MAIN CONTENT --- */}
         <main className="flex-1 overflow-y-auto bg-[#f8f9fa] flex flex-col">
@@ -299,7 +293,6 @@ export default function RiwayatPage() {
                 <div className="bg-[#8b5e3c] p-4 px-8 flex justify-between items-center text-white">
                   <span className="font-bold text-lg">Daftar Permohonan</span>
                   
-                  {/* Dropdown Filter */}
                   <div className="relative" ref={dropdownRef}>
                     <button 
                       onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -332,13 +325,13 @@ export default function RiwayatPage() {
                   <table className="w-full text-left">
                     <thead className="border-b-3 border-gray-200">
                       <tr>
-                        <th className="px-8 text-sm py-4 text-[14px] font-bold text-gray-600">Tanggal Daftar</th>
-                        <th className="px-6 text-sm py-4 text-[14px] font-bold text-gray-600">Jenis Pendaftaran</th>
-                        <th className="px-6 text-sm py-4 text-[14px] font-bold text-gray-600">Jenis Hak</th>
-                        <th className="px-6 text-sm py-4 text-[14px] font-bold text-gray-600">No. Sertipikat</th>
-                        <th className="px-6 text-sm py-4 text-[14px] font-bold text-gray-600">Lokasi</th>
-                        <th className="px-6 text-sm py-4 text-[14px] font-bold text-gray-600 text-center">Status</th>
-                        <th className="px-8 text-sm py-4 text-[14px] font-bold text-gray-600">Catatan Admin</th>
+                        <th className="px-8 py-4 text-[14px] font-bold text-gray-600">Tanggal Daftar</th>
+                        <th className="px-6 py-4 text-[14px] font-bold text-gray-600">Jenis Pendaftaran</th>
+                        <th className="px-6 py-4 text-[14px] font-bold text-gray-600">Jenis Hak</th>
+                        <th className="px-6 py-4 text-[14px] font-bold text-gray-600">No. Sertipikat</th>
+                        <th className="px-6 py-4 text-[14px] font-bold text-gray-600">Lokasi</th>
+                        <th className="px-6 py-4 text-[14px] font-bold text-gray-600 text-center">Status</th>
+                        <th className="px-8 py-4 text-[14px] font-bold text-gray-600">Catatan Admin</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-300">
@@ -365,8 +358,8 @@ export default function RiwayatPage() {
                                <div className="text-[10px] text-gray-500 font-medium">{item.desa}</div>
                             </td>
                             <td className="px-6 py-5 text-center">
-                              <span className={`px-4 py-1 rounded-full inline-block px-5 py-1 rounded-full text-[10px] font-bold border-2 transition-all duration-300text-[10px] font-bold inline-block min-w-[90px] text-center
-                                ${item.status === "Disetujui" ? "border-green-500 text-green-500 bg-white" : 
+                              <span className={`min-w-[90px] px-4 py-1 rounded-full text-[10px] font-bold border-2 inline-block
+                                ${item.status === "Disetujui" ? "border-green-500 text-green-500 bg-green-50" : 
                                   item.status === "Ditolak" ? "border-red-500 text-red-500 bg-red-50" : 
                                   item.status === "Proses" ? "border-blue-500 text-blue-500 bg-blue-50" : 
                                   "border-orange-500 text-orange-500 bg-orange-50"}`}>
@@ -397,25 +390,17 @@ export default function RiwayatPage() {
         </main>
       </div>
 
-      {/* MODAL POP UP KELUAR */}
+      {/* --- MODAL POP UP KELUAR --- */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-
           <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl">
             <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
             <p className="text-gray-600 font-medium mt-2">Anda perlu login kembali untuk mengakses sistem.</p>
-
              <div className="flex justify-end gap-3 mt-10">
-              
-
                <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold">Batal</button>
-
                <button onClick={handleLogout} className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold">Ya, Keluar</button>
-
              </div>
-
           </div>
-
         </div>
       )}
     </div>

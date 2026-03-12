@@ -18,7 +18,7 @@ class RegisterConfigController extends Controller
                 'sub_judul'=>'Silahkan daftar untuk membuat akun di sistem layanan pertanahan kantah Gowa.',
                 'maskot_path'=>null,
                 'background_path'=>null,
-                'opsi_jabatan'=>['Notaris/PPAT', 'Sekretaris Notaris/PPAT', 'Anggota ATR BPN']
+                'opsi_jabatan'=>['Notaris/PPAT/PPATS', 'Staf Notaris/PPAT/PPATS', 'Staf ATR BPN']
 
             ]);
 

@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 
 // --- KOMPONEN CUSTOM DROPDOWN ---
-
 interface AdminSelectProps {
   label: string;
   options: string[];
@@ -56,7 +55,6 @@ const AdminStyleSelect: React.FC<AdminSelectProps> = ({ label, options, value, o
         <span className={value ? "text-black" : "text-gray-500"}>
           {value || placeholder}
         </span>
-
         <ChevronDown
           size={20}
           className={`transition-transform duration-300 ${isOpen ? "rotate-180 text-[#56b35a]" : "text-gray-500"}`}
@@ -64,7 +62,7 @@ const AdminStyleSelect: React.FC<AdminSelectProps> = ({ label, options, value, o
       </button>
 
       {isOpen && (
-        <div className="absolute z-[100] w-full mt-2 bg-white border border-gray-100 shadow-2xl rounded-[25px] p-2 animate-in fade-in zoom-in duration-200">
+        <div className="absolute z-[100] w-full mt-2 bg-white border border-gray-100 shadow-2xl rounded-[25px] p-2 animate-in fade-in zoom-in duration-200 max-h-60 overflow-y-auto">
           {options.map((opt) => (
             <button
               key={opt}
@@ -94,7 +92,7 @@ export default function PermohonanPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
+  const [unreadCount, setUnreadCount] = useState(0); // State untuk angka notifikasi
   const router = useRouter();
 
   const [userData, setUserData] = useState({
@@ -112,75 +110,64 @@ export default function PermohonanPage() {
     kecamatan: ""
   });
 
+  // Fetch Notifikasi untuk mendapatkan angka badge
+  const fetchUnreadCount = async (userId: any) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/notifikasi/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        const unread = data.filter((n: any) => !n.is_read).length;
+        setUnreadCount(unread);
+      }
+    } catch (error) {
+      console.error("Gagal mengambil status notifikasi:", error);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
     const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
       const user = JSON.parse(storedUser);
-      // PROTEKSI: Jika user adalah admin, redirect ke AdminDashboard
       if (user.role === 'admin') {
         router.push('/AdminDashboard');
         return;
       }
-
-    // Fetch navbar icon dari backend
-    const fetchNavbarIcon = async () => {
-      try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
-        const data = await res.json();
-        setNavbarIconUrl(data.navbarIcon || "/logo.png");
-      } catch (error) {
-        console.error("Gagal fetch navbar icon:", error);
-      }
-    };
-
-    fetchNavbarIcon();
-
       setUserData({
         id: user.id,
         nama: user.nama_lengkap || user.nama || "User",
         email: user.email || ""
       });
+      fetchUnreadCount(user.id);
     } else {
-      // PROTEKSI: Jika tidak ada user data, redirect ke login
       router.push('/Login');
-      return;
     }
 
     const saved = localStorage.getItem("sidebarStatus");
-    if (saved !== null) {
-      setIsSidebarOpen(JSON.parse(saved));
-    }
+    if (saved !== null) setIsSidebarOpen(JSON.parse(saved));
   }, [router]);
 
   useEffect(() => {
-    if (mounted) {
-      localStorage.setItem("sidebarStatus", JSON.stringify(isSidebarOpen));
-    }
+    if (mounted) localStorage.setItem("sidebarStatus", JSON.stringify(isSidebarOpen));
   }, [isSidebarOpen, mounted]);
 
   const handleLogout = async () => {
-    // Bersihkan sessionStorage
-    sessionStorage.removeItem("user");
-    sessionStorage.removeItem("token");
+    sessionStorage.clear();
     localStorage.removeItem("sidebarStatus");
-    // Redirect ke home
     router.push("/");
   };
 
   const [navData, setNavData] = useState({
-    navText1:"KANTAH Gowa", 
+    navText1: "KANTAH Gowa",
     navText2: "Sistem Informasi & Layanan Internal",
-    navbarIcon:"/logo.png",
+    navbarIcon: "/logo.png",
   });
-  
-  
+
   useEffect(() => {
     const fetchNavbarData = async () => {
       try {
         const res = await fetch("http://localhost:8000/api/hero-display");
         const data = await res.json();
-        
         if (res.ok) {
           setNavData({
             navText1: data.navText1 || "KANTAH Gowa",
@@ -194,6 +181,11 @@ export default function PermohonanPage() {
     };
     fetchNavbarData();
   }, []);
+
+  const [konten, setKonten] = useState({
+    footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
+    footerText2: "Sistem Informasi Internal untuk Notaris/PPATS dan PPAT",
+  });
 
   const handleCustomChange = (name: string, value: string) => {
     setFormData(prev => ({
@@ -229,488 +221,260 @@ export default function PermohonanPage() {
   const triggerConfirm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.jenisPendaftaran || !formData.jenisHak || !formData.noSertipikat || !formData.desa || !formData.kecamatan) {
-        alert("Harap lengkapi seluruh data form!");
-        return;
+      alert("Harap lengkapi seluruh data form!");
+      return;
     }
-
-    // Validasi: jika jenis pendaftaran "Lainnya", catatan harus diisi
-    if (formData.jenisPendaftaran === "Lainnya" && !formData.catatanPendaftaran.trim()) {
-        alert("Harap jelaskan alasan Anda memilih jenis pendaftaran 'Lainnya'!");
-        return;
-    }
-
     setShowConfirmModal(true);
-
   };
-
-
-  const [konten, setKonten] = useState({
-    footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
-    footerText2: "Sistem Informasi Internal untuk Notaris dan PPAT",
-  });
-
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try { 
-        const response = await fetch('http://localhost:8000/api/hero-display');
-        const data = await response.json();
-
-        if (data) {
-          setKonten({
-            footerText1: data.footerText1,
-            footerText2: data.footerText2
-          });
-        }
-      } catch (error){
-        console.error('gagal mengambil data: ', error);
-      }
-    };
-    fetchData();
-  }, []);
-
-
-  // --- FUNGSI FINAL SUBMIT YANG SUDAH DISINKRONKAN DENGAN LARAVEL ---
 
   const handleFinalSubmit = async () => {
-
     setIsLoading(true);
-
-   
-
-    // Pastikan nama field (key) di bawah ini sama persis dengan $validator di Laravel
-
     const dataToSend = {
-
       user_id: userData.id,
-      nama: userData.nama,
-      email: userData.email,
-
-      jenisPendaftaran: formData.jenisPendaftaran,
-
-      catatanPendaftaran: formData.catatanPendaftaran,
-
-      jenisHak: formData.jenisHak,
-
-      noSertipikat: formData.noSertipikat, // Menggunakan 'p' sesuai validator Laravel
-
-      desa: formData.desa,
-
-      kecamatan: formData.kecamatan,
-
+      ...formData
     };
 
-
-
     try {
-
       const response = await fetch("http://localhost:8000/api/permohonan", {
-
         method: "POST",
-
-        headers: {
-
-          "Content-Type": "application/json",
-
-          "Accept": "application/json", // Agar Laravel mengirim error dalam bentuk JSON
-
-        },
-
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify(dataToSend),
-
       });
 
-
-
-      const result = await response.json();
-
-
-
       if (response.ok) {
-
         setShowConfirmModal(false);
-
         setShowSuccessModal(true);
-
         handleReset();
-
-      } else {
-
-        // Jika validasi gagal, log error ke console untuk debugging
-
-        console.error("Validation Errors:", result.errors);
-
-        alert(result.message || "Data tidak valid. Silakan periksa kembali isian Anda.");
-
       }
-
     } catch (error) {
-
-      console.error("Fetch Error:", error);
-
-      alert("Gagal terhubung ke server. Pastikan backend Laravel sudah berjalan.");
-
+      alert("Gagal mengirim permohonan.");
     } finally {
-
       setIsLoading(false);
-
     }
-
   };
 
-
-
-  const SidebarItem = ({ href, icon: Icon, label, active = false }: any) => (
-
+  // PERBAIKAN: SidebarItem dengan Badge
+  const SidebarItem = ({ href, icon: Icon, label, active = false, badge = 0 }: any) => (
     <Link href={href} className="block group relative">
-
       <button
-
         className={`flex items-center w-full py-3.5 transition-all rounded-xl font-bold whitespace-nowrap
-
         ${active ? "bg-[#56b35a] shadow-lg text-white" : "text-white hover:bg-white/10"}
-
         ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}
-
       >
-
-        <Icon size={22} className="shrink-0" />
-
-        {isSidebarOpen && <span>{label}</span>}
-
-      </button>
-
-      {!isSidebarOpen && (
-
-        <div className="absolute left-full ml-4 px-3 py-2 bg-[#1a1a1a] text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl border border-white/10 top-1/2 -translate-y-1/2 whitespace-nowrap">
-
-          {label}
-
-          <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-[#1a1a1a] rotate-45"></div>
-
+        <div className="relative">
+          <Icon size={22} className="shrink-0" />
+          {!isSidebarOpen && badge > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#7c4d2d]">
+              {badge}
+            </span>
+          )}
         </div>
-
+        {isSidebarOpen && (
+          <div className="flex justify-between items-center w-full">
+            <span>{label}</span>
+            {badge > 0 && (
+              <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm">
+                {badge}
+              </span>
+            )}
+          </div>
+        )}
+      </button>
+      {!isSidebarOpen && (
+        <div className="absolute left-full ml-4 px-3 py-2 bg-[#1a1a1a] text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl border border-white/10 top-1/2 -translate-y-1/2 whitespace-nowrap">
+          {label} {badge > 0 && `(${badge})`}
+          <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-[#1a1a1a] rotate-45"></div>
+        </div>
       )}
-
     </Link>
-
   );
-
-
 
   if (!mounted) return null;
 
-
-
   return (
-
     <div className="flex flex-col h-screen bg-[#f5f5f5] font-sans overflow-hidden relative">
-
       <header className="w-full bg-[#1a1a1a] text-white h-20 flex items-center justify-between px-8 z-30 shadow-md">
         <div className="flex items-center">
-            <div className="w-12 flex justify-start items-center">
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                <Menu size={24} />
-              </button>
-            </div>
-           
- <div className="flex items-center gap-3 ml-4">
+          <div className="w-12 flex justify-start items-center">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+              <Menu size={24} />
+            </button>
+          </div>
+          <div className="flex items-center gap-3 ml-4">
             <img src={navData.navbarIcon} alt="Logo" className="h-10 w-auto shrink-0" />
-              <div className="flex flex-col min-w-max">
-                <h1 className="font-bold text-lg leading-none whitespace-nowrap">{navData.navText1} - User </h1>
-                <p className="text-[10px] opacity-70 whitespace-nowrap">{navData.navText2}</p>
-              </div>
+            <div className="flex flex-col min-w-max">
+              <h1 className="font-bold text-lg leading-none whitespace-nowrap">{navData.navText1}</h1>
+              <p className="text-[10px] opacity-70 whitespace-nowrap">{navData.navText2}</p>
             </div>
+          </div>
         </div>
-
         <div className="text-right hidden sm:block">
           <h2 className="text-sm font-bold tracking-tight">{userData.nama}</h2>
           <p className="text-[10px] opacity-70">{userData.email}</p>
         </div>
-
       </header>
 
-
-
       <div className="flex flex-1 overflow-hidden">
-
         <aside className={`${isSidebarOpen ? "w-72" : "w-20"} bg-[#7c4d2d] text-white flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out`}>
-
           <nav className="flex-1 px-3 py-8 space-y-4">
-
             <SidebarItem href="/UserDashboard" icon={LayoutDashboard} label="Beranda" />
-
             <SidebarItem href="/UserDashboard/Permohonan" icon={FileEdit} label="Permohonan" active={true} />
-
             <SidebarItem href="/UserDashboard/Riwayat" icon={History} label="Riwayat" />
-
-            <SidebarItem href="/UserDashboard/Notifikasi" icon={Bell} label="Notifikasi" />
-
+            {/* INPUT BADGE DI SINI */}
+            <SidebarItem 
+              href="/UserDashboard/Notifikasi" 
+              icon={Bell} 
+              label="Notifikasi" 
+              badge={unreadCount} 
+            />
+            
             <div className="pt-4 mt-4 border-t border-white/20">
-
-               <button onClick={() => setIsLogoutModalOpen(true)} className={`group relative flex items-center w-full py-3.5 hover:bg-red-600 rounded-xl font-bold transition-all whitespace-nowrap ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}>
-
+              <button onClick={() => setIsLogoutModalOpen(true)} className={`group relative flex items-center w-full py-3.5 hover:bg-red-600 rounded-xl font-bold transition-all whitespace-nowrap ${isSidebarOpen ? "px-5 gap-3" : "justify-center px-0"}`}>
                 <LogOut size={22} /> {isSidebarOpen && <span>Keluar</span>}
-
-                
-                {!isSidebarOpen && (
-                  <div className="absolute left-full ml-4 px-3 py-2 bg-red-600 text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl top-1/2 -translate-y-1/2 whitespace-nowrap">
-                    Keluar
-                    <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-red-600 rotate-45"></div>
-                  </div>
-                )}
-
-               </button>
-
+              </button>
             </div>
-
           </nav>
-
         </aside>
 
-
-
         <main className="flex-1 overflow-y-auto bg-[#f8f9fa] flex flex-col">
-
           <div className="p-10 flex-1">
-
             <div className="max-w-[1400px] mx-auto text-left">
-
               <div className="mb-8">
-
                 <h3 className="text-3xl font-black text-gray-900">Permohonan</h3>
-
                 <p className="text-gray-600 font-medium">Ajukan permohonan baru</p>
-
                 <hr className="mt-5 border-b-2 border-gray-200" />
-
               </div>
 
-
-
               <form onSubmit={triggerConfirm} className="max-w-5xl bg-white rounded-[30px] shadow-xl border-2 border-[#7c4d2d] overflow-hidden">
-
                 <div className="bg-[#8b5e3c] p-4 px-8 text-white flex items-center gap-3">
-
                   <FileText size={24} />
-
                   <span className="font-bold text-lg">Form Permohonan</span>
-
                 </div>
-
-
 
                 <div className="p-8 space-y-5">
-
                   <div className="space-y-1.5">
-
                     <label className="text-sm font-bold text-gray-700 ml-1">Nama Lengkap</label>
-
                     <input type="text" value={userData.nama} disabled className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl text-gray-500 font-bold" />
-
                   </div>
 
-
-
                   <AdminStyleSelect
-
                     label="Jenis Pendaftaran"
-
                     name="jenisPendaftaran"
-
                     placeholder="Pilih jenis pendaftaran"
-
                     options={["Pengecekan", "SKPT", "Lainnya"]}
-
                     value={formData.jenisPendaftaran}
-
                     onChange={handleCustomChange}
-
                   />
-
-
 
                   {formData.jenisPendaftaran === "Lainnya" && (
-
                     <div className="space-y-1.5 animate-in slide-in-from-top-2 bg-blue-50 p-4 rounded-xl border-l-4 border-blue-500">
-
-                      <label className="text-sm font-bold text-gray-700 ml-1">Jelaskan Jenis Pendaftaran Lainnya</label>
-
-                      <input type="text" name="catatanPendaftaran" value={formData.catatanPendaftaran} onChange={handleChange} placeholder="Tulis alasan atau penjelasan..." className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl text-black font-medium outline-none" />
-
+                      <label className="text-sm font-bold text-gray-700 ml-1">Jelaskan Jenis Pendaftaran</label>
+                      <input type="text" name="catatanPendaftaran" value={formData.catatanPendaftaran} onChange={handleChange} placeholder="Tulis alasan..." className="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none" />
                     </div>
-
                   )}
 
-
-
                   <AdminStyleSelect
-
                     label="Jenis Hak"
-
                     name="jenisHak"
-
                     placeholder="Pilih jenis hak"
-
-                    options={["Hak Milik", "Hak Guna Bangunan", "Hak Pakai", "Hak Guna Usaha"]}
-
+                    options={["Hak Milik", "Hak Guna Usaha", "Hak Guna Bangunan", "Hak Pengelolaan", "Hak Pakai", "Wakaf"]}
                     value={formData.jenisHak}
-
                     onChange={handleCustomChange}
-
                   />
 
-
-
                   <div className="space-y-1.5">
-
                     <label className="text-sm font-bold text-gray-700 ml-1">5 Angka Terakhir No. Sertipikat</label>
-
-                    <input type="text" name="noSertipikat" value={formData.noSertipikat} onChange={handleNoSertipikatChange} placeholder="Contoh: 12345" className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl text-black font-medium outline-none" />
-
+                    <input type="text" name="noSertipikat" value={formData.noSertipikat} onChange={handleNoSertipikatChange} placeholder="Contoh: 12345" className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl outline-none" />
                   </div>
-
-
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
                     <div className="space-y-1.5">
-
                       <label className="text-sm font-bold text-gray-700 ml-1">Desa / Kelurahan</label>
-
-                      <input type="text" name="desa" value={formData.desa} onChange={handleChange} placeholder="Masukkan Desa" className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl text-black font-medium outline-none" />
-
+                      <input type="text" name="desa" value={formData.desa} onChange={handleChange} placeholder="Masukkan Desa" className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl outline-none" />
                     </div>
-
                     <div className="space-y-1.5">
-
                       <label className="text-sm font-bold text-gray-700 ml-1">Kecamatan</label>
-
-                      <input type="text" name="kecamatan" value={formData.kecamatan} onChange={handleChange} placeholder="Masukkan Kecamatan" className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl text-black font-medium outline-none" />
-
+                      <input type="text" name="kecamatan" value={formData.kecamatan} onChange={handleChange} placeholder="Masukkan Kecamatan" className="w-full px-4 py-3 bg-[#e9e9e9] border-none rounded-xl outline-none" />
                     </div>
-
                   </div>
-
-
 
                   <div className="flex gap-4 pt-4">
-
                     <button type="submit" className="flex items-center gap-2 px-6 py-3 bg-[#56b35a] text-white font-bold rounded-xl shadow-lg hover:bg-[#469e4a] transition">
-
                       <Send size={18} /> Ajukan Permohonan
-
                     </button>
-
                     <button type="button" onClick={handleReset} className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition">
-
                       <RotateCcw size={18} /> Reset
-
                     </button>
-
                   </div>
-
                 </div>
-
               </form>
-
             </div>
-
           </div>
-
           <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center text-[10px] font-bold">
-
             {konten.footerText1}
-
+            <p className="text-[9px] opacity-60 mt-1 tracking-widest">{konten.footerText2}</p>
           </footer>
-
         </main>
-
       </div>
-
-
 
       {/* MODAL KONFIRMASI */}
 
       {showConfirmModal && (
 
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+<div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
 
-          <div className="bg-white rounded-[35px] p-8 w-full max-w-xl shadow-2xl animate-in zoom-in duration-300">
+  <div className="bg-white rounded-[35px] p-8 w-full max-w-xl shadow-2xl animate-in zoom-in duration-300">
 
-            <h3 className="text-2xl font-black text-gray-900 mb-6 text-center">Konfirmasi Pengiriman</h3>
+    <h3 className="text-2xl font-black text-gray-900 mb-6 text-center">Konfirmasi Pengiriman</h3>
 
-            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex gap-4 mb-6">
+    <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex gap-4 mb-6">
 
-              <AlertTriangle className="text-orange-500 shrink-0" size={24} />
+      <AlertTriangle className="text-orange-500 shrink-0" size={24} />
 
-              <p className="text-sm text-gray-600">Pastikan data sudah benar sebelum dikirim.</p>
-
-            </div>
-
-            <div className="flex justify-center gap-4 mt-8">
-
-              <button onClick={() => setShowConfirmModal(false)} className="px-8 py-3 rounded-full border-2 border-gray-100 text-gray-500 font-bold">Kembali</button>
-
-              <button onClick={handleFinalSubmit} disabled={isLoading} className="px-8 py-3 rounded-full bg-[#56b35a] text-white font-bold shadow-lg disabled:opacity-50">
-
-                {isLoading ? "Mengirim..." : "Ya, Kirim Sekarang"}
-
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
-
-
-      {/* MODAL BERHASIL */}
-
-      {showSuccessModal && (
-
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-center">
-
-          <div className="bg-white rounded-[35px] p-12 w-full max-w-2xl shadow-2xl border-[3px] border-green-500 animate-in zoom-in duration-300 flex flex-col items-center">
-
-            <CheckCircle2 size={80} className="text-green-500 mb-6" />
-
-            <h3 className="text-3xl font-black text-[#56b35a] mb-4">Berhasil!</h3>
-
-            <p className="text-gray-600 text-lg">Permohonan Anda telah terkirim dan sedang diproses.</p>
-
-            <button onClick={() => setShowSuccessModal(false)} className="mt-10 px-10 py-3 bg-green-500 text-white font-bold rounded-full">Tutup</button>
-
-          </div>
-
-        </div>
-
-      )}
-
-
-
-      {/* MODAL LOGOUT */}
-
-      {isLogoutModalOpen && (
-
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl">
-            <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
-            <p className="text-gray-600 font-medium mt-2">Anda perlu login kembali untuk mengakses sistem.</p>
-            <div className="flex justify-end gap-3 mt-10">
-              <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold">Batal</button>
-              <button onClick={handleLogout} className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold shadow-lg">Ya, Keluar</button>
-            </div>
-          </div>
-        </div>
-
-      )}
+      <p className="text-sm text-gray-600">Pastikan data sudah benar sebelum dikirim.</p>
 
     </div>
 
-  );
+    <div className="flex justify-center gap-4 mt-8">
 
+      <button onClick={() => setShowConfirmModal(false)} className="px-8 py-3 rounded-full border-2 border-gray-100 text-gray-500 font-bold">Kembali</button>
+
+      <button onClick={handleFinalSubmit} disabled={isLoading} className="px-8 py-3 rounded-full bg-[#56b35a] text-white font-bold shadow-lg disabled:opacity-50">
+
+        {isLoading ? "Mengirim..." : "Ya, Kirim Sekarang"}
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+)}
+      
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-center">
+          <div className="bg-white rounded-[35px] p-12 w-full max-w-2xl shadow-2xl border-[3px] border-green-500 flex flex-col items-center">
+            <CheckCircle2 size={80} className="text-green-500 mb-6" />
+            <h3 className="text-3xl font-black text-[#56b35a] mb-4">Berhasil!</h3>
+            <p className="text-gray-600 text-lg">Permohonan Anda telah terkirim.</p>
+            <button onClick={() => setShowSuccessModal(false)} className="mt-10 px-10 py-3 bg-green-500 text-white font-bold rounded-full">Tutup</button>
+          </div>
+        </div>
+      )}
+
+      {isLogoutModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl">
+            <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
+            <div className="flex justify-end gap-3 mt-10">
+              <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold">Batal</button>
+              <button onClick={handleLogout} className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold">Ya, Keluar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\UserApprovedMail;
 use Illuminate\Support\Facades\Log;
+use App\Mail\PasswordChangedNotification;
 
 class UserController extends Controller
 {
@@ -109,5 +111,38 @@ class UserController extends Controller
         // Jika user sudah aktif, hapus data user
         $user->delete();
         return response()->json(['message' => 'User berhasil dihapus']);
+    }
+    public function changePassword(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'id' => 'required|exists:users,id',
+            'new_password' => 'required|min:8',
+        ]);
+
+        try {
+            $user = User::find($request->id);
+
+            // Update password dengan hashing
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+
+            // Kirim email notifikasi
+            Log::info('Mengirim email notifikasi ganti password ke: ' . $user->email);
+            Mail::to($user->email)->send(new PasswordChangedNotification($user));
+            Log::info('Email ganti password berhasil dikirim!');
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Password berhasil diperbarui dan notifikasi telah dikirim.'
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Gagal proses ganti password: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan sistem.'
+            ], 500);
+        }
     }
 }

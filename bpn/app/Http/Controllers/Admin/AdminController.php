@@ -105,7 +105,7 @@ class AdminController extends Controller
     {
         $user = User::find($id);
         if ($user) {
-            $user->status = 'Aktif';
+            $user->status = 'aktif';
             $user->save();
 
             // Kirim email notifikasi ke user

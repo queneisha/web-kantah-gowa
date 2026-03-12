@@ -33,6 +33,7 @@ export default function EditKontenPage() {
   const [mounted, setMounted] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [bgHero, setBgHero] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   
 
   // State untuk menyimpan data teks
@@ -214,6 +215,7 @@ const [registerConfigMaskotFile, setRegisterConfigMaskotFile] = useState<File | 
   const handleSaveRegisterConfig = async () => {
     try {
       const formData = new FormData();
+      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
 
       formData.append('judul_utama', registerConfigKonten.headerTitle);
       formData.append('sub_judul', registerConfigKonten.subHeader);
@@ -229,7 +231,14 @@ const [registerConfigMaskotFile, setRegisterConfigMaskotFile] = useState<File | 
         const response = await fetch('http://localhost:8000/api/registerconfig', {
           method:'POST', 
           body: formData,
+          headers: {
+            Accept: "application/json",
+          
+          }
         });
+       
+        
+
         const result = await response.json();
 
         if (response.ok && result.status === 'success'){
@@ -289,7 +298,6 @@ useEffect(() => {
   const handleSave = async () => {
     try {
       const formData = new FormData();
-
       // teks hero
       formData.append("heroTitle1", konten.heroTitle1);
       formData.append("heroTitle2", konten.heroTitle2);
@@ -325,12 +333,11 @@ useEffect(() => {
           Accept: "application/json",
         },
       });
+    
+
 
       const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.message || `HTTP Error: ${response.status}`);
-      }
 
       // 🔥 trigger Hero & Navbar reload
       window.dispatchEvent(new Event("heroUpdated"));
@@ -371,6 +378,7 @@ useEffect(() => {
 
   const handleSaveAlur = async () => {
     try {
+     
       const formData = new FormData();
 
       // Loop data alur dan masukkan ke FormData
@@ -394,8 +402,10 @@ useEffect(() => {
         },
       });
 
+
       const result = await response.json();
-      if (!response.ok) throw new Error(result.message);
+    
+
 
       alert("Alur Sistem berhasil diperbarui!");
     } catch (error) {
@@ -439,7 +449,13 @@ useEffect(() => {
   useEffect(() => {
     const fetchContentData = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
+        const res = await fetch("http://localhost:8000/api/hero-display", {
+          method: "POST", // Jangan pakai JSON.stringify
+          headers: {
+            Accept: "application/json",
+            // PENTING: Jangan set Content-Type manual jika menggunakan FormData
+          },
+        });
         const data = await res.json();
         setKonten({
           heroTitle1: data.heroTitle1 || "Selamat Datang",
@@ -453,7 +469,7 @@ useEffect(() => {
             "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
           footerText2:
             data.footerText2 ||
-            "Sistem Informasi Internal untuk Notaris dan PPAT",
+            "Sistem Informasi Internal untuk Notaris/PPATS dan PPAT",
           navText1: data.navText1 || "KANTAH Gowa",
           navText2: data.navText2 || "Sistem Informasi & Layanan Internal",
           navText3: data.navText3 || "Administrator",
@@ -488,8 +504,8 @@ useEffect(() => {
 
   const handleLogout = async () => {
     // Clear all user session data from sessionStorage
-    sessionStorage.removeItem("user");
-    sessionStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
     localStorage.removeItem("sidebarStatus");
     // Redirect to home page
     router.push("/");
@@ -562,7 +578,7 @@ const [loginConfigMaskotFile, setLoginConfigMaskotFile] = useState<File | null>(
   const handleSaveLoginConfig = async () => {
     try {
       const formData = new FormData();
-
+   
       formData.append("judul_utama", loginKonten.headerTitle);
       formData.append("sub_judul", loginKonten.subHeader);
 
@@ -581,9 +597,7 @@ const [loginConfigMaskotFile, setLoginConfigMaskotFile] = useState<File | null>(
         },
       });
       const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.message || `HTTP Error: ${response.status}`);
-      }
+     
 
       window.dispatchEvent(new Event("loginConfigUpdated"));
       setIsSaved(true);
@@ -621,6 +635,7 @@ const [loginConfigMaskotFile, setLoginConfigMaskotFile] = useState<File | null>(
   const handleSaveFitur = async () => {
     try {
       const formData = new FormData();
+     
 
       fiturUtama.forEach((fitur, index) => {
         formData.append(`features[${index}][id]`, String(fitur.id));
@@ -645,7 +660,7 @@ const [loginConfigMaskotFile, setLoginConfigMaskotFile] = useState<File | null>(
 
       const result = await response.json();
 
-      if (!response.ok) throw new Error(result.message);
+     
 
       alert("Fitur Utama berhasil diperbarui!");
     } catch (error) {
@@ -785,7 +800,8 @@ const [loginConfigMaskotFile, setLoginConfigMaskotFile] = useState<File | null>(
                 }`}
               >
                 <LogOut size={22} className="shrink-0" />
-                {isSidebarOpen && <span>Keluar</span>}
+                {isSidebarOpen &&
+                 <span> Keluar</span>}
 
                 {!isSidebarOpen && (
                   <div className="absolute left-full ml-4 px-3 py-2 bg-red-600 text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl top-1/2 -translate-y-1/2 whitespace-nowrap">
@@ -801,6 +817,15 @@ const [loginConfigMaskotFile, setLoginConfigMaskotFile] = useState<File | null>(
         {/* AREA KONTEN UTAMA */}
         <main className="flex-1 overflow-y-auto bg-[#f8f9fa] flex flex-col justify-between">
           <div className="p-10">
+          {notification && (
+        <div className={`fixed top-5 right-5 z-[200] px-6 py-4 rounded-2xl shadow-lg animate-in fade-in slide-in-from-top duration-300 ${
+          notification.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+        }`}>
+          <p className="font-bold text-sm">{notification.message}</p>
+        </div>
+      )}
             <div className="max-w-350 mx-auto">
               <h3 className="text-3xl font-black text-gray-900">
                 Edit Konten Website
@@ -916,51 +941,6 @@ const [loginConfigMaskotFile, setLoginConfigMaskotFile] = useState<File | null>(
                         Pengaturan Gambar & Media
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-3">
-                          <label className="text-[16px] font-bold text-gray-700 ml-1">
-                            Gambar Maskot
-                          </label>
-                          <input
-                            type="file"
-                            ref={heroMaskotInputRef}
-                            onChange={handleHeroMaskotChange}
-                            accept="image/png"
-                            className="hidden"
-                          />
-
-                          <div
-                            onClick={() => heroMaskotInputRef.current?.click()}
-                            className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-4 flex flex-col items-center justify-center min-h-[150px] hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300"
-                          >
-                            {heroMaskotFile ? (
-                              <div className="relative w-full flex flex-col items-center">
-                                <img
-                                  src={URL.createObjectURL(heroMaskotFile)}
-                                  alt="Preview Maskot"
-                                  className="h-32 object-contain mb-2"
-                                />
-                                <p className="text-[11px] text-[#56b35a] font-bold">
-                                  {" "}
-                                  {heroMaskotFile.name}
-                                </p>
-                              </div>
-                            ) : (
-                              <>
-                                <ImageIcon
-                                  className="text-gray-900 mb-2 group-hover:text-[#56b35a] transition-colors"
-                                  size={32}
-                                />
-                                <p className="text-[12px] text-gray-500 font-medium group-hover:text-[#56b35a] transition-colors">
-                                  Klik untuk ganti karakter petugas
-                                </p>
-                              </>
-                            )}
-                            <div className="mt-2 text-[10px] bg-[#8b5e3c] text-white px-2 py-1 rounded shadow-sm group-hover:bg-[#56b35a] transition-colors">
-                              Format: PNG (Transparan) Format: PNG (Transparan)
-                            </div>
-                          </div>
-                        </div>
-
                         <div className="space-y-3">
                           <label className="text-[16px] font-bold text-gray-700 ml-1">
                             Gambar Background
@@ -1489,50 +1469,6 @@ const [loginConfigMaskotFile, setLoginConfigMaskotFile] = useState<File | null>(
                         Pengaturan Gambar & Media
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-3">
-                          <label className="text-[16px] font-bold text-gray-700 ml-1">
-                            Gambar Maskot
-                          </label>
-                          <input
-                            type="file"
-                            ref={loginConfigMaskotInputRef}
-                            onChange={handleMaskotLoginConfigChange}
-                            accept="image/png"
-                            className="hidden"
-                          />
-
-                          <div
-                            onClick={() => loginConfigMaskotInputRef.current?.click()}
-                            className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-4 flex flex-col items-center justify-center min-h-[150px] hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300"
-                          >
-                            {loginConfigMaskotFile ? (
-                              <div className="relative w-full flex flex-col items-center">
-                                <img
-                                  src={URL.createObjectURL(loginConfigMaskotFile)}
-                                  alt="Preview Maskot"
-                                  className="h-32 object-contain mb-2"
-                                />
-                                <p className="text-[11px] text-[#56b35a] font-bold">
-                                  {" "}
-                                  {loginConfigMaskotFile.name}
-                                </p>
-                              </div>
-                            ) : (
-                              <>
-                                <ImageIcon
-                                  className="text-gray-900 mb-2 group-hover:text-[#56b35a] transition-colors"
-                                  size={32}
-                                />
-                                <p className="text-[12px] text-gray-500 font-medium group-hover:text-[#56b35a] transition-colors">
-                                  Klik untuk ganti karakter petugas
-                                </p>
-                              </>
-                            )}
-                            <div className="mt-2 text-[10px] bg-[#8b5e3c] text-white px-2 py-1 rounded shadow-sm group-hover:bg-[#56b35a] transition-colors">
-                              Format: PNG (Transparan) Format: PNG (Transparan)
-                            </div>
-                          </div>
-                        </div>
 
                         <div className="space-y-3">
                           <label className="text-[16px] font-bold text-gray-700 ml-1">
@@ -1867,38 +1803,6 @@ const [loginConfigMaskotFile, setLoginConfigMaskotFile] = useState<File | null>(
                           Pengaturan Gambar & Media
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-3">
-                            <label className="text-[16px] font-bold text-gray-700 ml-1">
-                              Gambar Maskot
-                            </label>
-                            <input
-                         type="file"
-  ref={registerConfigMaskotInputRef}
-  onChange={handleMaskotRegisterConfigChange}
-  className="hidden"
-  accept="image/png"
-/>
-                            <div onClick={()=> registerConfigMaskotInputRef.current?.click()}
-                             className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-4 flex flex-col items-center justify-center min-h-[150px] hover:border-[#56b35a] hover:bg-green-50/30 cursor-pointer transition-all duration-300">
-                             
-                              {registerConfigMaskotFile ? (
-                                <p className="text-[#56b35a] font-bold text-sm">File terpilih: {registerConfigMaskotFile.name}</p>
-                              ): (
-                                <>
-                                <ImageIcon
-                                className="text-gray-900 mb-2 group-hover:text-[#56b35a] transition-colors"
-                                size={32}/>
-                                <p className="text-[12px] text-gray-500 font-medium group-hover:text-[#56b35a] transition-colors">
-                                Klik untuk ganti karakter petugas
-                              </p>
-                              </>
-                              )}
-                              <div className="mt-2 text-[10px] bg-[#8b5e3c] text-white px-2 py-1 rounded shadow-sm group-hover:bg-[#56b35a] transition-colors">
-                                Format: PNG (Transparan)
-                              </div>
-                            </div>
-                          </div>
-
                           <div className="space-y-3">
                             <label className="text-[16px] font-bold text-gray-700 ml-1">
                               Gambar Background

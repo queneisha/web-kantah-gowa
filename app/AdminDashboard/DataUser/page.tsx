@@ -39,7 +39,7 @@ export default function DataUserPage() {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
-
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("Semua Status");
   const [searchTerm, setSearchTerm] = useState("");
@@ -51,12 +51,39 @@ export default function DataUserPage() {
     setMounted(true);
     const fetchUsers = async () => {
       try {
+        const token = typeof window !== 'undefined' ? sessionStorage.getItem('token'): null;
         const response = await fetch('http://localhost:8000/api/all-users', {
-          headers: { 'Accept': 'application/json' }
+          method: 'GET',
+          headers: { 
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            ...(token ? {Authorization: `Bearer ${token}`} : {}) 
+           }
         });
+        if (response.status === 401 || response.status === 403) {
+          setNotification({ 
+            type: 'error', 
+            message: 'Sesi berakhir atau tidak memiliki akses. Silakan login ulang.' 
+          });
+          
+          try {
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+          } catch (e) {
+            // ignore
+          }
+        
+          setTimeout(() => {
+            if (typeof window !== 'undefined') window.location.href = '/Login';
+          }, 1200);
+          
+          return;
+        }
         if (response.ok) {
           const data = await response.json();
           setUsers(data);
+        } else {
+          console.error("Fetch /all-user error:", response.status);
         }
       } catch (error) {
         console.error("Gagal mengambil data user:", error);
@@ -77,7 +104,6 @@ export default function DataUserPage() {
     }
   }, [isSidebarOpen, mounted]);
 
-  // FUNGSI DETAIL BARU
   const handleOpenDetail = async (user: UserData) => {
     try {
       const response = await fetch(`http://localhost:8000/api/users/${user.id}`, {
@@ -88,12 +114,10 @@ export default function DataUserPage() {
         setSelectedUser(data);
         setIsDetailOpen(true);
       } else {
-        // Fallback jika API detail bermasalah, gunakan data dari list
         setSelectedUser(user);
         setIsDetailOpen(true);
       }
     } catch (error) {
-      console.error("Gagal mengambil detail:", error);
       setSelectedUser(user);
       setIsDetailOpen(true);
     }
@@ -105,15 +129,21 @@ export default function DataUserPage() {
     navbarIcon:"/logo.png",
   });
 
-  const isAdmin = false;
-  
-
   useEffect(() => {
     const fetchNavbarData = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
+        const token = typeof window !== 'undefined' ? sessionStorage.getItem('token'): null;
+
+
+        const res = await fetch("http://localhost:8000/api/hero-display",    {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        });
         const data = await res.json();
-        
         if (res.ok) {
           setNavData({
             navText1: data.navText1 || "KANTAH Gowa",
@@ -128,19 +158,28 @@ export default function DataUserPage() {
     fetchNavbarData();
   }, []);
 
-
   const [konten, setKonten] = useState({
     footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
-    footerText2: "Sistem Informasi Internal untuk Notaris dan PPAT",
+    footerText2: "Sistem Informasi Internal untuk Notaris/PPATS dan PPAT",
   });
-
 
   useEffect(() => {
     const fetchData = async () => {
       try { 
-        const response = await fetch('http://localhost:8000/api/hero-display');
-        const data = await response.json();
+        const token = typeof window !== 'undefined' ? sessionStorage.getItem('token'): null;
 
+
+        const response = await fetch('http://localhost:8000/api/hero-display', 
+          {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            }
+          });
+    
+        const data = await response.json();
         if (data) {
           setKonten({
             footerText1: data.footerText1,
@@ -154,21 +193,47 @@ export default function DataUserPage() {
     fetchData();
   }, []);
 
- const confirmApprove = async () => {
+  const confirmApprove = async () => {
     if (selectedUser) {
       try {
+        const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
         const response = await fetch(`http://localhost:8000/api/approve-user/${selectedUser.id}`, {
           method: 'POST', 
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            ...(token ? {Authorization: `Bearer ${token}`}: {})
+           }
         });
+        if (response.status === 401 || response.status === 403) {
+          setNotification({ 
+            type: 'error', 
+            message: 'Sesi berakhir atau tidak memiliki akses. Silakan login ulang.' 
+          });
+          
+          try {
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+          } catch (e) {
+            // ignore
+          }
+        
+          setTimeout(() => {
+            if (typeof window !== 'undefined') window.location.href = '/Login';
+          }, 1200);
+          
+          return;
+        }
 
         if (response.ok) {
-          // KUNCI PERBAIKAN: Gunakan status yang seragam (misal "aktif" kecil) 
-          // atau pastikan sama dengan yang dicek di LoginPage.
-          setUsers(users.map(u => u.id === selectedUser.id ? { ...u, status: "aktif" } : u));
-          
+          setUsers(prevUsers=> 
+            prevUsers.map(u => 
+              u.id === selectedUser.id ? { ...u, status: "Aktif" } : u));
           setIsApproveModalOpen(false);
           alert("User berhasil disetujui!");
+        } else {
+          const errorData = await response.json();
+          alert(`Gagal: ${errorData.message || 'Terjadi kesalahan'}`);
         }
       } catch (error) {
         alert("Gagal menghubungi server.");
@@ -177,70 +242,88 @@ export default function DataUserPage() {
   };
 
   const confirmReject = async () => {
-  if (selectedUser) {
-    try {
-      // PERHATIKAN URL DI BAWAH INI: Tambahkan 'admin' dan 'reject'
-      const response = await fetch(`http://localhost:8000/api/admin/users/${selectedUser.id}/reject`, {
-        method: 'DELETE',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
+    if (selectedUser) {
+      try {
+        const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+        const response = await fetch(`http://localhost:8000/api/admin/users/${selectedUser.id}/reject`, {
+          method: 'DELETE',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            ...(token ? {Authorization: `Bearer ${token}`} : {})
+          }
+        });
+        if (response.status === 401 || response.status === 403) {
+          setNotification({ 
+            type: 'error', 
+            message: 'Sesi berakhir atau tidak memiliki akses. Silakan login ulang.' 
+          });
+          
+          try {
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+          } catch (e) {
+            // ignore
+          }
+        
+          setTimeout(() => {
+            if (typeof window !== 'undefined') window.location.href = '/Login';
+          }, 1200);
+          
+          return;
         }
-      });
 
-      if (response.ok) {
-        setUsers(users.filter(u => u.id !== selectedUser.id));
-        setIsRejectModalOpen(false);
-        setSelectedUser(null);
-        alert("User berhasil dihapus.");
-      } else {
-        const errorData = await response.json();
-        alert(`Gagal menghapus: ${errorData.message}`);
+        if (response.ok) {
+          // Update status lokal menjadi ditolak (atau hapus jika API menghapus permanen)
+          setUsers(users.filter(u => u.id !== selectedUser.id));
+          setIsRejectModalOpen(false);
+          setSelectedUser(null);
+          alert("User berhasil diproses.");
+        } else {
+          const errorData = await response.json();
+          alert(`Gagal: ${errorData.message}`);
+        }
+      } catch (error) {
+        alert("Terjadi kesalahan koneksi ke server.");
       }
-    } catch (error) {
-      alert("Terjadi kesalahan koneksi ke server.");
     }
-  }
-};
+  };
 
- const filteredUsers = users
-  .sort((a, b) => {
-    const statusA = a.status?.toLowerCase();
-    const statusB = b.status?.toLowerCase();
+  const filteredUsers = users
+    .sort((a, b) => {
+      const statusA = a.status?.toLowerCase();
+      const statusB = b.status?.toLowerCase();
+      if (statusA === "menunggu" && statusB !== "menunggu") return -1;
+      if (statusA !== "menunggu" && statusB === "menunggu") return 1;
+      const dateA = new Date(a.tgl).getTime();
+      const dateB = new Date(b.tgl).getTime();
+      return dateB - dateA;
+    })
+    .filter((user) => {
+      const userStatus = user.status?.toLowerCase();
+      const filterStatus = selectedFilter.toLowerCase();
+      const matchesFilter = selectedFilter === "Semua Status" || userStatus === filterStatus;
+      const matchesSearch =
+        user.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesFilter && matchesSearch;
+    });
 
-    // ✅ Prioritas: status MENUNGGU selalu di atas
-    if (statusA === "menunggu" && statusB !== "menunggu") return -1;
-    if (statusA !== "menunggu" && statusB === "menunggu") return 1;
-
-    // ✅ Jika status sama → urutkan dari tanggal paling baru
-    const dateA = new Date(a.tgl).getTime();
-    const dateB = new Date(b.tgl).getTime();
-    return dateB - dateA;
-  })
-  .filter((user) => {
-    const userStatus = user.status?.toLowerCase();
-    const filterStatus = selectedFilter.toLowerCase();
-
-    const matchesFilter =
-      selectedFilter === "Semua Status" || userStatus === filterStatus;
-
-    const matchesSearch =
-      user.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return matchesFilter && matchesSearch;
-  });
-
+  // Fungsi helper untuk mendapatkan warna status
+  const getStatusStyles = (status: string) => {
+    const s = status?.toLowerCase();
+    if (s === 'aktif') return 'bg-green-100 text-green-600 border-green-500';
+    if (s === 'menunggu') return 'bg-orange-100 text-orange-600 border-orange-500';
+    if (s === 'ditolak') return 'bg-red-100 text-red-600 border-red-500';
+    return 'bg-gray-100 text-gray-600 border-gray-500';
+  };
 
   const handleOpenApprove = (user: UserData) => { setSelectedUser(user); setIsApproveModalOpen(true); };
   const handleOpenReject = (user: UserData) => { setSelectedUser(user); setIsRejectModalOpen(true); };
 
   const handleLogout = async () => {
-    // Clear all user session data from sessionStorage
-    sessionStorage.removeItem("user");
-    sessionStorage.removeItem("token");
+    sessionStorage.clear();
     localStorage.removeItem("sidebarStatus");
-    // Redirect to home page
     router.push("/");
   };
 
@@ -253,24 +336,10 @@ export default function DataUserPage() {
       {!isSidebarOpen && (
         <div className="absolute left-full ml-4 px-3 py-2 bg-[#1a1a1a] text-white text-xs rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-all z-50 shadow-xl border border-white/10 top-1/2 -translate-y-1/2 whitespace-nowrap">
           {label}
-          <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-[#1a1a1a] rotate-45"></div>
         </div>
       )}
     </Link>
   );
-
-  // Fetch navbar icon dari backend
-    const fetchNavbarIcon = async () => {
-      try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
-        const data = await res.json();
-        setNavbarIconUrl(data.navbarIcon || "/logo.png");
-      } catch (error) {
-        console.error("Gagal fetch navbar icon:", error);
-      }
-    };
-
-    fetchNavbarIcon();
 
   if (!mounted) return null;
 
@@ -312,6 +381,15 @@ export default function DataUserPage() {
         </aside>
         
         <main className="flex-1 overflow-y-auto bg-[#f8f9fa] flex flex-col relative">
+        {notification && (
+        <div className={`fixed top-5 right-5 z-[200] px-6 py-4 rounded-2xl shadow-lg animate-in fade-in slide-in-from-top duration-300 ${
+          notification.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+        }`}>
+          <p className="font-bold text-sm">{notification.message}</p>
+        </div>
+      )}
           <div className="p-10">
             <div className="max-w-7xl mx-auto space-y-6">
               <div className="pb-4 border-b-2 border-gray-200">
@@ -339,22 +417,16 @@ export default function DataUserPage() {
                       className="flex items-center justify-between bg-white px-6 py-2 rounded-full min-w-[160px] font-bold text-sm text-gray-600 transition-all shadow-sm"
                     >
                       {selectedFilter} 
-                      <ChevronDown 
-                        size={18} 
-                        className={`ml-2 transition-transform duration-300 ${isFilterOpen ? "rotate-180" : "rotate-0"}`} 
-                      />
+                      <ChevronDown size={18} className={`ml-2 transition-transform duration-300 ${isFilterOpen ? "rotate-180" : "rotate-0"}`} />
                     </button>
-                    
                     {isFilterOpen && (
                       <div className="absolute right-0 mt-3 w-full bg-white rounded-[25px] p-2 shadow-2xl z-50 border border-gray-100">
-                        {["Semua Status", "Menunggu", "Aktif"].map((option) => (
+                        {["Semua Status", "Menunggu", "Aktif", "Ditolak"].map((option) => (
                           <button 
                             key={option} 
                             onClick={() => { setSelectedFilter(option); setIsFilterOpen(false); }} 
                             className={`w-full py-2 px-4 rounded-full text-sm font-bold mb-1 transition-colors ${
-                              selectedFilter === option 
-                                ? "bg-[#7c4d2d] text-white" 
-                                : "text-gray-600 hover:bg-gray-100"
+                              selectedFilter === option ? "bg-[#7c4d2d] text-white" : "text-gray-600 hover:bg-gray-100"
                             }`}
                           >
                             {option}
@@ -384,29 +456,20 @@ export default function DataUserPage() {
                             <td className="px-6 py-5 text-gray-600 text-sm font-medium">{user.email}</td>
                             <td className="px-6 py-5 text-gray-600 text-sm">
                               <div className="flex flex-col">
-                                <span className="font-medium text-gray-600">{user.jabatan}</span>
-                                {user.notaris ? (
-                                  <span className="text-[13px] text-gray-600 italic mt-0.5">
-                                    {user.jabatan.toLowerCase().includes("sekretaris") ? `Notaris/PPAT : ${user.notaris}` : user.notaris}
-                                  </span>
-                                ) : (
-                                  user.jabatan.toLowerCase().includes("sekretaris") && (
-                                    <span className="text-[13px] text-red-400 italic mt-0.5">
-                                      Data Notaris Kosong
-                                    </span>
-                                  )
-                                )}
+                                <span className="font-medium text-gray-600 uppercase">{user.jabatan}</span>
+                                {user.notaris && <span className="text-[13px] text-gray-600 italic mt-0.5">{user.notaris}</span>}
                               </div>
                             </td>
                             <td className="px-6 py-5">
-                              <span className={`px-4 py-1 rounded-full text-[10px] font-bold border-2 ${user.status === 'Aktif' ? 'bg-green-100 text-green-600 border-green-500' : 'bg-orange-100 text-orange-600 border-orange-500'}`}>
+                              {/* PERBAIKAN WARNA STATUS DI TABEL */}
+                              <span className={`px-4 py-1 rounded-full text-[10px] font-bold border-2 ${getStatusStyles(user.status)}`}>
                                 {user.status}
                               </span>
                             </td>
                             <td className="px-6 py-5">
                               <div className="flex justify-center gap-2">
                                 <button onClick={() => handleOpenDetail(user)} className="p-1.5 bg-blue-50 text-blue-600 border-2 border-blue-400 rounded-lg hover:bg-blue-600 hover:text-white transition"><Eye size={16} /></button>
-                                {user.status !== 'Aktif' && (
+                                {user.status?.toLowerCase() === 'menunggu' && (
                                   <button onClick={() => handleOpenApprove(user)} className="p-1.5 bg-green-50 text-green-600 border-2 border-green-400 rounded-lg hover:bg-green-600 hover:text-white transition"><Check size={16} /></button>
                                 )}
                                 <button onClick={() => handleOpenReject(user)} className="p-1.5 bg-red-50 text-red-600 border-2 border-red-400 rounded-lg hover:bg-red-600 hover:text-white transition"><Trash2 size={16} /></button>
@@ -425,6 +488,7 @@ export default function DataUserPage() {
           </div>
           <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center mt-auto">
             <p className="text-[10px] font-bold">{konten.footerText1}</p>
+            <p className="text-[9px] opacity-60 mt-1 tracking-widest">{konten.footerText2}</p>
           </footer>
         </main>
       </div>
@@ -442,42 +506,40 @@ export default function DataUserPage() {
                 <X size={20} />
               </button>
             </div>
-            
             <div className="p-8 space-y-5 bg-white">
               <div className="flex flex-col gap-1 border-b border-gray-100 pb-3">
-                <span className="text-[14px] uppercase tracking-wider font-bold  font-black text-gray-600">Nama Lengkap</span>
+                <span className="text-[14px] uppercase tracking-wider font-bold text-gray-600">Nama Lengkap</span>
                 <span className="font-medium text-[14px] text-gray-500 italic">{selectedUser.nama}</span>
               </div>
               <div className="flex flex-col gap-1 border-b border-gray-100 pb-3">
-                <span className="text-[14px] uppercase tracking-wider font-bold  font-black text-gray-600">Alamat Email</span>
+                <span className="text-[14px] uppercase tracking-wider font-bold text-gray-600">Alamat Email</span>
                 <span className="font-medium text-[14px] text-gray-500 italic">{selectedUser.email}</span>
               </div>
               <div className="flex flex-col gap-1 border-b border-gray-100 pb-3">
-                <span className="text-[14px] uppercase tracking-wider font-bold font-black text-gray-600">Jabatan & Instansi</span>
+                <span className="text-[14px] uppercase tracking-wider font-bold text-gray-600">Jabatan & Instansi</span>
                 <span className="font-medium text-[14px] text-gray-500 italic">{selectedUser.jabatan} {selectedUser.notaris ? `(${selectedUser.notaris})` : ''}</span>
               </div>
               <div className="flex flex-col gap-1 border-b border-gray-100 pb-3">
-                <span className="text-[13px] uppercase tracking-wider font-bold font-black text-gray-600">Nomor Handphone (WhatsApp)</span>
+                <span className="text-[13px] uppercase tracking-wider font-bold text-gray-600">Nomor WhatsApp</span>
                 <span className="font-medium text-[14px] text-gray-500 italic">{selectedUser.hp || '-'}</span>
               </div>
               <div className="flex flex-col gap-1 border-b border-gray-100 pb-3">
-                <span className="text-[13px] uppercase tracking-wider font-bold font-black text-gray-600">Status Akun</span>
-                <span className={`w-fit px-3 py-1 rounded-full text-[10px] font-black border-2 ${selectedUser.status === 'Aktif' ? 'bg-green-50 text-green-600 border-green-500' : 'bg-orange-50 text-orange-600 border-orange-500'}`}>
+                <span className="text-[13px] uppercase tracking-wider font-bold text-gray-600">Status Akun</span>
+                {/* PERBAIKAN WARNA STATUS DI MODAL DETAIL */}
+                <span className={`w-fit px-3 py-1 rounded-full text-[10px] font-black border-2 ${getStatusStyles(selectedUser.status)}`}>
                   {selectedUser.status.toUpperCase()}
                 </span>
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-[13px] uppercase tracking-wider font-bold font-black text-gray-600">Tanggal Mendaftar</span>
+                <span className="text-[13px] uppercase tracking-wider font-bold text-gray-600">Tanggal Mendaftar</span>
                 <span className="font-medium text-[14px] text-gray-500 italic">{selectedUser.tgl}</span>
               </div>
             </div>
-
-            
           </div>
         </div>
       )}
 
-      {/* MODAL APPROVE */}
+      {/* MODAL APPROVE & REJECT TETAP SAMA */}
       {isApproveModalOpen && selectedUser && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[25px] p-10 w-full max-w-lg shadow-2xl">
@@ -491,24 +553,14 @@ export default function DataUserPage() {
         </div>
       )}
 
-      {/* MODAL REJECT */}
       {isRejectModalOpen && selectedUser && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[25px] p-10 w-full max-w-lg shadow-2xl">
-            {selectedUser.status === 'Aktif' ? (
-              <>
-                <h3 className="text-3xl font-bold text-red-600 mb-2">Hapus User</h3>
-                <p className="text-gray-600 font-semibold">Hapus user dengan nama <b>{selectedUser.nama}</b>?</p>
-              </>
-            ) : (
-              <>
-                <h3 className="text-3xl font-bold text-red-600 mb-2">Tolak Pendaftaran</h3>
-                <p className="text-gray-600 font-semibold">Tolak pendaftaran akun dengan nama <b>{selectedUser.nama}</b>?</p>
-              </>
-            )}
+            <h3 className="text-3xl font-bold text-red-600 mb-2">Proses User</h3>
+            <p className="text-gray-600 font-semibold">Tolak atau hapus data user <b>{selectedUser.nama}</b>?</p>
             <div className="flex justify-end gap-3 mt-8">
               <button onClick={() => setIsRejectModalOpen(false)} className="px-8 py-3 rounded-full border-2 font-bold text-gray-600 hover:bg-gray-50">Batal</button>
-              <button onClick={confirmReject} className="px-8 py-3 rounded-full bg-red-600 text-white font-bold">Ya, {selectedUser.status === 'Aktif' ? 'Hapus' : 'Tolak'}</button>
+              <button onClick={confirmReject} className="px-8 py-3 rounded-full bg-red-600 text-white font-bold">Ya, Proses</button>
             </div>
           </div>
         </div>
@@ -517,26 +569,11 @@ export default function DataUserPage() {
       {/* MODAL KELUAR */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="space-y-4">
-              <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
-              <p className="text-gray-500 font-medium leading-relaxed">
-                Anda akan keluar dari admin panel. Anda perlu login kembali untuk mengakses sistem.
-              </p>
-            </div>
+          <div className="bg-white rounded-[25px] p-8 w-full max-w-md shadow-2xl">
+            <h3 className="text-2xl font-bold text-gray-900">Yakin untuk keluar?</h3>
             <div className="flex justify-end gap-3 mt-10">
-              <button 
-                onClick={() => setIsLogoutModalOpen(false)}
-                className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold hover:bg-gray-50 transition"
-              >
-            Batal
-              </button>
-              <button 
-                onClick={handleLogout}
-                className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-200"
-              >
-                  Ya, Keluar
-                </button>
+              <button onClick={() => setIsLogoutModalOpen(false)} className="px-8 py-2.5 rounded-full border-2 border-gray-600 text-gray-600 font-bold">Batal</button>
+              <button onClick={handleLogout} className="px-8 py-2.5 rounded-full bg-red-600 text-white font-bold">Ya, Keluar</button>
             </div>
           </div>
         </div>
