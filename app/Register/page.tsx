@@ -52,7 +52,7 @@ export default function RegisterPage() {
 
   const [konten, setKonten] = useState({
     footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
-    footerText2: "Sistem Informasi Internal untuk Notaris/PPAT dan PPATS",
+    footerText2: "Sistem Informasi Internal untuk Notaris/PPAT/PPATS",
   });
 
   useEffect(() => {
@@ -256,10 +256,10 @@ export default function RegisterPage() {
 
       </section>
       
-      <footer className="bg-[#1a1a1a] text-white py-6 text-center z-10 relative">
-        <p className="text-[10px] font-bold">{konten.footerText1}</p>
-        <p className="text-[9px] opacity-60 mt-1 uppercase tracking-widest">{konten.footerText2}</p>
-      </footer>
+      <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center mt-auto">
+            <p className="text-[10px] font-bold">{konten.footerText1}</p>
+            <p className="text-[9px] opacity-60 mt-1 tracking-widest">{konten.footerText2}</p>
+          </footer>
     </main>
   );
 }

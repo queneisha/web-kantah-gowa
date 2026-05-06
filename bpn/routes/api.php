@@ -15,6 +15,7 @@ use App\Http\Controllers\RegisterConfigController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\Auth\LupaPasswordController;
 use Illuminate\Auth\Notifications\ResetPassword;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +35,7 @@ Route::post('/permohonan', [PermohonanController::class, 'store']);
 Route::get('/riwayat/{userId}', [PermohonanController::class, 'getRiwayatUser']);
 Route::get('/notifikasi/{userId}', [PermohonanController::class, 'getNotifikasiUser']);
 Route::patch('/notifikasi/{id}/read', [PermohonanController::class, 'markNotificationAsRead']);
+Route::get('/notifications/unread-count/{id}', [NotificationController::class, 'getUnreadCount']);
 
 /*
 |--------------------------------------------------------------------------

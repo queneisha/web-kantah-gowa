@@ -18,7 +18,7 @@ export default function LoginPage() {
 
   const [konten, setKonten] = useState({
     footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
-    footerText2: "Sistem Informasi Internal untuk Notaris dan PPAT",
+    footerText2: "Sistem Informasi Internal untuk Notaris/PPAT/PPATS",
   });
 
   // 1. Ambil Konfigurasi Tampilan dari Backend
@@ -71,13 +71,13 @@ export default function LoginPage() {
     };
 
     try {
-      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token'): null;
+    
       const response = await fetch('http://localhost:8000/api/login', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json', 
           'Accept': 'application/json', // Memaksa Laravel mengirim JSON jika terjadi error
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+         
           
         },body: JSON.stringify(payload),
         
@@ -133,12 +133,12 @@ export default function LoginPage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     try {
-      const token = typeof window !== 'undefined' ? sessionStorage.getItem('token'): null;
+    
       const response = await fetch('http://localhost:8000/api/lupa-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 
           'Accept': 'application/json',  
-           ...(token ? { Authorization: `Bearer ${token}` } : {}) 
+      
         },body: JSON.stringify({ email: formData.get("email_lupa") }),
       });
       const result = await response.json();
@@ -239,11 +239,10 @@ export default function LoginPage() {
           </div>
         </div>
       </section>
-      
-      <footer className="bg-[#1a1a1a] text-white py-6 text-center z-10 relative">
-        <p className="text-[10px] font-bold">{konten.footerText1}</p>
-        <p className="text-[9px] opacity-60 mt-1 uppercase tracking-widest">{konten.footerText2}</p>
-      </footer>
+      <footer className="w-full bg-[#1a1a1a] text-white py-6 text-center mt-auto">
+            <p className="text-[10px] font-bold">{konten.footerText1}</p>
+            <p className="text-[9px] opacity-60 mt-1 tracking-widest">{konten.footerText2}</p>
+          </footer>
     </main>
   );
 }

@@ -53,4 +53,20 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public static function boot()
+{
+    parent::boot();
+
+    static::deleting(function ($user) {
+        \App\Models\Permohonan::where('user_id', $user->id)->delete();
+    });
+}
+
+public function permohonans()
+{
+    return $this->hasMany(\App\Models\Permohonan::class, 'user_id');
+}
+
+
 }

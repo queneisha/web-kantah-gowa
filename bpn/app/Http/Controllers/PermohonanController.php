@@ -36,6 +36,11 @@ class PermohonanController extends Controller
                     'kecamatan' => $item->kecamatan,
                     'status' => $item->status,
                     'catatan' => $item->catatan_pendaftaran ?? null,
+
+                    'user_status' => $item->user->status ?? null,
+                   
+
+                    
                 ];
             });
 
@@ -97,19 +102,14 @@ class PermohonanController extends Controller
      * 3. Fungsi untuk User: Mengambil riwayat permohonan milik user tertentu.
      */
     public function getRiwayatUser($userId)
-    {
-        try {
-            $riwayat = Permohonan::where('user_id', $userId)
-                                 ->orderBy('created_at', 'desc')
-                                 ->get();
+{
+    // Hapus filter whereIn agar semua status (Proses, Menunggu, dll) muncul di riwayat
+    $data = Permohonan::where('user_id', $userId) 
+        ->latest()
+        ->get();
 
-            return response()->json($riwayat);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Gagal mengambil riwayat'
-            ], 500);
-        }
-    }
+    return response()->json($data);
+}
 
     /**
      * 4. Fungsi untuk Admin: Update status permohonan.
@@ -121,7 +121,7 @@ class PermohonanController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'status' => 'required|in:Menunggu,Proses,Disetujui,Ditolak',
-                'catatan' => 'nullable|string'
+                'catatan_pendaftaran' => 'nullable|string'
             ]);
 
             if ($validator->fails()) {
@@ -135,11 +135,13 @@ class PermohonanController extends Controller
             $newStatus = $request->status;
 
             // Update status permohonan dan catatan jika ada (hanya jika belum ada catatan sebelumnya)
-            $updateData = ['status' => $newStatus];
-            if ($request->filled('catatan')) {
+            $status = ucfirst(strtolower($request->status));
+
+            $updateData = ['status' => $status];
+            if ($request->filled('catatan_pendaftaran')) {
                 // Hanya allow update catatan jika belum ada catatan sebelumnya
                 if (empty($permohonan->catatan_pendaftaran)) {
-                    $updateData['catatan_pendaftaran'] = $request->catatan;
+                    $updateData['catatan_pendaftaran'] = $request->catatan_pendaftaran;
                 } else {
                     return response()->json([
                         'message' => 'Alasan penolakan sudah ditulis dan tidak dapat diubah',
@@ -221,6 +223,7 @@ class PermohonanController extends Controller
                     Notification::create([
                         'user_id' => $permohonan->user_id,
                         'permohonan_id' => $permohonan->id,
+
                         'title' => $titleMap[$newStatus] ?? 'Status Permohonan Berubah',
                         'message' => $messageMap[$newStatus] ?? 'Status permohonan Anda telah diperbarui.',
                         'status' => $newStatus,

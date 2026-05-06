@@ -11,8 +11,10 @@ class ExportController extends Controller
     public function export(Request $request)
     {
         // 1. Tangkap parameter dari Frontend
-        $tanggalDari = $request->query('tanggal_dari');
-        $tanggalSampai = $request->query('tanggal_sampai');
+        if (ob_get_level()) ob_end_clean();
+
+        $tanggalDari = $request->query('start_date');
+        $tanggalSampai = $request->query('end_date');
 
         // 2. Query data dengan Filter
         $query = Permohonan::with('user');

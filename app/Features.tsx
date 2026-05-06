@@ -20,13 +20,31 @@ export default function Features() {
     icon: string;
   }
 
-  //fitur
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const resFitur = await fetch("http://localhost:8000/api/fiturs", { cache: 'no-store' });
+        const [resFitur, resAlur] = await Promise.all([
+          fetch("http://localhost:8000/api/fiturs", { cache: "no-store" }),
+          fetch("http://localhost:8000/api/alurs", { cache: "no-store" }),
+        ]);
+
+        // Cek apakah respons berhasil
+        if (!resFitur.ok) {
+          throw new Error(`Failed to fetch fiturs: ${resFitur.status} ${resFitur.statusText}`);
+        }
+        if (!resAlur.ok) {
+          throw new Error(`Failed to fetch alurs: ${resAlur.status} ${resAlur.statusText}`);
+        }
+
         const dataFitur = await resFitur.json();
+        const dataAlur = await resAlur.json();
+
+        // Log data untuk debugging
+        console.log("Data fiturs:", dataFitur);
+        console.log("Data alurs:", dataAlur);
+
         setFeatures(dataFitur);
+        setSteps(dataAlur);
       } catch (error) {
         console.error("Gagal mengambil data:", error);
       }
@@ -34,46 +52,18 @@ export default function Features() {
     fetchData();
   }, []);
 
-  //alur
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const resAlur = await fetch("http://localhost:8000/api/alurs", { cache: 'no-store' });
-        const dataAlur = await resAlur.json();
-        setSteps(dataAlur);
-      } catch (error) {
-        console.error("Gagal megambil data:", error);
-      }
-    };
-    fetchData();
-  }, []);
-
   return (
     <div className="bg-[#5d4037] relative overflow-hidden">
-      {/* --- BACKGROUND ANIMASI ELEGAN (Framer Motion) --- */}
+      {/* --- BACKGROUND ANIMASI ELEGAN --- */}
       <div className="absolute inset-0 pointer-events-none">
         <motion.div
-          animate={{
-            x: [0, 30, 0],
-            y: [0, 50, 0],
-            scale: [1, 1.1, 1],
-          }}
+          animate={{ x: [0, 30, 0], y: [0, 50, 0], scale: [1, 1.1, 1] }}
           transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
           className="absolute top-0 left-0 w-[400px] h-[400px] bg-white/5 rounded-full blur-[100px]"
         />
         <motion.div
-          animate={{
-            x: [0, -40, 0],
-            y: [0, -60, 0],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
+          animate={{ x: [0, -40, 0], y: [0, -60, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute bottom-10 right-0 w-[500px] h-[500px] bg-black/10 rounded-full blur-[120px]"
         />
       </div>
@@ -101,19 +91,19 @@ export default function Features() {
               className="bg-white rounded-[35px] p-5 flex items-center gap-6 shadow-2xl transition-all"
             >
               <div className="bg-[#7c4d2d] text-white w-20 h-20 rounded-[25px] flex items-center justify-center text-4xl shadow-lg shrink-0 overflow-hidden relative">
-              {s.icon && s.icon.length > 4 ? ( // Cek jika icon adalah nama file (bukan emotikon)
-    <img 
-      src={`http://localhost:8000/storage/icons/${s.icon}`} 
-      className="w-full h-full object-contain p-3 opacity-100 relative z-10 block"
-      alt={s.judul}
-      style={{ opacity: 1 }}
-    />
-  ) : (
-    <span>{s.icon || "✨"}</span> // Tampilkan emotikon lama jika bukan file
-  )}
+                {s.icon && s.icon.length > 4 ? (
+                  <img 
+                    src={`http://localhost:8000/storage/icons/${s.icon}`} 
+                    className="w-full h-full object-contain p-3 opacity-100 relative z-10 block"
+                    alt={s.judul}
+                    style={{ opacity: 1 }}
+                  />
+                ) : (
+                  <span>{s.icon || "✨"}</span>
+                )}
               </div>
               <div>
-                <h3 className="font-semibold text-[#333] text-xl mb-1">
+                <h3 className="font-semibold text-[#333] text-xl mb-1 leading-tight">
                   {s.judul}
                 </h3>
                 <p className="text-gray-500 text-sm leading-snug">
@@ -147,24 +137,23 @@ export default function Features() {
               whileHover={{ y: -8 }}
               className="bg-white p-10 rounded-[50px] shadow-[0_20px_50px_rgba(0,0,0,0.08)] flex items-center gap-8 border border-gray-50 hover:border-green-100 transition-all"
             >
-           <div className="!bg-green-200 flex items-center justify-center rounded-[30px] shadow-[inset_0_2px_10px_rgba(0,0,0,0.1)] shrink-0 w-20 h-20 md:w-24 md:h-24 overflow-hidden">
-  {f.icon && f.icon.length > 2 ? (
-    <img
-      src={`http://localhost:8000/storage/icons/${f.icon}`}
-      className="w-12 h-12 md:w-14 md:h-14 object-contain"
-      alt={f.judul}
-      // Kita tambahkan drop-shadow kecil agar ikon putihnya makin tegas
-      style={{ filter: 'brightness(0) invert(1) drop-shadow(0px 2px 2px rgba(0,0,0,0.2))' }}
-    />
-  ) : (
-    <span className="text-white text-4xl">{f.icon || "✨"}</span>
-  )}
-</div>
-              <div>
-                <h4 className="font-semibold text-[#56b35a] text-2xl mb-2 tracking-tight">
+              <div className="!bg-[#56b35a] flex items-center justify-center rounded-[30px] shadow-[inset_0_2px_10px_rgba(0,0,0,0.1)] shrink-0 w-20 h-20 md:w-24 md:h-24 overflow-hidden">
+                {f.icon && f.icon.length > 2 ? (
+                  <img
+                    src={`http://localhost:8000/storage/icons/${f.icon}`}
+                    className="w-12 h-12 md:w-14 md:h-14 object-contain"
+                    alt={f.judul}
+                    style={{ filter: 'brightness(0) invert(1) drop-shadow(0px 2px 2px rgba(0,0,0,0.2))' }}
+                  />
+                ) : (
+                  <span className="text-white text-4xl">{f.icon || "✨"}</span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="font-semibold text-[#56b35a] text-2xl mb-2 tracking-tight leading-tight">
                   {f?.judul}
                 </h4>
-                <p className="text-gray-400 text-sm font-medium leading-relaxed">
+                <p className="text-gray-500 text-sm font-medium leading-relaxed">
                   {f?.deskripsi}
                 </p>
               </div>
