@@ -26,8 +26,8 @@ export default function LoginPage() {
     const fetchConfig = async () => {
       try {
         const [resHero, resConfig] = await Promise.all([
-          fetch('http://localhost:8000/api/hero-display', { cache: 'no-store' }),
-          fetch('http://localhost:8000/api/loginconfig', { cache: 'no-store' }),
+          fetch('http://bpn.kadastrium.id/api/hero-display', { cache: 'no-store' }),
+          fetch('http://bpn.kadastrium.id/api/loginconfig', { cache: 'no-store' }),
         ]);
         
         const dataHero = await resHero.json();
@@ -46,7 +46,7 @@ export default function LoginPage() {
             judul_utama: result.headerTitle || prev.judul_utama,
             sub_judul: result.subHeader || prev.sub_judul,
             background_path: result.background_path 
-              ? `http://localhost:8000/storage/${result.background_path.replace(/^\/+/g, '').replace('public/', '')}` 
+              ? `http://bpn.kadastrium.id/storage/${result.background_path.replace(/^\/+/g, '').replace('public/', '')}` 
               : prev.background_path,
           }));
         }
@@ -72,7 +72,7 @@ export default function LoginPage() {
 
     try {
     
-      const response = await fetch('http://localhost:8000/api/login', {
+      const response = await fetch('http://bpn.kadastrium.id/api/login', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json', 
@@ -134,7 +134,7 @@ export default function LoginPage() {
     const formData = new FormData(e.currentTarget);
     try {
     
-      const response = await fetch('http://localhost:8000/api/lupa-password', {
+      const response = await fetch('http://bpn.kadastrium.id/api/lupa-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 
           'Accept': 'application/json',  

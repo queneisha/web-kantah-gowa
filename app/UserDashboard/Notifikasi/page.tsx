@@ -64,7 +64,7 @@ export default function NotifikasiPage() {
   const fetchNotifikasi = async (userId: string) => {
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:8000/api/notifikasi/${userId}`);
+      const response = await fetch(`http://bpn.kadastrium.id/api/notifikasi/${userId}`);
       if (response.ok) {
         const data = await response.json();
         setNotifications(data.filter((n: Notification) => !n.is_read));
@@ -74,7 +74,7 @@ export default function NotifikasiPage() {
 
   const markAsRead = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/notifikasi/${id}/read`, { method: 'PATCH' });
+      const response = await fetch(`http://bpn.kadastrium.id/api/notifikasi/${id}/read`, { method: 'PATCH' });
       if (response.ok) setNotifications(prev => prev.filter(n => n.id !== id));
     } catch (error) { console.error(error); }
   };
@@ -92,7 +92,7 @@ export default function NotifikasiPage() {
       router.push('/Login');
     }
 
-    fetch('http://localhost:8000/api/hero-display')
+    fetch('http://bpn.kadastrium.id/api/hero-display')
       .then(res => res.json())
       .then(data => {
         if (data) {

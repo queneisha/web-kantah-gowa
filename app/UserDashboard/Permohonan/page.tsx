@@ -113,7 +113,7 @@ export default function PermohonanPage() {
   // 1. Fetch data Tampilan (Navbar & Footer)
   const fetchDisplayData = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/hero-display");
+      const res = await fetch("http://bpn.kadastrium.id/api/hero-display");
       if (res.ok) {
         const data = await res.json();
         setNavData({
@@ -131,7 +131,7 @@ export default function PermohonanPage() {
   const fetchUnreadNotifications = async (userId: number) => {
     try {
       const token = sessionStorage.getItem("token");
-      const res = await fetch(`http://localhost:8000/api/notifications/unread-count/${userId}`, {
+      const res = await fetch(`http://bpn.kadastrium.id/api/notifications/unread-count/${userId}`, {
         headers: {
           "Accept": "application/json",
           "Authorization": `Bearer ${token}`
@@ -200,7 +200,7 @@ export default function PermohonanPage() {
       const token = sessionStorage.getItem("token");
       const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
-      const res = await fetch("http://localhost:8000/api/permohonan", {
+      const res = await fetch("http://bpn.kadastrium.id/api/permohonan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

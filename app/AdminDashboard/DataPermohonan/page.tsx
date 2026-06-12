@@ -102,7 +102,7 @@ export default function DataPermohonanPage() {
   const fetchNavbarData = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      const res = await fetch("http://localhost:8000/api/hero-display", {
+      const res = await fetch("http://bpn.kadastrium.id/api/hero-display", {
         headers: {
           'Accept': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -122,7 +122,7 @@ export default function DataPermohonanPage() {
   const fetchKonten = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      const res = await fetch("http://localhost:8000/api/hero-display", {
+      const res = await fetch("http://bpn.kadastrium.id/api/hero-display", {
         headers: {
           'Accept': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -142,7 +142,7 @@ export default function DataPermohonanPage() {
     try {
       setIsLoading(true);
       const token = sessionStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/all-permohonan', {
+      const response = await fetch('http://bpn.kadastrium.id/api/all-permohonan', {
         headers: {
           'Accept': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -179,7 +179,7 @@ export default function DataPermohonanPage() {
   const handleInstantProcess = async (id: string) => {
     try {
       const token = sessionStorage.getItem('token');
-      const response = await fetch(`http://localhost:8000/api/permohonan/${id}/status`, {
+      const response = await fetch(`http://bpn.kadastrium.id/api/permohonan/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -207,7 +207,7 @@ export default function DataPermohonanPage() {
       setIsSaving(true);
       const token = sessionStorage.getItem('token');
       
-      const response = await fetch(`http://localhost:8000/api/permohonan/${selectedMohon.id}/status`, {
+      const response = await fetch(`http://bpn.kadastrium.id/api/permohonan/${selectedMohon.id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -239,7 +239,7 @@ export default function DataPermohonanPage() {
     try {
       setIsSaving(true);
       const token = sessionStorage.getItem('token');
-      const response = await fetch(`http://localhost:8000/api/permohonan/${selectedMohon.id}`, {
+      const response = await fetch(`http://bpn.kadastrium.id/api/permohonan/${selectedMohon.id}`, {
         method: 'DELETE',
         headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
       });
@@ -473,7 +473,30 @@ export default function DataPermohonanPage() {
           </div>
         </div>
       )}
+       {isDeletePopupOpen && (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="bg-white rounded-2xl p-8 w-[350px] text-center shadow-xl">
+      <h3 className="text-xl font-bold text-red-600">Hapus/tolak permohonan?</h3>
+      <p className="mt-2 text-gray-600">User harus membuat ulang permohonan.</p>
 
+      <div className="flex gap-3 mt-6">
+        <button 
+          onClick={() => setIsDeletePopupOpen(false)}
+          className="flex-1 py-2 border rounded-lg"
+        >
+          Batal
+        </button>
+
+        <button 
+          onClick={confirmDelete}
+          className="flex-1 py-2 bg-red-600 text-white rounded-lg"
+        >
+          Hapus
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       
     </div>

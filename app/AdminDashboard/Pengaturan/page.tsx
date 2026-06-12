@@ -40,7 +40,7 @@ export default function PengaturanPage() {
   const fetchKonten = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      const res = await fetch("http://localhost:8000/api/hero-display", {
+      const res = await fetch("http://bpn.kadastrium.id/api/hero-display", {
         headers: {
           'Accept': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -62,7 +62,7 @@ export default function PengaturanPage() {
   const fetchNavbarData = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      const res = await fetch("http://localhost:8000/api/hero-display", {
+      const res = await fetch("http://bpn.kadastrium.id/api/hero-display", {
         headers: {
           'Accept': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})

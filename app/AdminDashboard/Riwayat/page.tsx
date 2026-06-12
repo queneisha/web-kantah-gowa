@@ -35,12 +35,13 @@ export default function RiwayatPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [startDate, setStartDate] = useState("");
 const [endDate, setEndDate] = useState("");
+const flatpickr = require("flatpickr");
 
   const [navbarIconUrl, setNavbarIconUrl] = useState<string>("/logo.png");
   // Fetch navbar icon dari backend
     const fetchNavbarIcon = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
+        const res = await fetch("http://bpn.kadastrium.id/api/hero-display");
         const data = await res.json();
         setNavbarIconUrl(data.navbarIcon || "/logo.png");
       } catch (error) {
@@ -55,7 +56,7 @@ const [endDate, setEndDate] = useState("");
     try {
       setIsLoading(true);
       const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
-      const response = await fetch('http://localhost:8000/api/all-permohonan', {
+      const response = await fetch('http://bpn.kadastrium.id/api/all-permohonan', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -117,7 +118,7 @@ const [endDate, setEndDate] = useState("");
         return;
       }
   
-      const response = await fetch(`http://localhost:8000/api/export-permohonan?start_date=${startDate}&end_date=${endDate}`, {
+      const response = await fetch(`http://bpn.kadastrium.id/api/export-permohonan?start_date=${startDate}&end_date=${endDate}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -164,7 +165,7 @@ const [endDate, setEndDate] = useState("");
   useEffect(() => {
     const fetchNavbarData = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
+        const res = await fetch("http://bpn.kadastrium.id/api/hero-display");
         const data = await res.json();
         
         if (res.ok) {
@@ -192,7 +193,7 @@ const [endDate, setEndDate] = useState("");
   useEffect(() => {
     const fetchData = async () => {
       try { 
-        const response = await fetch('http://localhost:8000/api/hero-display');
+        const response = await fetch('http://bpn.kadastrium.id/api/hero-display');
         const data = await response.json();
 
         if (data) {

@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         ResetPassword::createUrlUsing(function ($user, string $token) {
-            $url = 'http://localhost:3000/reset-password';
+            $url = 'http://bpn.kadastrium.id/reset-password';
             
             // PHP akan otomatis memberikan tanda ? dan = dengan benar
             return $url . '?' . http_build_query([

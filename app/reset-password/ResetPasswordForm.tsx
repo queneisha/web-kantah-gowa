@@ -46,7 +46,7 @@ if (!token || !email) {
     return;
   }
   try {
-    const response = await fetch("http://localhost:8000/api/reset-password", {
+    const response = await fetch("http://bpn.kadastrium.id/api/reset-password", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -90,8 +90,8 @@ if (!token || !email) {
     const fetchAllData = async () => {
       try { 
         const [resHero, resConfig] = await Promise.all([
-          fetch ('http://localhost:8000/api/hero-display', { cache: 'no-store' }),
-          fetch ('http://localhost:8000/api/loginconfig', { cache: 'no-store' }),
+          fetch ('http://bpn.kadastrium.id/api/hero-display', { cache: 'no-store' }),
+          fetch ('http://bpn.kadastrium.id/api/loginconfig', { cache: 'no-store' }),
         ]);
         const dataHero = await resHero.json();
         const dataConfig = await resConfig.json();
@@ -107,7 +107,7 @@ if (!token || !email) {
         if (!path) return defaultImg;
         if(path.startsWith('http')) return path;
         const cleanPath = path.replace('public/', '');
-        return `http://localhost:8000/storage/${cleanPath}`;
+        return `http://bpn.kadastrium.id/storage/${cleanPath}`;
       };
       setLoginKonten({
         headerTitle: dataConfig.headerTitle || "Selamat Datang Kembali",
@@ -131,7 +131,7 @@ if (!token || !email) {
     };
 
     try {
-      const response = await fetch('http://localhost:8000/api/login', {
+      const response = await fetch('http://bpn.kadastrium.id/api/login', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

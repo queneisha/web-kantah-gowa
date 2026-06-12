@@ -24,8 +24,8 @@ export default function Features() {
     const fetchData = async () => {
       try {
         const [resFitur, resAlur] = await Promise.all([
-          fetch("http://localhost:8000/api/fiturs", { cache: "no-store" }),
-          fetch("http://localhost:8000/api/alurs", { cache: "no-store" }),
+          fetch("http://bpn.kadastrium.id/api/fiturs", { cache: "no-store" }),
+          fetch("http://bpn.kadastrium.id/api/alurs", { cache: "no-store" }),
         ]);
 
         // Cek apakah respons berhasil
@@ -93,7 +93,7 @@ export default function Features() {
               <div className="bg-[#7c4d2d] text-white w-20 h-20 rounded-[25px] flex items-center justify-center text-4xl shadow-lg shrink-0 overflow-hidden relative">
                 {s.icon && s.icon.length > 4 ? (
                   <img 
-                    src={`http://localhost:8000/storage/icons/${s.icon}`} 
+                    src={`http://bpn.kadastrium.id/storage/icons/${s.icon}`} 
                     className="w-full h-full object-contain p-3 opacity-100 relative z-10 block"
                     alt={s.judul}
                     style={{ opacity: 1 }}
@@ -140,7 +140,7 @@ export default function Features() {
               <div className="!bg-[#56b35a] flex items-center justify-center rounded-[30px] shadow-[inset_0_2px_10px_rgba(0,0,0,0.1)] shrink-0 w-20 h-20 md:w-24 md:h-24 overflow-hidden">
                 {f.icon && f.icon.length > 2 ? (
                   <img
-                    src={`http://localhost:8000/storage/icons/${f.icon}`}
+                    src={`http://bpn.kadastrium.id/storage/icons/${f.icon}`}
                     className="w-12 h-12 md:w-14 md:h-14 object-contain"
                     alt={f.judul}
                     style={{ filter: 'brightness(0) invert(1) drop-shadow(0px 2px 2px rgba(0,0,0,0.2))' }}

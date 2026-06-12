@@ -14,7 +14,7 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try { 
-        const response = await fetch('http://localhost:8000/api/hero-display',{ cache: 'no-store' });
+        const response = await fetch('http://bpn.kadastrium.id/api/hero-display',{ cache: 'no-store' });
         const data = await response.json();
 
         if (data) {

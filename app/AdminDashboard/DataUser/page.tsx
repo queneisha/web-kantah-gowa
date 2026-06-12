@@ -46,8 +46,10 @@ export default function DataUserPage() {
   const [selectedFilter, setSelectedFilter] = useState("Semua Status");
   const [searchTerm, setSearchTerm] = useState("");
   
-  const [users, setUsers] = useState<UserData[]>([]);
   
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const [konten, setKonten] = useState({
     footerText1: "© 2026 Kantor Pertanahan Kabupaten Gowa. Semua hak dilindungi.",
     footerText2: "Sistem Informasi Internal untuk Notaris/PPAT/PPATS",
@@ -61,7 +63,7 @@ export default function DataUserPage() {
   const fetchNavbarData = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      const res = await fetch("http://localhost:8000/api/hero-display", {
+      const res = await fetch("http://bpn.kadastrium.id/api/hero-display", {
         headers: {
           'Accept': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -79,7 +81,7 @@ export default function DataUserPage() {
   };const fetchKonten = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      const res = await fetch("http://localhost:8000/api/hero-display", {
+      const res = await fetch("http://bpn.kadastrium.id/api/hero-display", {
         headers: {
           'Accept': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -100,7 +102,7 @@ export default function DataUserPage() {
   const fetchUsers = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/all-users', {
+      const response = await fetch('http://bpn.kadastrium.id/api/all-users', {
         headers: { 'Accept': 'application/json', ...(token ? {Authorization: `Bearer ${token}`} : {}) }
       });
       if (response.ok) {
@@ -170,36 +172,57 @@ export default function DataUserPage() {
   );
 
   const handleApprove = async () => {
-    if (!selectedUser) return;
-  
-    const token = sessionStorage.getItem("token");
-  
-    const res = await fetch(`http://localhost:8000/api/approve-user/${selectedUser.id}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  
-    if (res.ok) {
-      setUsers(prev =>
-        prev.map(u =>
-          u.id === selectedUser.id ? { ...u, status: "Aktif" } : u
-        )
-      );
-  
-      setNotification({ type: "success", message: "User berhasil disetujui ✅" });
+    if (!selectedUser || loading) return;
+
+    setLoading(true);
+
+    try {
+        const token = sessionStorage.getItem("token");
+
+        const res = await fetch(
+            `http://bpn.kadastrium.id/api/approve-user/${selectedUser.id}`,
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        if (res.ok) {
+            setUsers(prev =>
+                prev.map(u =>
+                    u.id === selectedUser.id ? { ...u, status: "Aktif" } : u
+                )
+            );
+
+            setNotification({
+                type: "success",
+                message: "User berhasil disetujui ✅",
+            });
+        } else {
+            setNotification({
+                type: "error",
+                message: "Gagal menyetujui user ❌",
+            });
+        }
+    } catch (err) {
+        setNotification({
+            type: "error",
+            message: "Terjadi kesalahan server ❌",
+        });
+    } finally {
+        setLoading(false);
+        setIsApproveModalOpen(false);
     }
-  
-    setIsApproveModalOpen(false);
-  };
+};
 
   const handleDelete = async () => {
     if (!selectedUser) return;
   
     const token = sessionStorage.getItem("token");
   
-    const res = await fetch(`http://localhost:8000/api/admin/users/${selectedUser.id}/reject`, {
+    const res = await fetch(`http://bpn.kadastrium.id/api/admin/users/${selectedUser.id}/reject`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -364,7 +387,7 @@ export default function DataUserPage() {
     onClick={() => {setSelectedUser(user); setIsDetailOpen(true)}}
     title="Lihat Detail"
     className="group relative p-2 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 
-    hover:bg-blue-600 hover:text-white transition-all duration-300 shadow-sm hover:scale-110"
+    hover:bg-blue-600 hover:text-white transition-all duration-300 shadow-sm hover:scale-110 cursor-pointer"
   >
     <Eye size={16} />
   </button>
@@ -375,7 +398,7 @@ export default function DataUserPage() {
       onClick={() => {setSelectedUser(user); setIsApproveModalOpen(true)}}
       title="Setujui"
       className="group relative p-2 bg-green-50 text-green-600 rounded-xl border border-green-100 
-      hover:bg-green-600 hover:text-white transition-all duration-300 shadow-sm hover:scale-110"
+      hover:bg-green-600 hover:text-white transition-all duration-300 shadow-sm hover:scale-110 cursor-pointer"
     >
       <Check size={16} />
     </button>
@@ -386,7 +409,7 @@ export default function DataUserPage() {
     onClick={() => {setSelectedUser(user); setIsRejectModalOpen(true)}}
     title="Hapus"
     className="group relative p-2 bg-red-50 text-red-600 rounded-xl border border-red-100 
-    hover:bg-red-600 hover:text-white transition-all duration-300 shadow-sm hover:scale-110"
+    hover:bg-red-600 hover:text-white transition-all duration-300 shadow-sm hover:scale-110 cursor-pointer"
   >
     <Trash2 size={16} />
   </button>
@@ -417,8 +440,8 @@ export default function DataUserPage() {
             <h3 className="text-xl md:text-3xl font-black text-gray-900">Yakin untuk keluar?</h3>
             <p className="text-sm md:text-lg text-gray-600 font-medium mt-3">Sesi Anda akan berakhir. Anda perlu login kembali untuk mengakses sistem.</p>
             <div className="flex justify-end gap-3 mt-8 md:mt-12">
-              <button onClick={() => setIsLogoutModalOpen(false)} className="px-6 md:px-10 py-3 rounded-full border-2 border-gray-400 text-gray-600 font-bold text-xs md:text-sm uppercase tracking-widest hover:bg-gray-50">Batal</button>
-              <button onClick={handleLogout} className="px-6 md:px-10 py-3 rounded-full bg-red-600 text-white font-bold text-xs md:text-sm uppercase tracking-widest transition-hover hover:bg-red-700 shadow-lg shadow-red-200">Ya, Keluar</button>
+              <button onClick={() => setIsLogoutModalOpen(false)} className="px-6 md:px-10 py-3 rounded-full border-2 border-gray-400 text-gray-600 font-bold text-xs md:text-sm uppercase tracking-widest hover:bg-gray-50 cursor-pointer">Batal</button>
+              <button onClick={handleLogout} className="px-6 md:px-10 py-3 rounded-full bg-red-600 text-white font-bold text-xs md:text-sm uppercase tracking-widest transition-hover hover:bg-red-700 shadow-lg shadow-red-200 cursor-pointer">Ya, Keluar</button>
             </div>
           </div>
         </div>
@@ -518,11 +541,37 @@ export default function DataUserPage() {
         </button>
 
         <button 
-          onClick={handleApprove}
-          className="flex-1 py-2 bg-green-600 text-white rounded-lg"
-        >
-          Setujui
-        </button>
+  onClick={handleApprove}
+  disabled={loading}
+  className="flex-1 py-2 bg-green-600 text-white rounded-lg flex items-center justify-center gap-2 disabled:opacity-60"
+>
+  {loading ? (
+    <>
+      <svg
+        className="w-4 h-4 animate-spin"
+        viewBox="0 0 24 24"
+        fill="none"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+        />
+      </svg>
+      Memproses...
+    </>
+  ) : (
+    "Setujui"
+  )}
+</button>
       </div>
     </div>
   </div>
@@ -536,14 +585,14 @@ export default function DataUserPage() {
       <div className="flex gap-3 mt-6">
         <button 
           onClick={() => setIsRejectModalOpen(false)}
-          className="flex-1 py-2 border rounded-lg"
+          className="flex-1 py-2 border rounded-lg cursor-pointer"
         >
           Batal
         </button>
 
         <button 
           onClick={handleDelete}
-          className="flex-1 py-2 bg-red-600 text-white rounded-lg"
+          className="flex-1 py-2 bg-red-600 text-white rounded-lg cursor-pointer"
         >
           Hapus
         </button>

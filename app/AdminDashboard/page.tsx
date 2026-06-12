@@ -72,10 +72,10 @@ export default function AdminDashboard() {
 
     try {
       const [resStats, resUsers, resPermohonan, resHero] = await Promise.all([
-        fetch('http://localhost:8000/api/dashboard-stats', { headers }),
-        fetch('http://localhost:8000/api/latest-users', { headers }),
-        fetch('http://localhost:8000/api/latest-permohonan', { headers }),
-        fetch('http://localhost:8000/api/hero-display', { headers })
+        fetch('http://bpn.kadastrium.id/api/dashboard-stats', { headers }),
+        fetch('http://bpn.kadastrium.id/api/latest-users', { headers }),
+        fetch('http://bpn.kadastrium.id/api/latest-permohonan', { headers }),
+        fetch('http://bpn.kadastrium.id/api/hero-display', { headers })
       ]);
 
       if (resStats.ok) setStats(await resStats.json());
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
         setKonten({ footerText1: data.footerText1, footerText2: data.footerText2 });
       }
 
-      const resAll = await fetch('http://localhost:8000/api/all-permohonan', { headers });
+      const resAll = await fetch('http://bpn.kadastrium.id/api/all-permohonan', { headers });
 
 if (resAll.ok) {
   const data = await resAll.json();

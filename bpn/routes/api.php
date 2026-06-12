@@ -84,5 +84,5 @@ Route::post('/reset-password', [LupaPasswordController::class, 'resetPassword'])
 Route::post('/user/change-password', [UserController::class, 'changePassword']);
 
 ResetPassword::createUrlUsing(function ($user, string $token){
-    return 'http://localhost:3000/reset-password?token='.$token.'&email='.$user->email;
+    return 'http://kadastrium.id/reset-password?token='.$token.'&email='.$user->email;
 });

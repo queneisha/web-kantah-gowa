@@ -82,7 +82,7 @@ export default function UserDashboardPage() {
   const fetchInitialData = async (userId: string) => {
     // Ambil Konten Hero/Display
     try {
-      const resHero = await fetch("http://localhost:8000/api/hero-display");
+      const resHero = await fetch("http://bpn.kadastrium.id/api/hero-display");
       if (resHero.ok) {
         const data = await resHero.json();
         setDisplayData(prev => ({
@@ -104,7 +104,7 @@ export default function UserDashboardPage() {
   const fetchPermohonanStats = async (userId: string) => {
     try {
       // Ambil Riwayat
-      const resRiwayat = await fetch(`http://localhost:8000/api/riwayat/${userId}`);
+      const resRiwayat = await fetch(`http://bpn.kadastrium.id/api/riwayat/${userId}`);
       if (resRiwayat.ok) {
         const data = await resRiwayat.json();
         const diproses = data.filter((item: any) => item.status === 'Proses').length;
@@ -120,7 +120,7 @@ export default function UserDashboardPage() {
       }
 
       // Ambil Notifikasi unread
-      const resNotif = await fetch(`http://localhost:8000/api/notifikasi/${userId}`);
+      const resNotif = await fetch(`http://bpn.kadastrium.id/api/notifikasi/${userId}`);
       if (resNotif.ok) {
         const dataNotif = await resNotif.json();
         setUnreadCount(dataNotif.filter((n: any) => !n.is_read).length);

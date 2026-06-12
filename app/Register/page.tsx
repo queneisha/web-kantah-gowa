@@ -24,7 +24,7 @@ export default function RegisterPage() {
     setIsMounted(true);
     const fetchConfig = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/registerconfig');
+        const response = await fetch('http://bpn.kadastrium.id/api/registerconfig');
         const result = await response.json();
         if (result && !result.error) {
           const dbJabatan = result.opsi_jabatan?.length > 0 
@@ -35,7 +35,7 @@ export default function RegisterPage() {
             ...prev,
             ...result,
             background_path: result.background_path 
-              ? `http://localhost:8000/storage/${result.background_path.replace(/^\/+/g, '')}` 
+              ? `http://bpn.kadastrium.id/storage/${result.background_path.replace(/^\/+/g, '')}` 
               : prev.background_path,
             opsi_jabatan: dbJabatan
           }));
@@ -58,7 +58,7 @@ export default function RegisterPage() {
   useEffect(() => {
     const fetchData = async () => {
       try { 
-        const response = await fetch('http://localhost:8000/api/hero-display', { cache: 'no-store' })
+        const response = await fetch('http://bpn.kadastrium.id/api/hero-display', { cache: 'no-store' })
         const data = await response.json();
         if (data) {
           setKonten({
@@ -96,7 +96,7 @@ export default function RegisterPage() {
       password: formData.get("password"),
     };
     try {
-      const response = await fetch('http://localhost:8000/api/register', {
+      const response = await fetch('http://bpn.kadastrium.id/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),

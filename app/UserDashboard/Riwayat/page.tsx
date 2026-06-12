@@ -66,7 +66,7 @@ const formatBadge = (count: number) => (count > 9 ? "9+" : count);
 
   const fetchInitialData = async () => {
     try {
-      const resHero = await fetch("http://localhost:8000/api/hero-display");
+      const resHero = await fetch("http://bpn.kadastrium.id/api/hero-display");
       if (resHero.ok) {
         const data = await resHero.json();
         setDisplayData(prev => ({
@@ -85,7 +85,7 @@ const formatBadge = (count: number) => (count > 9 ? "9+" : count);
 
   const fetchNotifikasi = async (userId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/notifikasi/${userId}`);
+      const response = await fetch(`http://bpn.kadastrium.id/api/notifikasi/${userId}`);
       if (response.ok) {
         const data = await response.json();
         setNotifications(data);
@@ -98,7 +98,7 @@ const formatBadge = (count: number) => (count > 9 ? "9+" : count);
   const fetchRiwayatPermohonan = async (userId: string) => {
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:8000/api/riwayat/${userId}`);
+      const response = await fetch(`http://bpn.kadastrium.id/api/riwayat/${userId}`);
       if (response.ok) {
         const data = await response.json();
         

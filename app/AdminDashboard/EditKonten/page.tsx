@@ -229,7 +229,7 @@ const [registerConfigMaskotFile, setRegisterConfigMaskotFile] = useState<File | 
         formData.append('background', registerConfigBgFile);
         }
 
-        const response = await fetch('http://localhost:8000/api/registerconfig', {
+        const response = await fetch('http://bpn.kadastrium.id/api/registerconfig', {
           method:'POST', 
           body: formData,
           headers: {
@@ -255,7 +255,7 @@ const [registerConfigMaskotFile, setRegisterConfigMaskotFile] = useState<File | 
 };
 useEffect(() => {
   const loadExistingConfig = async () => {
-    const res = await fetch('http://localhost:8000/api/registerconfig');
+    const res = await fetch('http://bpn.kadastrium.id/api/registerconfig');
     const data = await res.json();
     if (data) {
       setRegisterConfigKonten({
@@ -329,7 +329,7 @@ useEffect(() => {
         formData.append("navbarIcon", selectedNavbarIcon);
       }
 
-      const response = await fetch("http://localhost:8000/api/hero-update", {
+      const response = await fetch("http://bpn.kadastrium.id/api/hero-update", {
         method: "POST",
         body: formData,
         headers: {
@@ -399,7 +399,7 @@ useEffect(() => {
         }
       });
 
-      const response = await fetch("http://localhost:8000/api/alur-update", {
+      const response = await fetch("http://bpn.kadastrium.id/api/alur-update", {
         method: "POST",
         body: formData, // Jangan pakai JSON.stringify
         headers: {
@@ -431,7 +431,7 @@ useEffect(() => {
   useEffect(() => {
     const fetchAlurData = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/alurs");
+        const res = await fetch("http://bpn.kadastrium.id/api/alurs");
         const data = await res.json();
         if (data.length > 0) {
           setAlurSistem(data);
@@ -455,7 +455,7 @@ useEffect(() => {
   useEffect(() => {
     const fetchContentData = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/hero-display", {
+        const res = await fetch("http://bpn.kadastrium.id/api/hero-display", {
           method: "GET", // Jangan pakai JSON.stringify
           headers: {
             Accept: "application/json",
@@ -590,7 +590,7 @@ const [loginConfigMaskotFile, setLoginConfigMaskotFile] = useState<File | null>(
         formData.append("background", loginConfigBgFile);
       }
 
-      const response = await fetch("http://localhost:8000/api/loginconfig", {
+      const response = await fetch("http://bpn.kadastrium.id/api/loginconfig", {
         method: "POST",
         body: formData,
         headers: {
@@ -652,7 +652,7 @@ const [loginConfigMaskotFile, setLoginConfigMaskotFile] = useState<File | null>(
         }
       });
 
-      const response = await fetch("http://localhost:8000/api/fitur/update", {
+      const response = await fetch("http://bpn.kadastrium.id/api/fitur/update", {
         method: "POST",
         body: formData,
         headers: {
@@ -688,7 +688,7 @@ const [loginConfigMaskotFile, setLoginConfigMaskotFile] = useState<File | null>(
   useEffect(() => {
     const fetchNavbarData = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/hero-display");
+        const res = await fetch("http://bpn.kadastrium.id/api/hero-display");
         const data = await res.json();
         
         if (res.ok) {
@@ -709,7 +709,7 @@ const [loginConfigMaskotFile, setLoginConfigMaskotFile] = useState<File | null>(
   // Fetch navbar icon dari backend
   const fetchNavbarIcon = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/hero-display");
+      const res = await fetch("http://bpn.kadastrium.id/api/hero-display");
 
       const data = await res.json();
 
